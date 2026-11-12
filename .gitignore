@@ -1,0 +1,12 @@
+node_modules/
+server/data/*.db
+server/uploads/*
+!server/uploads/.gitkeep
+web/dist/
+.env
+.DS_Store
+
+server/data/*
+!server/data/.gitkeep
+.claude/
+.tmp.drive*
