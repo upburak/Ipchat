@@ -29,8 +29,13 @@ export function discoverServers({
       try {
         const reply = JSON.parse(msg.toString());
         if (reply.app !== 'ipchat' || !Number.isInteger(reply.port)) return;
+        const name = String(reply.name ?? '');
         const url = `http://${rinfo.address}:${reply.port}`;
-        if (!found.has(url)) found.set(url, { url, name: String(reply.name ?? '') });
+        const key = `${name}:${reply.port}`;
+        const existing = found.get(key);
+        if (!existing || (rinfo.address === '127.0.0.1' && !existing.url.includes('//127.0.0.1:'))) {
+          found.set(key, { url, name });
+        }
       } catch {
         /* ilgisiz paket */
       }
@@ -38,9 +43,9 @@ export function discoverServers({
     socket.on('error', finish);
     socket.bind(0, () => {
       socket.setBroadcast(true);
-      socket.send('IPCHAT_DISCOVER', udpPort, broadcastAddress, (err) => {
-        if (err) finish();
-      });
+      for (const address of new Set([broadcastAddress, '127.0.0.1'])) {
+        socket.send('IPCHAT_DISCOVER', udpPort, address, () => {});
+      }
     });
   });
 }

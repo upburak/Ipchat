@@ -27,3 +27,14 @@ test('deduplicates the same server answering twice', async () => {
     a.close();
   }
 });
+
+test('finds a server running on the same computer even when broadcast is not looped back', async () => {
+  const d = await startDiscovery(3000, { udpPort: 0, name: 'ayni-pc' });
+  try {
+    const found = await discoverServers({ udpPort: d.port, timeoutMs: 500 });
+    assert.equal(found.length, 1);
+    assert.equal(found[0].url, 'http://127.0.0.1:3000');
+  } finally {
+    d.close();
+  }
+});

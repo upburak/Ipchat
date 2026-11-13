@@ -4,9 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "start": "electron ."
   },
   "engines": {
     "node": ">=22.5.0"
+  },
+  "main": "src/main.js",
+  "devDependencies": {
+    "electron": "^45.3.2"
   }
 }

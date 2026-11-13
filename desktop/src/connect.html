@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>Ipchat</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #dfe4ec; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  .card { background: #fff; border-radius: 12px; padding: 28px; width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  p { color: #555; margin: 0 0 16px; font-size: 14px; }
+  input, button { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
+  input { border: 1px solid #ccd; }
+  button { border: 0; background: #3763e6; color: #fff; cursor: pointer; }
+  button.server { background: #eef1fb; color: #1b2a5c; text-align: left; }
+  .error { color: #c0392b; font-size: 13px; min-height: 18px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Ipchat</h1>
+  <div id="choose" hidden>
+    <p>Ağda birden fazla sunucu bulundu. Hangisine bağlanılsın?</p>
+    <div id="list"></div>
+  </div>
+  <div id="manual">
+    <p id="manual-text">Sunucu ağda otomatik bulunamadı. Sunucu bilgisayarın adresini yaz (örn. 192.168.1.10).</p>
+    <form id="form">
+      <input id="addr" placeholder="Sunucu adresi" autofocus />
+      <button type="submit">Bağlan</button>
+    </form>
+  </div>
+  <div class="error" id="error"></div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const errorEl = document.getElementById('error');
+  async function connect(text) {
+    errorEl.textContent = '';
+    const result = await window.ipchat.submitServer(text);
+    if (result && result.error) errorEl.textContent = result.error;
+  }
+  if (params.get('mode') === 'choose') {
+    document.getElementById('choose').hidden = false;
+    document.getElementById('manual-text').textContent = 'Ya da adresi elle yaz:';
+    const servers = JSON.parse(params.get('servers') || '[]');
+    for (const s of servers) {
+      const b = document.createElement('button');
+      b.className = 'server';
+      b.textContent = s.name ? s.name + '  (' + s.url + ')' : s.url;
+      b.addEventListener('click', () => connect(s.url));
+      document.getElementById('list').appendChild(b);
+    }
+  }
+  document.getElementById('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    connect(document.getElementById('addr').value);
+  });
+</script>
+</body>
+</html>
