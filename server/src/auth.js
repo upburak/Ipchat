@@ -10,21 +10,53 @@ function createSession(userId) {
   return token;
 }
 
+const STATUS_ERRORS = {
+  pending: 'Hesabın yönetici onayı bekliyor',
+  rejected: 'Hesabın reddedildi',
+  disabled: 'Hesabın kapatıldı',
+};
+
+function assertActive(user) {
+  if (user.status !== 'active') {
+    throw new Error(STATUS_ERRORS[user.status] || 'Hesap aktif değil');
+  }
+}
+
 export function register(username, password) {
   username = username.trim();
   if (!username || !password) {
     throw new Error('Kullanıcı adı ve şifre gerekli');
   }
-  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-  if (existing) throw new Error('Bu kullanıcı adı zaten alınmış');
-
   const passwordHash = bcrypt.hashSync(password, 10);
-  const info = db
-    .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-    .run(username, passwordHash);
-  const userId = info.lastInsertRowid;
-  const token = createSession(userId);
-  return { userId, username, token };
+
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const existing = db.prepare('SELECT id, status FROM users WHERE username = ?').get(username);
+    let userId;
+    let status;
+    if (existing) {
+      if (existing.status !== 'rejected') throw new Error('Bu kullanıcı adı zaten alınmış');
+      userId = existing.id;
+      status = 'pending';
+      db.prepare("UPDATE users SET password_hash = ?, pin_hash = NULL, status = 'pending' WHERE id = ?").run(
+        passwordHash,
+        userId
+      );
+    } else {
+      const isFirst = !db.prepare('SELECT 1 FROM users LIMIT 1').get();
+      status = isFirst ? 'active' : 'pending';
+      const info = db
+        .prepare('INSERT INTO users (username, password_hash, status, is_admin) VALUES (?, ?, ?, ?)')
+        .run(username, passwordHash, status, isFirst ? 1 : 0);
+      userId = Number(info.lastInsertRowid);
+    }
+    db.exec('COMMIT');
+    if (status !== 'active') return { userId, username, status };
+    return { userId, username, status, token: createSession(userId) };
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
 }
 
 export function login(username, password) {
@@ -32,6 +64,7 @@ export function login(username, password) {
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     throw new Error('Kullanıcı adı veya şifre hatalı');
   }
+  assertActive(user);
   const token = createSession(user.id);
   return { userId: user.id, username: user.username, token };
 }
@@ -52,6 +85,7 @@ export function loginWithPin(deviceToken, pin) {
   if (!user || !user.pin_hash || !bcrypt.compareSync(pin, user.pin_hash)) {
     throw new Error('PIN hatalı');
   }
+  assertActive(user);
   const token = createSession(user.id);
   return { userId: user.id, username: user.username, token };
 }
@@ -60,7 +94,9 @@ export function verifySession(token) {
   if (!token) return null;
   const session = db.prepare('SELECT * FROM sessions WHERE token = ?').get(token);
   if (!session) return null;
-  const user = db.prepare('SELECT id, username FROM users WHERE id = ?').get(session.user_id);
-  if (!user) return null;
-  return user;
+  const user = db
+    .prepare('SELECT id, username, status, is_admin FROM users WHERE id = ?')
+    .get(session.user_id);
+  if (!user || user.status !== 'active') return null;
+  return { id: user.id, username: user.username, isAdmin: user.is_admin === 1 };
 }

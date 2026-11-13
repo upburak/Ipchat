@@ -48,5 +48,5 @@ authRouter.post('/pin/set', requireAuth, (req, res) => {
 });
 
 authRouter.get('/me', requireAuth, (req, res) => {
-  res.json({ userId: req.user.id, username: req.user.username });
+  res.json({ userId: req.user.id, username: req.user.username, isAdmin: req.user.isAdmin });
 });
