@@ -9,7 +9,7 @@ messagesRouter.use(requireAuth);
 
 messagesRouter.get('/users', (req, res) => {
   const users = db
-    .prepare('SELECT id, username FROM users WHERE id != ? ORDER BY username')
+    .prepare("SELECT id, username FROM users WHERE id != ? AND status = 'active' ORDER BY username")
     .all(req.user.id);
   res.json(users.map((u) => ({ ...u, online: isOnline(u.id) })));
 });

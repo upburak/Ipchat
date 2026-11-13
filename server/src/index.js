@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 
 import { authRouter } from './routes/auth.js';
+import { createAdminRouter } from './routes/admin.js';
 import { messagesRouter } from './routes/messages.js';
 import { uploadRouter } from './routes/upload.js';
 import { attachSockets } from './sockets/index.js';
@@ -23,7 +24,12 @@ app.get('/api/health', (req, res) => res.json({ ok: true, app: 'ipchat' }));
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+attachSockets(io);
+
 app.use('/api', authRouter);
+app.use('/api', createAdminRouter(io));
 app.use('/api', messagesRouter);
 app.use('/api', uploadRouter);
 
@@ -35,10 +41,6 @@ app.get('*', (req, res, next) => {
     if (err) next();
   });
 });
-
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-attachSockets(io);
 
 function lanAddresses() {
   const addrs = [];
