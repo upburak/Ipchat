@@ -1,0 +1,73 @@
+<h2>Ana pencere hangi tarza yakın olsun?</h2>
+<p class="subtitle">Pencere 800x620 sabit boyutlu kalacak. Aynı ekranın üç farklı yorumu: sol kişi listesi, sağda sohbet, üstte yöneticiye gelen "bekleyen hesap" bildirimi. Birine tıkla.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#dfe9f5;">
+      <div style="font-family:Segoe UI,Tahoma,sans-serif;font-size:11px;color:#1b2a3a;">
+        <div style="background:linear-gradient(#6fa8e8,#3a79c4);color:#fff;padding:5px 8px;font-weight:600;display:flex;justify-content:space-between;">
+          <span>Ipchat</span><span style="background:#e0452d;border-radius:9px;padding:0 6px;">2 yeni istek</span>
+        </div>
+        <div style="display:flex;height:190px;">
+          <div style="width:34%;background:linear-gradient(#f4f8fd,#dce8f6);border-right:1px solid #aac3e3;padding:6px;">
+            <div style="color:#3a5f8f;font-size:10px;margin-bottom:4px;">KİŞİLER (3)</div>
+            <div style="padding:3px 0;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:radial-gradient(#7be08a,#2c9a3d);margin-right:5px;"></span>Ayşe</div>
+            <div style="padding:3px 0;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:radial-gradient(#7be08a,#2c9a3d);margin-right:5px;"></span>Mehmet</div>
+            <div style="padding:3px 0;color:#7b8794;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b8c2cc;margin-right:5px;"></span>Zeynep</div>
+          </div>
+          <div style="flex:1;background:#fff;padding:8px;">
+            <div style="background:#eaf3ff;border:1px solid #b9d3f2;border-radius:3px;padding:4px 6px;width:70%;margin-bottom:6px;">Toplantı 14:00'te mi?</div>
+            <div style="background:#f1f1f1;border:1px solid #d6d6d6;border-radius:3px;padding:4px 6px;width:50%;margin-left:auto;">Evet, geliyorum.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><h3>A — Klasik Messenger</h3><p>Eski MSN havası: mavi degrade başlık, parlak durum yuvarlakları, köşeli balonlar. Nostalji vurgusu güçlü.</p></div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#f3f4f8;">
+      <div style="font-family:system-ui,Segoe UI,sans-serif;font-size:11px;color:#1d2433;">
+        <div style="background:#fff;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e6e8ef;">
+          <b style="font-size:12px;">Ipchat</b><span style="background:#ef4444;color:#fff;border-radius:10px;padding:1px 8px;">2</span>
+        </div>
+        <div style="display:flex;height:190px;">
+          <div style="width:34%;background:#fff;border-right:1px solid #e6e8ef;padding:8px;">
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;"><span style="width:20px;height:20px;border-radius:50%;background:#6366f1;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">A</span>Ayşe<span style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#22c55e;"></span></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;"><span style="width:20px;height:20px;border-radius:50%;background:#0ea5e9;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">M</span>Mehmet<span style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#22c55e;"></span></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;color:#8b93a7;"><span style="width:20px;height:20px;border-radius:50%;background:#cbd0dc;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">Z</span>Zeynep</div>
+          </div>
+          <div style="flex:1;padding:10px;">
+            <div style="background:#fff;border-radius:12px 12px 12px 2px;padding:6px 9px;width:68%;margin-bottom:6px;box-shadow:0 1px 2px rgba(0,0,0,.08);">Toplantı 14:00'te mi?</div>
+            <div style="background:#6366f1;color:#fff;border-radius:12px 12px 2px 12px;padding:6px 9px;width:48%;margin-left:auto;">Evet, geliyorum.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><h3>B — Modern ve sade</h3><p>Beyaz yüzeyler, yuvarlak avatarlar, yuvarlak balonlar, tek vurgu rengi. Temiz ve güncel görünüm.</p></div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#10161f;">
+      <div style="font-family:system-ui,Segoe UI,sans-serif;font-size:11px;color:#d7dee8;">
+        <div style="background:#161e2a;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #243041;">
+          <b style="font-size:12px;color:#5eead4;">Ipchat</b><span style="background:#f59e0b;color:#10161f;border-radius:10px;padding:1px 8px;font-weight:600;">2 istek</span>
+        </div>
+        <div style="display:flex;height:190px;">
+          <div style="width:34%;background:#131b27;border-right:1px solid #243041;padding:8px;">
+            <div style="padding:4px 6px;border-radius:6px;background:#1c2736;">● Ayşe</div>
+            <div style="padding:4px 6px;">● Mehmet</div>
+            <div style="padding:4px 6px;color:#6b7a90;">○ Zeynep</div>
+          </div>
+          <div style="flex:1;padding:10px;background:#10161f;">
+            <div style="background:#1c2736;border-radius:8px;padding:6px 9px;width:68%;margin-bottom:6px;">Toplantı 14:00'te mi?</div>
+            <div style="background:#0f766e;color:#ecfeff;border-radius:8px;padding:6px 9px;width:48%;margin-left:auto;">Evet, geliyorum.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><h3>C — Koyu ve yoğun</h3><p>Koyu zemin, turkuaz vurgu, sıkı yerleşim. Göz yormaz, çok kişi listelenince daha çok yer açar.</p></div>
+  </div>
+
+</div>
