@@ -17,6 +17,10 @@ export default function LoginScreen({ onLoggedIn }) {
     setError('');
     try {
       const result = isRegister ? await api.register(username, password) : await api.login(username, password);
+      if (result.status === 'pending') {
+        setMode('waiting');
+        return;
+      }
       setAuthPending(result);
       setPendingUser(result);
       setMode('setpin');
@@ -91,6 +95,22 @@ export default function LoginScreen({ onLoggedIn }) {
             </form>
             <button className="link" onClick={() => setIsRegister(!isRegister)}>
               {isRegister ? 'Zaten hesabım var' : 'Hesabım yok, kayıt olmak istiyorum'}
+            </button>
+          </>
+        )}
+
+        {mode === 'waiting' && (
+          <>
+            <p className="subtitle">Hesabın oluşturuldu ve yönetici onayı bekliyor.</p>
+            <p className="subtitle">Onaylandığında şifrenle giriş yapabilirsin.</p>
+            <button
+              className="link"
+              onClick={() => {
+                setIsRegister(false);
+                setMode('password');
+              }}
+            >
+              Giriş ekranına dön
             </button>
           </>
         )}

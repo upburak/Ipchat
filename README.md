@@ -22,6 +22,19 @@ Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
 
 İstemci kurulumu yapmak istemeyenler tarayıcıdan da bağlanabilir (örn. `http://192.168.1.10:3000`) — sayfa sunucudan servis edildiği için **IP sorulmaz, otomatik bağlanır**.
 
+## Hesap onayı ve yönetici
+
+- Sunucuda **ilk açılan hesap otomatik yönetici** olur ve doğrudan giriş yapar.
+- Sonraki herkes kayıt olabilir ama hesapları **"onay bekliyor"** durumuna düşer; yönetici onaylayana kadar giriş yapamazlar.
+- Yönetici, sohbet ekranında **Hesaplar** düğmesinden bekleyen hesapları onaylar/reddeder, hesapları kapatır/açar ve başka kullanıcıları yönetici yapabilir. Kapatılan kullanıcının açık oturumu hemen düşer.
+- Tek yönetici şifresini kaybederse, sunucu bilgisayarında şu komut şifreyi sıfırlar ve hesabı yönetici yapar:
+
+```bash
+npm run reset-admin -- <kullanici-adi> <yeni-sifre>
+```
+
+- Testler: `npm test -w server`
+
 ## Elle kurulum (macOS / Linux / geliştirici)
 
 ```bash

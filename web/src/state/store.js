@@ -24,8 +24,8 @@ export const useStore = create((set, get) => ({
     set({ serverUrl: url });
   },
 
-  setSession: ({ userId, username, token }) => {
-    set({ currentUser: { id: userId, username }, token });
+  setSession: ({ userId, username, isAdmin, token }) => {
+    set({ currentUser: { id: userId, username, isAdmin: Boolean(isAdmin) }, token });
   },
 
   setAuthPending: ({ token }) => {

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../state/store.js';
 import { api } from '../lib/api.js';
 import { connectSocket, disconnectSocket } from '../lib/socket.js';
 import ContactList from '../components/ContactList.jsx';
 import ChatWindow from '../components/ChatWindow.jsx';
+import AdminPanel from '../components/AdminPanel.jsx';
 
 export default function ChatApp() {
   const {
@@ -18,6 +19,8 @@ export default function ChatApp() {
     activeConversation,
     logout,
   } = useStore();
+
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     const socket = connectSocket(serverUrl, token);
@@ -37,14 +40,27 @@ export default function ChatApp() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <strong>{currentUser?.username}</strong>
-          <button className="link" onClick={logout}>
-            Çıkış
-          </button>
+          <span>
+            {currentUser?.isAdmin && (
+              <button className="link" onClick={() => setShowAdmin(!showAdmin)}>
+                Hesaplar
+              </button>
+            )}{' '}
+            <button className="link" onClick={logout}>
+              Çıkış
+            </button>
+          </span>
         </div>
         <ContactList />
       </aside>
       <main className="main">
-        {activeConversation ? <ChatWindow /> : <div className="empty-state">Sohbet başlatmak için soldan birini seç</div>}
+        {showAdmin ? (
+          <AdminPanel />
+        ) : activeConversation ? (
+          <ChatWindow />
+        ) : (
+          <div className="empty-state">Sohbet başlatmak için soldan birini seç</div>
+        )}
       </main>
     </div>
   );

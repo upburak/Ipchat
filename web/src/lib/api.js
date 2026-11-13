@@ -23,6 +23,9 @@ export const api = {
   setPin: (pin) => request('/api/pin/set', { method: 'POST', body: { pin }, auth: true }),
   me: () => request('/api/me', { auth: true }),
 
+  adminListUsers: () => request('/api/admin/users', { auth: true }),
+  adminAction: (id, action) => request(`/api/admin/users/${id}/${action}`, { method: 'POST', auth: true }),
+
   listUsers: () => request('/api/users', { auth: true }),
   listGroups: () => request('/api/groups', { auth: true }),
   listMessages: (params) => {
