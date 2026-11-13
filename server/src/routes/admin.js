@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from './auth.js';
-import { listUsers, applyAction, AdminError } from '../admin.js';
+import { listUsers, applyAction, pendingSummary, AdminError } from '../admin.js';
 
 function requireAdmin(req, res, next) {
   if (!req.user?.isAdmin) return res.status(403).json({ error: 'Yönetici yetkisi gerekli' });
@@ -12,6 +12,7 @@ export function createAdminRouter(io) {
   router.use('/admin', requireAuth, requireAdmin);
 
   router.get('/admin/users', (req, res) => res.json(listUsers()));
+  router.get('/admin/pending-count', (req, res) => res.json(pendingSummary()));
 
   router.post('/admin/users/:id/:action', (req, res) => {
     try {

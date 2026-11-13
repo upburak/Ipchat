@@ -81,3 +81,25 @@ test('/users excludes pending accounts', async () => {
   const r = await call('GET', '/api/users', admin.token);
   assert.deepEqual(r.body.map((u) => u.username), []);
 });
+
+test('pending-count returns count and latest pending accounts', async () => {
+  auth.register('ikinci-bekleyen', 'sifre123');
+  const r = await call('GET', '/api/admin/pending-count', admin.token);
+  assert.equal(r.status, 200);
+  assert.equal(r.body.count, 2);
+  assert.equal(r.body.latest[0].username, 'ikinci-bekleyen');
+  assert.ok(r.body.latest[0].id > r.body.latest[1].id);
+});
+
+test('pending-count is 403 for non-admin', async () => {
+  db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(pendingId);
+  const token = auth.login('bekleyen', 'sifre123').token;
+  assert.equal((await call('GET', '/api/admin/pending-count', token)).status, 403);
+});
+
+test('pending-count caps latest at 5', async () => {
+  for (let i = 0; i < 7; i++) auth.register(`kisi${i}`, 'sifre123');
+  const r = await call('GET', '/api/admin/pending-count', admin.token);
+  assert.equal(r.body.count, 8);
+  assert.equal(r.body.latest.length, 5);
+});

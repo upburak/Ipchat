@@ -20,6 +20,15 @@ export function listUsers() {
     }));
 }
 
+export function pendingSummary() {
+  const count = db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'pending'").get().n;
+  const latest = db
+    .prepare("SELECT id, username FROM users WHERE status = 'pending' ORDER BY id DESC LIMIT 5")
+    .all()
+    .map((u) => ({ id: u.id, username: u.username }));
+  return { count, latest };
+}
+
 export function revokeUser(userId, io) {
   db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM devices WHERE user_id = ?').run(userId);
