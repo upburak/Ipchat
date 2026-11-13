@@ -2,12 +2,13 @@ import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { migrate } from './migrate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '..', 'data');
 fs.mkdirSync(dataDir, { recursive: true });
 
-export const db = new DatabaseSync(path.join(dataDir, 'ipchat.db'));
+export const db = new DatabaseSync(process.env.IPCHAT_DB_PATH || path.join(dataDir, 'ipchat.db'));
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
 
@@ -61,3 +62,5 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_messages_conversation
     ON messages (recipient_type, recipient_id, sender_id);
 `);
+
+migrate(db);
