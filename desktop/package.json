@@ -1,7 +1,7 @@
 {
   "name": "ipchat-desktop",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "scripts": {
     "test": "node --test",
@@ -44,7 +44,10 @@
       "target": "zip",
       "category": "public.app-category.social-networking",
       "identity": null,
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "Ipchat, ağınızdaki Ipchat sunucusunu bulmak ve ona bağlanmak için yerel ağa erişir."
+      }
     }
   },
   "description": "Ipchat masaüstü uygulaması",
