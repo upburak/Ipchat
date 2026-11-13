@@ -14,7 +14,7 @@ export function createTray({ showWindow, changeServer, hostServer, stopHosting, 
   const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const state = { running: false, urls: [], badge: 0 };
+  const state = { running: false, urls: [], badge: 0, warning: false };
 
   const rebuild = () => {
     const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
@@ -22,6 +22,9 @@ export function createTray({ showWindow, changeServer, hostServer, stopHosting, 
       items.push({ label: 'Sunucu: Çalışıyor', enabled: false });
       for (const url of state.urls) {
         items.push({ label: `Adres: ${url}`, click: () => clipboard.writeText(url) });
+      }
+      if (state.warning) {
+        items.push({ label: 'Uyarı: güvenlik duvarı kurum ilkesiyle yönetiliyor', enabled: false });
       }
       items.push({ label: 'Sunucu modunu kapat', click: stopHosting });
     } else {
@@ -48,6 +51,7 @@ export function createTray({ showWindow, changeServer, hostServer, stopHosting, 
     const lines = [];
     if (alert) lines.push(`${state.badge} bekleyen hesap`);
     if (state.running) lines.push('Ipchat sunucusu çalışıyor', ...state.urls);
+    if (state.running && state.warning) lines.push('Güvenlik duvarı kurum ilkesiyle yönetiliyor');
     tray.setToolTip(lines.length ? lines.join('\n') : 'Ipchat');
   };
 

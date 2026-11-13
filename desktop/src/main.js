@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Notification, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, Notification, dialog, ipcMain, shell } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -8,6 +8,7 @@ import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions, webPreferences } from './window-options.js';
 import { isTrustedSender, isServerSender, shouldAllowNavigation } from './navigation.js';
 import { createTray } from './tray.js';
+import { readFirewallPolicy } from './firewall-policy.js';
 import { startServerProcess, lanUrls } from './server-host.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +24,7 @@ let onConnectPage = false;
 let retried = false;
 let connecting = false;
 let serverHost = null;
+let firewallWarned = false;
 
 const configDir = () => app.getPath('userData');
 const alive = () => win && !win.isDestroyed();
@@ -62,6 +64,21 @@ function updateTray() {
   tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [] });
 }
 
+async function checkFirewall() {
+  const { restricted } = await readFirewallPolicy();
+  tray?.update({ warning: restricted });
+  if (restricted && !firewallWarned && alive()) {
+    firewallWarned = true;
+    dialog.showMessageBox(win, {
+      type: 'warning',
+      title: 'Ipchat',
+      message: 'Bu bilgisayarın güvenlik duvarı kurum tarafından yönetiliyor.',
+      detail:
+        'Başka cihazlar bu bilgisayardaki sunucuya bağlanamayabilir. Sunucuyu başka bir bilgisayarda çalıştırmayı dene; bu bilgisayar istemci olarak sorunsuz çalışır.',
+    });
+  }
+}
+
 async function hostServer() {
   if (serverHost) return;
   const { entry, webDist } = serverPaths();
@@ -77,6 +94,7 @@ async function hostServer() {
     },
   });
   updateTray();
+  checkFirewall();
 }
 
 async function enableServerMode() {
