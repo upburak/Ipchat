@@ -29,6 +29,7 @@
       <button type="submit">Bağlan</button>
     </form>
   </div>
+  <button id="host" class="server" type="button">Bu bilgisayar sunucu olsun</button>
   <div class="error" id="error"></div>
 </div>
 <script>
@@ -60,6 +61,19 @@
       document.getElementById('list').appendChild(b);
     }
   }
+  document.getElementById('host').addEventListener('click', async () => {
+    if (busy) return;
+    busy = true;
+    errorEl.textContent = 'Sunucu başlatılıyor...';
+    try {
+      const result = await window.ipchat.hostServer();
+      errorEl.textContent = result && result.error ? result.error : '';
+    } catch (err) {
+      errorEl.textContent = 'Sunucu başlatılamadı';
+    } finally {
+      busy = false;
+    }
+  });
   document.getElementById('form').addEventListener('submit', (e) => {
     e.preventDefault();
     connect(document.getElementById('addr').value);

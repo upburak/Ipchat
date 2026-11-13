@@ -1,35 +1,55 @@
-import { Tray, Menu, nativeImage } from 'electron';
+import { Tray, Menu, nativeImage, clipboard } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const image = (name) =>
+  nativeImage.createFromPath(path.join(here, '..', 'assets', name)).resize({ width: 18, height: 18 });
 
-export function createTray({ showWindow, changeServer, quit, isAutoStart, setAutoStart }) {
-  const icon = nativeImage
-    .createFromPath(path.join(here, '..', 'assets', 'icon.png'))
-    .resize({ width: 18, height: 18 });
-  const tray = new Tray(icon);
+export function createTray({ showWindow, changeServer, hostServer, stopHosting, quit, isAutoStart, setAutoStart }) {
+  const normalIcon = image('icon.png');
+  const serverIcon = image('icon-server.png');
+  const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const rebuild = () =>
-    tray.setContextMenu(
-      Menu.buildFromTemplate([
-        { label: 'Aç', click: showWindow },
-        {
-          label: 'Bilgisayar açılınca başlat',
-          type: 'checkbox',
-          checked: isAutoStart(),
-          click: (item) => {
-            setAutoStart(item.checked);
-            rebuild();
-          },
+  const state = { running: false, urls: [] };
+
+  const rebuild = () => {
+    const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
+    if (state.running) {
+      items.push({ label: 'Sunucu: Çalışıyor', enabled: false });
+      for (const url of state.urls) {
+        items.push({ label: `Adres: ${url}`, click: () => clipboard.writeText(url) });
+      }
+      items.push({ label: 'Sunucu modunu kapat', click: stopHosting });
+    } else {
+      items.push({ label: 'Bu bilgisayarı sunucu yap', click: hostServer });
+      items.push({ label: 'Sunucuyu değiştir', click: changeServer });
+    }
+    items.push(
+      { type: 'separator' },
+      {
+        label: 'Bilgisayar açılınca başlat',
+        type: 'checkbox',
+        checked: isAutoStart(),
+        click: (item) => {
+          setAutoStart(item.checked);
+          rebuild();
         },
-        { label: 'Sunucuyu değiştir', click: changeServer },
-        { type: 'separator' },
-        { label: 'Çık', click: quit },
-      ])
+      },
+      { label: 'Çık', click: quit }
     );
+    tray.setContextMenu(Menu.buildFromTemplate(items));
+    tray.setImage(state.running ? serverIcon : normalIcon);
+    tray.setToolTip(state.running ? `Ipchat sunucusu çalışıyor\n${state.urls.join('\n')}` : 'Ipchat');
+  };
+
   rebuild();
   tray.on('click', showWindow);
-  return tray;
+  return {
+    update(next) {
+      Object.assign(state, next);
+      rebuild();
+    },
+  };
 }

@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer, isReachable } from './resolve-server.js';
@@ -7,10 +8,12 @@ import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions } from './window-options.js';
 import { isTrustedSender, shouldAllowNavigation } from './navigation.js';
 import { createTray } from './tray.js';
+import { startServerProcess, lanUrls } from './server-host.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const connectFileUrl = pathToFileURL(path.join(here, 'connect.html')).href;
 const RETRY_INTERVAL_MS = 10_000;
+const HOST_PORT = 3000;
 
 let win = null;
 let tray = null;
@@ -19,9 +22,57 @@ let serverUrl = null;
 let onConnectPage = false;
 let retried = false;
 let connecting = false;
+let serverHost = null;
 
 const configDir = () => app.getPath('userData');
 const alive = () => win && !win.isDestroyed();
+
+function serverPaths() {
+  const bundle = path.join(here, '..', 'bundle');
+  if (fs.existsSync(path.join(bundle, 'server', 'src', 'index.js'))) {
+    return { entry: path.join(bundle, 'server', 'src', 'index.js'), webDist: path.join(bundle, 'web-dist') };
+  }
+  const root = path.join(here, '..', '..');
+  return { entry: path.join(root, 'server', 'src', 'index.js'), webDist: path.join(root, 'web', 'dist') };
+}
+
+function updateTray() {
+  tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [] });
+}
+
+async function hostServer() {
+  if (serverHost) return;
+  const { entry, webDist } = serverPaths();
+  serverHost = await startServerProcess({
+    execPath: process.execPath,
+    entry,
+    port: HOST_PORT,
+    dataDir: path.join(configDir(), 'server-data'),
+    webDist,
+    onExit: () => {
+      serverHost = null;
+      updateTray();
+    },
+  });
+  updateTray();
+}
+
+async function enableServerMode() {
+  await hostServer();
+  saveConfig(configDir(), { ...loadConfig(configDir()), serverMode: true, lastServer: `http://127.0.0.1:${HOST_PORT}` });
+  retried = false;
+  openServer(`http://127.0.0.1:${HOST_PORT}`);
+}
+
+async function disableServerMode() {
+  saveConfig(configDir(), { ...loadConfig(configDir()), serverMode: false, lastServer: undefined });
+  await serverHost?.stop();
+  serverHost = null;
+  updateTray();
+  retried = false;
+  showWindow();
+  connectToServer();
+}
 
 function showWindow() {
   if (!alive()) return;
@@ -49,6 +100,16 @@ async function connectToServer() {
   if (connecting) return;
   connecting = true;
   try {
+    if (loadConfig(configDir()).serverMode) {
+      try {
+        await hostServer();
+        if (alive()) openServer(`http://127.0.0.1:${HOST_PORT}`);
+        return;
+      } catch {
+        if (alive()) showConnectPage('manual');
+        return;
+      }
+    }
     const result = await resolveServer({ configDir: configDir() });
     if (!alive()) return;
     if (result.status === 'ok') openServer(result.url);
@@ -77,10 +138,7 @@ async function retryInBackground() {
 }
 
 function changeServer() {
-  saveConfig(configDir(), { ...loadConfig(configDir()), lastServer: undefined });
-  retried = false;
-  showWindow();
-  connectToServer();
+  disableServerMode();
 }
 
 function createWindow() {
@@ -161,11 +219,22 @@ ipcMain.handle('server:submit', async (event, text) => {
   return { ok: true };
 });
 
+ipcMain.handle('server:host', async (event) => {
+  if (!isTrustedSender(event.senderFrame?.url, connectFileUrl)) return { error: 'İzin verilmedi' };
+  try {
+    await enableServerMode();
+    return { ok: true };
+  } catch {
+    return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
+  }
+});
+
 function start() {
   app.on('second-instance', showWindow);
   app.on('activate', showWindow);
   app.on('before-quit', () => {
     quitting = true;
+    serverHost?.stop();
   });
   app.on('window-all-closed', () => {
     /* tepside yasamaya devam eder */
@@ -177,17 +246,20 @@ function start() {
       app.setLoginItemSettings({ openAtLogin: true });
       saveConfig(configDir(), { ...config, autostartInitialized: true });
     }
-    createWindow();
     tray = createTray({
       showWindow,
       changeServer,
-      quit: () => {
+      hostServer: () => enableServerMode().catch(() => {}),
+      stopHosting: disableServerMode,
+      quit: async () => {
         quitting = true;
+        await serverHost?.stop();
         app.quit();
       },
       isAutoStart: () => app.getLoginItemSettings().openAtLogin,
       setAutoStart: (value) => app.setLoginItemSettings({ openAtLogin: value }),
     });
+    createWindow();
   });
 }
 

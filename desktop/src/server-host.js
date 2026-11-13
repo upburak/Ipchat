@@ -31,6 +31,7 @@ export function startServerProcess({ execPath, entry, port, dataDir, webDist, ti
         PORT: String(port),
         IPCHAT_DATA_DIR: dataDir,
         IPCHAT_WEB_DIST: webDist,
+        IPCHAT_PARENT_PID: String(process.pid),
       },
       stdio: 'ignore',
       windowsHide: true,

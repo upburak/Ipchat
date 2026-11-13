@@ -159,11 +159,11 @@ Write-Host "      Kural eklendi." -ForegroundColor Green
 Write-Host "[5/5] Bilgisayar her acildiginda sunucu otomatik baslasin mi?" -ForegroundColor Cyan
 $answer = Read-Host "      (E/H)"
 if ($answer -match '^[Ee]') {
-    $batPath = Join-Path $root 'baslat.bat'
-    schtasks /Create /F /SC ONLOGON /TN "Ipchat Sunucu" /TR "`"$batPath`"" /RL LIMITED | Out-Null
+    $vbsPath = Join-Path $root 'baslat-gizli.vbs'
+    schtasks /Create /F /SC ONLOGON /TN "Ipchat Sunucu" /TR "wscript.exe `"$vbsPath`"" /RL LIMITED | Out-Null
     Write-Host "      Otomatik baslatma ayarlandi (Gorev Zamanlayici: 'Ipchat Sunucu')." -ForegroundColor Green
 } else {
-    Write-Host "      Atlandi. Sunucuyu elle baslatmak icin: baslat.bat" -ForegroundColor Yellow
+    Write-Host "      Atlandi. Sunucuyu elle baslatmak icin: baslat-gizli.vbs (pencere acmadan arka planda) veya baslat.bat" -ForegroundColor Yellow
 }
 
 # ---- Baglanti bilgisi ----
@@ -180,5 +180,5 @@ foreach ($ip in $ips) {
     Write-Host "    http://${ip}:$Port" -ForegroundColor White
 }
 Write-Host ""
-Write-Host "Sunucu simdi baslatiliyor... (Bu pencereyi kapatabilirsiniz, sunucu ayri pencerede calisir)"
-Start-Process cmd.exe -ArgumentList "/k `"cd /d `"$root`" && npm start`""
+Write-Host "Sunucu simdi arka planda baslatiliyor (pencere acilmaz). Durdurmak icin: durdur.bat, tamamen kaldirmak icin: kaldir.bat"
+Start-Process wscript.exe -ArgumentList "`"$root\baslat-gizli.vbs`""

@@ -1,0 +1,39 @@
+name: Masaustu uygulamasi (Windows ve Mac)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npm run dist -w desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ipchat-Windows-Kurulum
+          path: desktop/dist/*.exe
+          if-no-files-found: error
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npm run dist:mac -w desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ipchat-Mac
+          path: desktop/dist/*.zip
+          if-no-files-found: error

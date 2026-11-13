@@ -22,20 +22,28 @@ Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
 
 İstemci kurulumu yapmak istemeyenler tarayıcıdan da bağlanabilir (örn. `http://192.168.1.10:3000`) — sayfa sunucudan servis edildiği için **IP sorulmaz, otomatik bağlanır**.
 
-## Masaüstü uygulaması (Electron)
+## Masaüstü uygulaması (Windows ve Mac) — önerilen yol
 
-`desktop/` klasöründeki uygulama, sohbet istemcisini sabit boyutlu (800x620, büyütülemez) bir pencerede açar:
+Tek program hem **istemci** hem de **sunucu** olabilir; Node.js kurmak veya terminal açmak gerekmez.
 
-- **Sunucuyu kendisi bulur:** Sunucu, ağdaki UDP `41234` portunda yayın sorgusuna cevap verir; uygulama açılışta bunu arar. Daha önce bağlanılan sunucu hatırlanır. Sunucu aynı bilgisayardaysa da bulunur. Birden fazla sunucu bulunursa liste gösterilir, hiç bulunamazsa adres elle yazılabilir (örn. `192.168.1.10`).
-- **Güvenlik duvarı:** Sunucu bilgisayarında UDP `41234` (ve web için TCP `3000`) gelen bağlantıya açık olmalı. Otomatik keşif çalışmazsa adres elle girilir.
-- **Tepsi:** Pencereyi kapatmak uygulamayı kapatmaz, sistem tepsisine indirir. Tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır.
-- **Otomatik başlatma:** Kurulu (paketlenmiş) uygulama ilk çalışmada bilgisayar açılışında başlamaya ayarlanır; tepsi menüsünden kapatılabilir.
+**Kurulum**
+- **Windows:** `Ipchat Setup x.y.z.exe` dosyasını çalıştır ("Bilinmeyen yayıncı" uyarısında *Yine de çalıştır*). Kaldırmak için: Ayarlar → Uygulamalar → Ipchat → Kaldır.
+- **Mac:** zip'i aç, `Ipchat.app`'i Uygulamalar'a at. İlk açılışta imzasız olduğu için engellenirse: uygulamaya sağ tıkla → *Aç*; "hasarlı" derse Terminal'de `xattr -cr /Applications/Ipchat.app` çalıştır. Kaldırmak için uygulamayı Çöp Kutusu'na at.
+- Mesaj verisi ayrı tutulur ve uygulama kaldırılınca silinmez: Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (tamamen silmek için bu klasörü de sil).
 
-Geliştirme: `npm start -w desktop` (önce sunucuyu başlat). Testler: `npm test -w desktop`.
+**Sunucu olarak kullanım:** Uygulamayı aç, ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Sunucu arka planda çalışır (pencere/terminal yok). Sistem tepsisinde (Mac'te menü çubuğunda) yeşil noktalı ikon ve **adres** görünür; ikona sağ tıklayıp adresi kopyalayabilirsin. Bu ayar hatırlanır, uygulama her açıldığında sunucu da başlar. Kapatmak için tepsi menüsünden "Sunucu modunu kapat". İlk açılan hesap yöneticidir.
 
-Windows kurulum dosyası (.exe) GitHub'da otomatik üretilir: repoda **Actions → "Windows masaustu uygulamasi" → Run workflow**, bitince çıkan **Ipchat-Windows-Kurulum** dosyası indirilir. (Elle üretmek için Windows bilgisayarda `npm run dist -w desktop`; çıktı `desktop/dist/` içine yazılır.) (macOS'ta paketleme `npx electron-builder --dir --mac` ile denenebilir; Windows kurulumu Mac'te üretilemez.)
+**İstemci olarak kullanım:** Uygulama sunucuyu ağda kendisi bulur (UDP `41234`), bulunanı listede gösterir; bulamazsa adres elle yazılır. Sunucu bilgisayarında UDP `41234` ve TCP `3000` gelen bağlantıya açık olmalı (güvenlik duvarı izni istenirse *izin ver*).
 
-Not: `kurulum.bat` içindeki istemci seçeneği, masaüstü uygulaması dağıtılana kadar mevcut kısayol yöntemiyle çalışmaya devam eder.
+**Genel:** Pencere sabit boyutlu (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir).
+
+**Derleme (geliştirici):** `.exe` ve Mac zip dosyaları GitHub'da otomatik üretilir: repoda **Actions → "Masaustu uygulamasi (Windows ve Mac)" → Run workflow**, bitince **Ipchat-Windows-Kurulum** ve **Ipchat-Mac** dosyaları indirilir. Geliştirme: `npm start -w desktop`; testler: `npm test -w desktop`.
+
+## Eski kurulum yöntemi (kurulum.bat, yalnızca sunucu)
+
+Masaüstü uygulaması yerine `kurulum.bat` ile de sunucu kurulabilir (Node.js'i kendisi kurar). Sunucu **pencere açmadan arka planda** çalışır:
+- Durdurmak: `durdur.bat` — Elle başlatmak: `baslat-gizli.vbs`
+- **Tamamen kaldırmak: `kaldir.bat`** (sunucuyu durdurur, otomatik başlatmayı, güvenlik duvarı kuralını ve masaüstü kısayolunu siler; klasörü ve Node.js'i silmez, onları elle silersin).
 
 ## Hesap onayı ve yönetici
 

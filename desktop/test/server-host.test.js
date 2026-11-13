@@ -54,3 +54,31 @@ test('lanUrls lists external IPv4 addresses with the port', () => {
   };
   assert.deepEqual(lanUrls(3000, ifaces), ['http://192.168.1.5:3000']);
 });
+
+test('the server exits by itself when the parent process disappears', async () => {
+  const { spawn } = await import('node:child_process');
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipchat-data-'));
+  const port = await freePort();
+  const fakeParent = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  const server = spawn(process.execPath, [entry], {
+    env: { ...process.env, PORT: String(port), IPCHAT_DATA_DIR: dataDir, IPCHAT_PARENT_PID: String(fakeParent.pid) },
+    stdio: 'ignore',
+  });
+  try {
+    let up = false;
+    for (let i = 0; i < 30 && !up; i++) {
+      up = await fetch(`http://127.0.0.1:${port}/api/health`).then(() => true, () => false);
+      if (!up) await new Promise((r) => setTimeout(r, 200));
+    }
+    assert.ok(up, 'sunucu acilmali');
+    fakeParent.kill('SIGKILL');
+    const exited = await Promise.race([
+      new Promise((r) => server.once('exit', () => r(true))),
+      new Promise((r) => setTimeout(() => r(false), 8000)),
+    ]);
+    assert.equal(exited, true, 'ebeveyn olunce sunucu kendiliginden kapanmali');
+  } finally {
+    server.kill();
+    fakeParent.kill();
+  }
+});

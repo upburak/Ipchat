@@ -56,6 +56,17 @@ app.get('*', (req, res, next) => {
   });
 });
 
+const parentPid = Number(process.env.IPCHAT_PARENT_PID);
+if (parentPid) {
+  setInterval(() => {
+    try {
+      process.kill(parentPid, 0);
+    } catch {
+      process.exit(0);
+    }
+  }, 2000).unref();
+}
+
 function lanAddresses() {
   const addrs = [];
   for (const list of Object.values(os.networkInterfaces())) {

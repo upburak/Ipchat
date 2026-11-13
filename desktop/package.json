@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test",
     "start": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "node scripts/prepare-bundle.js && electron-builder --win",
+    "dist:mac": "node scripts/prepare-bundle.js && electron-builder --mac"
   },
   "engines": {
     "node": ">=22.5.0"
@@ -22,6 +23,7 @@
     "files": [
       "src/**/*",
       "assets/**/*",
+      "bundle/**/*",
       "package.json"
     ],
     "directories": {
@@ -34,8 +36,23 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false
+    },
+    "asar": false,
+    "mac": {
+      "target": "zip",
+      "category": "public.app-category.social-networking",
+      "identity": null,
+      "icon": "assets/icon.png"
     }
   },
   "description": "Ipchat masaüstü uygulaması",
-  "author": "Ipchat"
+  "author": "Ipchat",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^2.0.0",
+    "socket.io": "^4.8.1"
+  }
 }

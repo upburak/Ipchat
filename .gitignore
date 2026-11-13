@@ -12,3 +12,4 @@ server/data/*
 .tmp.drive*
 .superpowers/
 desktop/dist/
+desktop/bundle/
