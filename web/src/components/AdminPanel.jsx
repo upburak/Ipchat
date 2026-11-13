@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
+import { POLL_MS } from '../lib/polling.js';
 
 const STATUS_LABELS = { active: 'Aktif', pending: 'Onay bekliyor', rejected: 'Reddedildi', disabled: 'Kapatıldı' };
 
@@ -19,6 +20,8 @@ export default function AdminPanel() {
   const load = () => api.adminListUsers().then(setUsers).catch((err) => setError(err.message));
   useEffect(() => {
     load();
+    const timer = setInterval(load, POLL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   async function run(id, action) {

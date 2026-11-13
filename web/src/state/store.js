@@ -11,6 +11,7 @@ export const useStore = create((set, get) => ({
 
   token: '',
   notice: '',
+  pendingCount: 0,
   currentUser: null, // { id, username }
 
   contacts: [], // [{id, username, online}]
@@ -45,9 +46,11 @@ export const useStore = create((set, get) => ({
     set({ deviceToken: '', rememberedUsername: '' });
   },
 
-  logout: (notice) => set({ notice: typeof notice === 'string' ? notice : '', token: '', currentUser: null, contacts: [], groups: [], messages: {}, activeConversation: null }),
+  logout: (notice) => set({ notice: typeof notice === 'string' ? notice : '', token: '', pendingCount: 0, currentUser: null, contacts: [], groups: [], messages: {}, activeConversation: null }),
 
   setContacts: (contacts) => set({ contacts }),
+  setPendingCount: (pendingCount) => set({ pendingCount }),
+  clearPresence: () => set({ presence: {} }),
   setGroups: (groups) => set({ groups }),
 
   setPresence: (userId, online) =>
