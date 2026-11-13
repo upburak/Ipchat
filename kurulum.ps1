@@ -141,7 +141,7 @@ if ($nodeCmd) {
 
 # ---- 2. Bagimliliklar ----
 Write-Host "[2/5] Bagimliliklar kuruluyor (npm install)..." -ForegroundColor Cyan
-npm install --no-fund --no-audit
+npm install -w server -w web --no-fund --no-audit
 if ($LASTEXITCODE -ne 0) { Write-Host "HATA: npm install basarisiz." -ForegroundColor Red; exit 1 }
 
 # ---- 3. Web arayuzu derleme ----

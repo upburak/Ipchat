@@ -33,7 +33,7 @@ Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
 
 Geliştirme: `npm start -w desktop` (önce sunucuyu başlat). Testler: `npm test -w desktop`.
 
-Windows kurulum dosyası (.exe) için Windows bilgisayarda `npm run dist -w desktop` çalıştırılır; çıktı `desktop/dist/` içine yazılır. (macOS'ta paketleme `npx electron-builder --dir --mac` ile denenebilir; Windows kurulumu Mac'te üretilemez.)
+Windows kurulum dosyası (.exe) GitHub'da otomatik üretilir: repoda **Actions → "Windows masaustu uygulamasi" → Run workflow**, bitince çıkan **Ipchat-Windows-Kurulum** dosyası indirilir. (Elle üretmek için Windows bilgisayarda `npm run dist -w desktop`; çıktı `desktop/dist/` içine yazılır.) (macOS'ta paketleme `npx electron-builder --dir --mac` ile denenebilir; Windows kurulumu Mac'te üretilemez.)
 
 Not: `kurulum.bat` içindeki istemci seçeneği, masaüstü uygulaması dağıtılana kadar mevcut kısayol yöntemiyle çalışmaya devam eder.
 
