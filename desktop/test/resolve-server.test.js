@@ -30,23 +30,21 @@ test('uses remembered server when reachable', async () => {
   assert.equal(d.calls.discover, 0);
 });
 
-test('rediscovers when remembered server is unreachable and saves the new one', async () => {
+test('a single newly discovered server needs confirmation (choose), and is not saved yet', async () => {
   const configDir = tmp();
   saveConfig(configDir, { lastServer: 'http://10.9.9.9:3000' });
-  const d = deps({ servers: [B] });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url });
-  assert.equal(loadConfig(configDir).lastServer, B.url);
+  const d = deps({ servers: [B], up: [B.url] });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'choose', servers: [B] });
+  assert.equal(loadConfig(configDir).lastServer, 'http://10.9.9.9:3000');
 });
 
-test('prefers remembered server among several discovered', async () => {
-  const configDir = tmp();
-  saveConfig(configDir, { lastServer: B.url });
-  const d = deps({ servers: [A, B] });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url });
+test('drops discovered servers that fail the health check', async () => {
+  const d = deps({ servers: [A, B], up: [B.url] });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [B] });
 });
 
 test('returns choose for several unknown servers', async () => {
-  const d = deps({ servers: [A, B] });
+  const d = deps({ servers: [A, B], up: [A.url, B.url] });
   assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [A, B] });
 });
 

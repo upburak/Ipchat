@@ -38,3 +38,17 @@ test('ignores unrelated packets', async () => {
     d.close();
   }
 });
+
+test('answerQuery never throws, even for source port 0 or a failing send', async () => {
+  const { answerQuery } = await import('../src/discovery.js');
+  let sent = 0;
+  const okSocket = { send: () => { sent++; } };
+  const badSocket = { send: () => { throw new Error('ERR_SOCKET_BAD_PORT'); } };
+  const reply = Buffer.from('{}');
+  assert.doesNotThrow(() => answerQuery(badSocket, reply, Buffer.from('IPCHAT_DISCOVER'), { port: 0, address: '1.2.3.4' }));
+  assert.doesNotThrow(() => answerQuery(badSocket, reply, Buffer.from('IPCHAT_DISCOVER'), { port: 5, address: '1.2.3.4' }));
+  answerQuery(okSocket, reply, Buffer.from('IPCHAT_DISCOVER'), { port: 0, address: '1.2.3.4' });
+  assert.equal(sent, 0);
+  answerQuery(okSocket, reply, Buffer.from('IPCHAT_DISCOVER'), { port: 5, address: '1.2.3.4' });
+  assert.equal(sent, 1);
+});

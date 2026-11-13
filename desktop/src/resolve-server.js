@@ -1,5 +1,5 @@
 import { discoverServers } from './discovery-client.js';
-import { loadConfig, saveConfig } from './config.js';
+import { loadConfig } from './config.js';
 
 export async function isReachable(url, timeoutMs = 1500) {
   try {
@@ -19,14 +19,11 @@ export async function resolveServer({ configDir, discover = discoverServers, rea
     return { status: 'ok', url: remembered };
   }
 
-  const servers = await discover();
-  const remember = (url) => {
-    saveConfig(configDir, { ...config, lastServer: url });
-    return { status: 'ok', url };
-  };
+  const discovered = await discover();
+  const checks = await Promise.all(discovered.map((server) => reachable(server.url)));
+  const servers = discovered.filter((_, i) => checks[i]);
 
   if (remembered && servers.some((s) => s.url === remembered)) return { status: 'ok', url: remembered };
-  if (servers.length === 1) return remember(servers[0].url);
-  if (servers.length > 1) return { status: 'choose', servers };
+  if (servers.length > 0) return { status: 'choose', servers };
   return { status: 'manual' };
 }
