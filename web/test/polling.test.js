@@ -41,3 +41,37 @@ test('notificationText for many accounts', () => {
   const fresh = [1, 2, 3].map((id) => ({ id, username: `u${id}` }));
   assert.deepEqual(notificationText(fresh), { title: 'Yeni hesap isteği', body: '3 yeni hesap isteği' });
 });
+
+import { startPoller } from '../src/lib/polling.js';
+
+test('startPoller never overlaps slow ticks and stops cleanly', async () => {
+  let running = 0;
+  let maxRunning = 0;
+  let calls = 0;
+  const stop = startPoller(async () => {
+    calls++;
+    running++;
+    maxRunning = Math.max(maxRunning, running);
+    await new Promise((r) => setTimeout(r, 40));
+    running--;
+  }, 10);
+  await new Promise((r) => setTimeout(r, 150));
+  stop();
+  const after = calls;
+  await new Promise((r) => setTimeout(r, 100));
+  assert.equal(maxRunning, 1);
+  assert.equal(calls, after);
+  assert.ok(calls >= 2);
+});
+
+test('startPoller tells a running task when it was stopped', async () => {
+  let sawStopped = null;
+  const stop = startPoller(async (isStopped) => {
+    await new Promise((r) => setTimeout(r, 30));
+    sawStopped = isStopped();
+  }, 1000);
+  await new Promise((r) => setTimeout(r, 5));
+  stop();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(sawStopped, true);
+});

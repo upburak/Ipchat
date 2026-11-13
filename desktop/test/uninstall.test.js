@@ -12,3 +12,12 @@ test('appBundlePath returns null for non-mac paths', () => {
   assert.equal(appBundlePath('/usr/bin/electron'), null);
   assert.equal(appBundlePath(''), null);
 });
+
+import { uninstallBlockedReason } from '../src/uninstall.js';
+
+test('uninstallBlockedReason blocks development and missing bundles on Mac', () => {
+  assert.equal(uninstallBlockedReason({ platform: 'win32', isPackaged: false, bundle: null }), null);
+  assert.equal(typeof uninstallBlockedReason({ platform: 'darwin', isPackaged: false, bundle: '/x.app' }), 'string');
+  assert.equal(typeof uninstallBlockedReason({ platform: 'darwin', isPackaged: true, bundle: null }), 'string');
+  assert.equal(uninstallBlockedReason({ platform: 'darwin', isPackaged: true, bundle: '/Applications/Ipchat.app' }), null);
+});

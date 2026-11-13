@@ -30,3 +30,23 @@ test('package.json nsis is per machine, one click, includes the script and keeps
   assert.equal(pkg.build.nsis.include, 'build/installer.nsh');
   assert.equal(pkg.build.nsis.deleteAppDataOnUninstall, false);
 });
+
+const uninstall = nsh.slice(nsh.indexOf('!macro customUnInstall'));
+
+test('uninstall cleanup of rules and autostart is skipped during in-place updates', () => {
+  const guard = uninstall.indexOf('${IfNot} ${isUpdated}');
+  assert.ok(guard > -1);
+  assert.ok(guard < uninstall.indexOf('delete rule name="Ipchat"'));
+  assert.ok(guard < uninstall.indexOf('DeleteRegValue'));
+});
+
+test('uninstall removes every autostart value name Electron may have used', () => {
+  for (const name of ['"Ipchat"', '"electron.app.ipchat-desktop"', '"electron.app.Ipchat"', '"com.ipchat.desktop"', '"ipchat-desktop"']) {
+    assert.ok(uninstall.includes(`Run" ${name}`), `Run ${name} silinmeli`);
+  }
+});
+
+test('data question warns that a server machine loses every account and message', () => {
+  assert.match(nsh, /server-data/);
+  assert.match(nsh, /tüm kullanıcıların hesapları ve mesajları/);
+});

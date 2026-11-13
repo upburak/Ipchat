@@ -6,6 +6,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const image = (name) =>
   nativeImage.createFromPath(path.join(here, '..', 'assets', name)).resize({ width: 18, height: 18 });
 
+import { applyState } from './tray-state.js';
+
 export function createTray({ showWindow, changeServer, uninstall, hostServer, stopHosting, quit, isAutoStart, setAutoStart }) {
   const normalIcon = image('icon.png');
   const serverIcon = image('icon-server.png');
@@ -60,8 +62,7 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
   tray.on('click', showWindow);
   return {
     update(next) {
-      Object.assign(state, next);
-      rebuild();
+      if (applyState(state, next)) rebuild();
     },
   };
 }

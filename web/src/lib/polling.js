@@ -25,3 +25,25 @@ export function notificationText(fresh) {
     body: fresh.length === 1 ? fresh[0].username : `${fresh.length} yeni hesap isteği`,
   };
 }
+
+export function startPoller(task, ms = POLL_MS) {
+  let stopped = false;
+  let running = false;
+  const tick = async () => {
+    if (stopped || running) return;
+    running = true;
+    try {
+      await task(() => stopped);
+    } catch {
+      /* sonraki turda tekrar denenir */
+    } finally {
+      running = false;
+    }
+  };
+  const timer = setInterval(tick, ms);
+  tick();
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}

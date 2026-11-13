@@ -10,7 +10,8 @@ import { windowOptions, webPreferences } from './window-options.js';
 import { isTrustedSender, isServerSender, shouldAllowNavigation } from './navigation.js';
 import { createTray } from './tray.js';
 import { readFirewallPolicy } from './firewall-policy.js';
-import { appBundlePath } from './uninstall.js';
+import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
+import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,8 @@ let connecting = false;
 let serverHost = null;
 let firewallWarned = false;
 
+if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
+
 const configDir = () => app.getPath('userData');
 const alive = () => win && !win.isDestroyed();
 
@@ -42,18 +45,24 @@ function serverPaths() {
 
 function setBadge(count) {
   tray?.update({ badge: count });
-  if (process.platform === 'darwin') app.dock?.setBadge(count > 0 ? String(count) : '');
+  if (process.platform === 'darwin' && count !== lastBadge) app.dock?.setBadge(count > 0 ? String(count) : '');
+  lastBadge = count;
 }
 
+const activeNotifications = new Set();
+let lastBadge = 0;
 const clip = (value, max = 120) => String(value ?? '').slice(0, max);
 
 ipcMain.handle('app:notify', (event, payload) => {
   if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
   const notification = new Notification({ title: clip(payload?.title), body: clip(payload?.body) });
+  activeNotifications.add(notification);
   notification.on('click', () => {
     showWindow();
     if (alive()) win.webContents.send('ipchat:open-admin');
   });
+  notification.on('close', () => activeNotifications.delete(notification));
+  notification.on('click', () => activeNotifications.delete(notification));
   notification.show();
 });
 
@@ -72,11 +81,18 @@ async function uninstallEverything() {
     return;
   }
   const bundle = appBundlePath(process.execPath);
+  const blocked = uninstallBlockedReason({ platform: process.platform, isPackaged: app.isPackaged, bundle });
+  if (blocked) {
+    dialog.showMessageBox({ type: 'info', title: 'Ipchat', message: 'Bu işlem şu an kullanılamıyor.', detail: blocked });
+    return;
+  }
   const { response, checkboxChecked } = await dialog.showMessageBox({
     type: 'question',
     title: 'Ipchat',
     message: 'Ipchat tamamen kaldırılsın mı?',
-    detail: "Sunucu durdurulur, otomatik başlatma kaldırılır ve uygulama Çöp Kutusu'na taşınır.",
+    detail:
+      "Sunucu durdurulur, otomatik başlatma kaldırılır ve uygulama Çöp Kutusu'na taşınır." +
+      (serverHost ? ' Bu bilgisayar sunucu olduğu için, geçmişi silersen tüm kullanıcıların hesapları ve mesajları da silinir.' : ''),
     buttons: ['Kaldır', 'Vazgeç'],
     defaultId: 0,
     cancelId: 1,
@@ -87,8 +103,21 @@ async function uninstallEverything() {
   quitting = true;
   await serverHost?.stop();
   serverHost = null;
-  app.setLoginItemSettings({ openAtLogin: false });
-  if (bundle) await shell.trashItem(bundle).catch(() => {});
+  app.setLoginItemSettings(loginItemSettings(false));
+  if (bundle) {
+    try {
+      await shell.trashItem(bundle);
+    } catch {
+      quitting = false;
+      await dialog.showMessageBox({
+        type: 'error',
+        title: 'Ipchat',
+        message: 'Uygulama Çöp Kutusu\'na taşınamadı.',
+        detail: 'Hiçbir veri silinmedi. Uygulamayı Uygulamalar klasörüne taşıyıp tekrar dene.',
+      });
+      return;
+    }
+  }
   if (checkboxChecked) {
     spawn('/bin/sh', ['-c', 'sleep 2; rm -rf "$1"', 'sh', app.getPath('userData')], {
       detached: true,
@@ -157,6 +186,7 @@ function showWindow() {
 }
 
 function showConnectPage(mode, servers = []) {
+  setBadge(0);
   const query = { mode };
   if (servers.length) query.servers = JSON.stringify(servers);
   serverUrl = null;
@@ -165,6 +195,7 @@ function showConnectPage(mode, servers = []) {
 }
 
 function openServer(url) {
+  setBadge(0);
   serverUrl = url;
   onConnectPage = false;
   win.loadURL(url).catch(() => {});
@@ -312,7 +343,7 @@ function start() {
   app.whenReady().then(() => {
     const config = loadConfig(configDir());
     if (app.isPackaged && !config.autostartInitialized) {
-      app.setLoginItemSettings({ openAtLogin: true });
+      app.setLoginItemSettings(loginItemSettings(true));
       saveConfig(configDir(), { ...config, autostartInitialized: true });
     }
     tray = createTray({
@@ -326,8 +357,8 @@ function start() {
         await serverHost?.stop();
         app.quit();
       },
-      isAutoStart: () => app.getLoginItemSettings().openAtLogin,
-      setAutoStart: (value) => app.setLoginItemSettings({ openAtLogin: value }),
+      isAutoStart: () => app.getLoginItemSettings(loginItemQuery()).openAtLogin,
+      setAutoStart: (value) => app.setLoginItemSettings(loginItemSettings(value)),
     });
     createWindow();
   });

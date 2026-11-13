@@ -5,7 +5,7 @@ import { connectSocket, disconnectSocket } from '../lib/socket.js';
 import ContactList from '../components/ContactList.jsx';
 import ChatWindow from '../components/ChatWindow.jsx';
 import AdminPanel from '../components/AdminPanel.jsx';
-import { POLL_MS, mergeContacts, trackPending, notificationText } from '../lib/polling.js';
+import { mergeContacts, trackPending, notificationText, startPoller } from '../lib/polling.js';
 
 export default function ChatApp() {
   const {
@@ -43,42 +43,33 @@ export default function ChatApp() {
     api.listUsers().then(setContacts).catch(() => {});
     api.listGroups().then(setGroups).catch(() => {});
 
-    const refreshContacts = async () => {
-      try {
-        const users = await api.listUsers();
-        setContacts(mergeContacts(users, useStore.getState().presence));
-        clearPresence();
-      } catch {
-        /* sonraki turda tekrar denenir */
-      }
-    };
-    const contactTimer = setInterval(refreshContacts, POLL_MS);
+    const stopContacts = startPoller(async (isStopped) => {
+      const users = await api.listUsers();
+      if (isStopped()) return;
+      setContacts(mergeContacts(users, useStore.getState().presence));
+      clearPresence();
+    });
 
-    let adminTimer = null;
+    let stopPending = null;
     if (currentUser?.isAdmin) {
       let seen = new Set();
       let first = true;
-      const refreshPending = async () => {
-        try {
-          const { count, latest } = await api.adminPendingCount();
-          setPendingCount(count);
-          const result = trackPending(seen, latest, first);
-          seen = result.seen;
-          first = false;
-          if (result.fresh.length > 0) window.ipchat?.notify?.(notificationText(result.fresh));
-          window.ipchat?.setBadge?.(count);
-        } catch {
-          /* sonraki turda tekrar denenir */
-        }
-      };
-      refreshPending();
-      adminTimer = setInterval(refreshPending, POLL_MS);
+      stopPending = startPoller(async (isStopped) => {
+        const { count, latest } = await api.adminPendingCount();
+        if (isStopped()) return;
+        setPendingCount(count);
+        const result = trackPending(seen, latest, first);
+        seen = result.seen;
+        first = false;
+        if (result.fresh.length > 0) window.ipchat?.notify?.(notificationText(result.fresh));
+        window.ipchat?.setBadge?.(count);
+      });
       window.ipchat?.onOpenAdmin?.(() => setShowAdmin(true));
     }
 
     return () => {
-      clearInterval(contactTimer);
-      if (adminTimer) clearInterval(adminTimer);
+      stopContacts();
+      if (stopPending) stopPending();
       window.ipchat?.setBadge?.(0);
       disconnectSocket();
     };
