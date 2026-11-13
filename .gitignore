@@ -10,3 +10,4 @@ server/data/*
 !server/data/.gitkeep
 .claude/
 .tmp.drive*
+.superpowers/
