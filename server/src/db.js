@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { migrate } from './migrate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, '..', 'data');
+const dataDir = process.env.IPCHAT_DATA_DIR || path.join(__dirname, '..', 'data');
 fs.mkdirSync(dataDir, { recursive: true });
 
 export const db = new DatabaseSync(process.env.IPCHAT_DB_PATH || path.join(dataDir, 'ipchat.db'));

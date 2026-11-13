@@ -16,6 +16,11 @@ import { attachSockets } from './sockets/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
+const uploadsDir =
+  process.env.IPCHAT_UPLOADS_DIR ||
+  (process.env.IPCHAT_DATA_DIR
+    ? path.join(process.env.IPCHAT_DATA_DIR, 'uploads')
+    : path.join(__dirname, '..', 'uploads'));
 
 const app = express();
 app.use(cors());
@@ -25,7 +30,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true, app: 'ipchat' }));
 
 app.use(
   '/uploads',
-  express.static(path.join(__dirname, '..', 'uploads'), {
+  express.static(uploadsDir, {
     setHeaders: (res) => {
       res.setHeader('Content-Disposition', 'attachment');
       res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -42,7 +47,7 @@ app.use('/api', createAdminRouter(io));
 app.use('/api', messagesRouter);
 app.use('/api', uploadRouter);
 
-const webDist = path.join(__dirname, '..', '..', 'web', 'dist');
+const webDist = process.env.IPCHAT_WEB_DIST || path.join(__dirname, '..', '..', 'web', 'dist');
 app.use(express.static(webDist));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
