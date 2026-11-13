@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Notification, dialog, ipcMain, shell } from 'electron';
 import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer, isReachable } from './resolve-server.js';
@@ -9,6 +10,7 @@ import { windowOptions, webPreferences } from './window-options.js';
 import { isTrustedSender, isServerSender, shouldAllowNavigation } from './navigation.js';
 import { createTray } from './tray.js';
 import { readFirewallPolicy } from './firewall-policy.js';
+import { appBundlePath } from './uninstall.js';
 import { startServerProcess, lanUrls } from './server-host.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -62,6 +64,38 @@ ipcMain.handle('app:badge', (event, count) => {
 
 function updateTray() {
   tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [] });
+}
+
+async function uninstallEverything() {
+  if (process.platform === 'win32') {
+    shell.openExternal('ms-settings:appsfeatures');
+    return;
+  }
+  const bundle = appBundlePath(process.execPath);
+  const { response, checkboxChecked } = await dialog.showMessageBox({
+    type: 'question',
+    title: 'Ipchat',
+    message: 'Ipchat tamamen kaldırılsın mı?',
+    detail: "Sunucu durdurulur, otomatik başlatma kaldırılır ve uygulama Çöp Kutusu'na taşınır.",
+    buttons: ['Kaldır', 'Vazgeç'],
+    defaultId: 0,
+    cancelId: 1,
+    checkboxLabel: 'Sohbet geçmişi ve ayarlar da silinsin (geri alınamaz)',
+    checkboxChecked: true,
+  });
+  if (response !== 0) return;
+  quitting = true;
+  await serverHost?.stop();
+  serverHost = null;
+  app.setLoginItemSettings({ openAtLogin: false });
+  if (bundle) await shell.trashItem(bundle).catch(() => {});
+  if (checkboxChecked) {
+    spawn('/bin/sh', ['-c', 'sleep 2; rm -rf "$1"', 'sh', app.getPath('userData')], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+  }
+  app.exit(0);
 }
 
 async function checkFirewall() {
@@ -284,6 +318,7 @@ function start() {
     tray = createTray({
       showWindow,
       changeServer,
+      uninstall: uninstallEverything,
       hostServer: () => enableServerMode().catch(() => {}),
       stopHosting: disableServerMode,
       quit: async () => {
