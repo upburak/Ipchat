@@ -27,13 +27,17 @@ Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
 Tek program hem **istemci** hem de **sunucu** olabilir; Node.js kurmak veya terminal açmak gerekmez.
 
 **Kurulum**
-- **Windows:** `Ipchat Setup x.y.z.exe` dosyasını çalıştır ("Bilinmeyen yayıncı" uyarısında *Yine de çalıştır*). Kaldırmak için: Ayarlar → Uygulamalar → Ipchat → Kaldır.
-- **Mac:** zip'i aç, `Ipchat.app`'i Uygulamalar'a at. İlk açılışta imzasız olduğu için engellenirse: uygulamaya sağ tıkla → *Aç*; "hasarlı" derse Terminal'de `xattr -cr /Applications/Ipchat.app` çalıştır. Kaldırmak için uygulamayı Çöp Kutusu'na at.
-- Mesaj verisi ayrı tutulur ve uygulama kaldırılınca silinmez: Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (tamamen silmek için bu klasörü de sil).
+- **Windows:** `Ipchat Setup x.y.z.exe` dosyasını çalıştır ("Bilinmeyen yayıncı" uyarısında *Yine de çalıştır*). Kurulum **bir kez yönetici izni** ister, programı bilgisayardaki tüm kullanıcılar için kurar ve güvenlik duvarına yalnızca iki kural ekler: TCP 3000 (sohbet) ve UDP 41234 (sunucu keşfi). Kaldırmak için: Ayarlar → Uygulamalar → Ipchat → Kaldır; kaldırıcı çalışan sunucuyu durdurur, güvenlik duvarı kurallarını ve otomatik başlatmayı siler ve **sohbet geçmişinin de silinip silinmeyeceğini bir kez sorar** (varsayılan: sil; sessiz kaldırmada ve güncellemede veri silinmez).
+- **Mac:** zip'i aç, `Ipchat.app`'i Uygulamalar'a at. İlk açılışta imzasız olduğu için engellenirse: uygulamaya sağ tıkla → *Aç*; "hasarlı" derse Terminal'de `xattr -cr /Applications/Ipchat.app` çalıştır. Tam temizlik için tepsi (menü çubuğu) menüsündeki **"Ipchat'i tamamen kaldır…"** kullanılır: sunucuyu durdurur, otomatik başlatmayı kaldırır, isteğe bağlı olarak sohbet geçmişini siler ve uygulamayı Çöp Kutusu'na taşır. (Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.)
+- Mesaj verisi şurada tutulur (Windows kaldırıcısı ve Mac "tamamen kaldır" menüsü silmeyi sorar): Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (tamamen silmek için bu klasörü de sil).
 
 **Sunucu olarak kullanım:** Uygulamayı aç, ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Sunucu arka planda çalışır (pencere/terminal yok). Sistem tepsisinde (Mac'te menü çubuğunda) yeşil noktalı ikon ve **adres** görünür; ikona sağ tıklayıp adresi kopyalayabilirsin. Bu ayar hatırlanır, uygulama her açıldığında sunucu da başlar. Kapatmak için tepsi menüsünden "Sunucu modunu kapat". İlk açılan hesap yöneticidir.
 
 **İstemci olarak kullanım:** Uygulama sunucuyu ağda kendisi bulur (UDP `41234`), bulunanı listede gösterir; bulamazsa adres elle yazılır. Sunucu bilgisayarında UDP `41234` ve TCP `3000` gelen bağlantıya açık olmalı (güvenlik duvarı izni istenirse *izin ver*).
+
+**Bildirimler:** Yönetici olan kullanıcı, biri kayıt olduğunda uygulamanın **bildirimini** alır (pencere kapalı/tepside olsa da). "Hesaplar" düğmesinde ve tepsi ikonunda bekleyen hesap sayısı rozeti görünür (Windows'ta ikon kırmızı noktalı olur ve üzerine gelince sayı yazar; Mac'te menü çubuğunda ve Dock'ta sayı). Kişi listesi ve bekleyen hesaplar **3 saniyede bir** kendiliğinden yenilenir.
+
+**Kurum bilgisayarları:** Bilgisayarın güvenlik duvarı grup ilkesiyle (GPO) yönetiliyorsa yerel kurallar uygulanmaz ve başka cihazlar sunucuya bağlanamayabilir. Uygulama bunu fark edip bir uyarı gösterir ve tepside belirtir. Böyle bilgisayarlar **istemci** olarak sorunsuz çalışır; sunucuyu güvenlik duvarını yönetebildiğin bir bilgisayara kur.
 
 **Genel:** Pencere sabit boyutlu (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir).
 
