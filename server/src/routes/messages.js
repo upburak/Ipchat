@@ -25,7 +25,7 @@ messagesRouter.get('/groups', (req, res) => {
 
   const memberStmt = db.prepare(
     `SELECT u.id, u.username FROM group_members gm
-     JOIN users u ON u.id = gm.user_id WHERE gm.group_id = ?`
+     JOIN users u ON u.id = gm.user_id WHERE gm.group_id = ? AND u.status = 'active'`
   );
   res.json(groups.map((g) => ({ ...g, members: memberStmt.all(g.id) })));
 });
@@ -35,6 +35,10 @@ messagesRouter.get('/messages', (req, res) => {
 
   let rows;
   if (withGroup) {
+    const member = db
+      .prepare('SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?')
+      .get(withGroup, req.user.id);
+    if (!member) return res.status(403).json({ error: 'Bu grubun üyesi değilsin' });
     rows = db
       .prepare(
         `SELECT * FROM messages

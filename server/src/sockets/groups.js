@@ -16,17 +16,29 @@ export function registerGroupHandlers(io, socket) {
       return ack?.({ error: 'Grup adı ve üye listesi gerekli' });
     }
 
-    const memberIds = [...new Set([...memberUserIds, socket.userId])];
+    const requested = [...new Set([...memberUserIds, socket.userId].map(Number))];
+    const placeholders = requested.map(() => '?').join(',');
+    const activeIds = db
+      .prepare(`SELECT id FROM users WHERE status = 'active' AND id IN (${placeholders})`)
+      .all(...requested)
+      .map((r) => r.id);
+    if (activeIds.length !== requested.length) {
+      return ack?.({ error: 'Geçersiz veya aktif olmayan üye var' });
+    }
+    const memberIds = requested;
 
-    const info = db
-      .prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)')
-      .run(name.trim(), socket.userId);
-    const groupId = info.lastInsertRowid;
-
-    const insertMember = db.prepare(
-      'INSERT INTO group_members (group_id, user_id) VALUES (?, ?)'
-    );
-    for (const userId of memberIds) insertMember.run(groupId, userId);
+    let groupId;
+    db.exec('BEGIN');
+    try {
+      const info = db.prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)').run(name.trim(), socket.userId);
+      groupId = info.lastInsertRowid;
+      const insertMember = db.prepare('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)');
+      for (const userId of memberIds) insertMember.run(groupId, userId);
+      db.exec('COMMIT');
+    } catch {
+      db.exec('ROLLBACK');
+      return ack?.({ error: 'Grup oluşturulamadı' });
+    }
 
     const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(groupId);
     const members = db

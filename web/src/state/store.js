@@ -10,6 +10,7 @@ export const useStore = create((set, get) => ({
   rememberedUsername: localStorage.getItem(LS_USERNAME) || '',
 
   token: '',
+  notice: '',
   currentUser: null, // { id, username }
 
   contacts: [], // [{id, username, online}]
@@ -44,7 +45,7 @@ export const useStore = create((set, get) => ({
     set({ deviceToken: '', rememberedUsername: '' });
   },
 
-  logout: () => set({ token: '', currentUser: null, contacts: [], groups: [], messages: {}, activeConversation: null }),
+  logout: (notice) => set({ notice: typeof notice === 'string' ? notice : '', token: '', currentUser: null, contacts: [], groups: [], messages: {}, activeConversation: null }),
 
   setContacts: (contacts) => set({ contacts }),
   setGroups: (groups) => set({ groups }),

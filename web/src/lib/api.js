@@ -12,7 +12,12 @@ async function request(pathname, { method = 'GET', body, auth = false, isForm = 
     body: isForm ? body : body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'İstek başarısız');
+  if (!res.ok) {
+    if (res.status === 401 && auth) {
+      useStore.getState().logout('Oturumun sonlandırıldı. Lütfen tekrar giriş yap.');
+    }
+    throw new Error(data.error || 'İstek başarısız');
+  }
   return data;
 }
 

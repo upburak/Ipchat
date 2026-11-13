@@ -58,3 +58,30 @@ test('rejected user can register again with the same username', () => {
   assert.equal(r.status, 'pending');
   assert.throws(() => auth.login('ikinci', 'yenisifre1'), /onay/);
 });
+
+test('login, pin login and first register return isAdmin', () => {
+  const first = auth.register('ilk', 'sifre123');
+  assert.equal(first.isAdmin, true);
+  assert.equal(auth.login('ilk', 'sifre123').isAdmin, true);
+  const { deviceToken } = auth.setPin(first.userId, '1234');
+  assert.equal(auth.loginWithPin(deviceToken, '1234').isAdmin, true);
+  auth.register('digeri', 'sifre123');
+  db.prepare("UPDATE users SET status = 'active' WHERE username = 'digeri'").run();
+  assert.equal(auth.login('digeri', 'sifre123').isAdmin, false);
+});
+
+test('device is deleted after 5 wrong pins', () => {
+  const first = auth.register('ilk', 'sifre123');
+  const { deviceToken } = auth.setPin(first.userId, '1234');
+  for (let i = 0; i < 5; i++) assert.throws(() => auth.loginWithPin(deviceToken, '0000'), /PIN hatalı/);
+  assert.throws(() => auth.loginWithPin(deviceToken, '1234'), /tanınmıyor/);
+});
+
+test('a correct pin resets the failed attempt counter', () => {
+  const first = auth.register('ilk', 'sifre123');
+  const { deviceToken } = auth.setPin(first.userId, '1234');
+  for (let i = 0; i < 4; i++) assert.throws(() => auth.loginWithPin(deviceToken, '0000'));
+  assert.ok(auth.loginWithPin(deviceToken, '1234').token);
+  for (let i = 0; i < 4; i++) assert.throws(() => auth.loginWithPin(deviceToken, '0000'));
+  assert.ok(auth.loginWithPin(deviceToken, '1234').token);
+});

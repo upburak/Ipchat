@@ -4,7 +4,7 @@ import { api } from '../lib/api.js';
 import PinPad from '../components/PinPad.jsx';
 
 export default function LoginScreen({ onLoggedIn }) {
-  const { deviceToken, rememberedUsername, setSession, setAuthPending, setDeviceToken, clearDevice } = useStore();
+  const { notice, deviceToken, rememberedUsername, setSession, setAuthPending, setDeviceToken, clearDevice } = useStore();
   const [mode, setMode] = useState(deviceToken ? 'pin' : 'password');
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState('');
@@ -56,6 +56,7 @@ export default function LoginScreen({ onLoggedIn }) {
     <div className="screen">
       <div className="card">
         <h1>Ipchat</h1>
+        {notice && <p className="error">{notice}</p>}
 
         {mode === 'pin' && (
           <>

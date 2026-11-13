@@ -52,7 +52,7 @@ export function register(username, password) {
     }
     db.exec('COMMIT');
     if (status !== 'active') return { userId, username, status };
-    return { userId, username, status, token: createSession(userId) };
+    return { userId, username, status, isAdmin: true, token: createSession(userId) };
   } catch (err) {
     db.exec('ROLLBACK');
     throw err;
@@ -66,7 +66,7 @@ export function login(username, password) {
   }
   assertActive(user);
   const token = createSession(user.id);
-  return { userId: user.id, username: user.username, token };
+  return { userId: user.id, username: user.username, isAdmin: user.is_admin === 1, token };
 }
 
 export function setPin(userId, pin) {
@@ -78,16 +78,24 @@ export function setPin(userId, pin) {
   return { deviceToken };
 }
 
+const MAX_PIN_ATTEMPTS = 5;
+
 export function loginWithPin(deviceToken, pin) {
   const device = db.prepare('SELECT * FROM devices WHERE device_token = ?').get(deviceToken);
   if (!device) throw new Error('Cihaz tanınmıyor, lütfen şifre ile giriş yapın');
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(device.user_id);
-  if (!user || !user.pin_hash || !bcrypt.compareSync(pin, user.pin_hash)) {
+  if (!user || !user.pin_hash || !bcrypt.compareSync(String(pin), user.pin_hash)) {
+    if (device.failed_attempts + 1 >= MAX_PIN_ATTEMPTS) {
+      db.prepare('DELETE FROM devices WHERE id = ?').run(device.id);
+    } else {
+      db.prepare('UPDATE devices SET failed_attempts = failed_attempts + 1 WHERE id = ?').run(device.id);
+    }
     throw new Error('PIN hatalı');
   }
   assertActive(user);
+  db.prepare('UPDATE devices SET failed_attempts = 0 WHERE id = ?').run(device.id);
   const token = createSession(user.id);
-  return { userId: user.id, username: user.username, token };
+  return { userId: user.id, username: user.username, isAdmin: user.is_admin === 1, token };
 }
 
 export function verifySession(token) {

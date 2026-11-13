@@ -22,7 +22,15 @@ app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ ok: true, app: 'ipchat' }));
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '..', 'uploads'), {
+    setHeaders: (res) => {
+      res.setHeader('Content-Disposition', 'attachment');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    },
+  })
+);
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });

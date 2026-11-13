@@ -25,6 +25,13 @@ export default function ChatApp() {
   useEffect(() => {
     const socket = connectSocket(serverUrl, token);
 
+    const dropToLogin = () => logout('Oturumun sonlandırıldı. Lütfen tekrar giriş yap.');
+    socket.on('disconnect', (reason) => {
+      if (reason === 'io server disconnect') dropToLogin();
+    });
+    socket.on('connect_error', (err) => {
+      if (err.message === 'Yetkisiz') dropToLogin();
+    });
     socket.on('presence:update', ({ userId, online }) => setPresence(userId, online));
     socket.on('message:new', (message) => appendMessage(message));
     socket.on('group:created', (group) => upsertGroup(group));
@@ -46,7 +53,7 @@ export default function ChatApp() {
                 Hesaplar
               </button>
             )}{' '}
-            <button className="link" onClick={logout}>
+            <button className="link" onClick={() => logout()}>
               Çıkış
             </button>
           </span>
