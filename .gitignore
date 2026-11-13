@@ -11,3 +11,4 @@ server/data/*
 .claude/
 .tmp.drive*
 .superpowers/
+desktop/dist/

@@ -22,6 +22,21 @@ Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
 
 İstemci kurulumu yapmak istemeyenler tarayıcıdan da bağlanabilir (örn. `http://192.168.1.10:3000`) — sayfa sunucudan servis edildiği için **IP sorulmaz, otomatik bağlanır**.
 
+## Masaüstü uygulaması (Electron)
+
+`desktop/` klasöründeki uygulama, sohbet istemcisini sabit boyutlu (800x620, büyütülemez) bir pencerede açar:
+
+- **Sunucuyu kendisi bulur:** Sunucu, ağdaki UDP `41234` portunda yayın sorgusuna cevap verir; uygulama açılışta bunu arar. Daha önce bağlanılan sunucu hatırlanır. Sunucu aynı bilgisayardaysa da bulunur. Birden fazla sunucu bulunursa liste gösterilir, hiç bulunamazsa adres elle yazılabilir (örn. `192.168.1.10`).
+- **Güvenlik duvarı:** Sunucu bilgisayarında UDP `41234` (ve web için TCP `3000`) gelen bağlantıya açık olmalı. Otomatik keşif çalışmazsa adres elle girilir.
+- **Tepsi:** Pencereyi kapatmak uygulamayı kapatmaz, sistem tepsisine indirir. Tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır.
+- **Otomatik başlatma:** Kurulu (paketlenmiş) uygulama ilk çalışmada bilgisayar açılışında başlamaya ayarlanır; tepsi menüsünden kapatılabilir.
+
+Geliştirme: `npm start -w desktop` (önce sunucuyu başlat). Testler: `npm test -w desktop`.
+
+Windows kurulum dosyası (.exe) için Windows bilgisayarda `npm run dist -w desktop` çalıştırılır; çıktı `desktop/dist/` içine yazılır. (macOS'ta paketleme `npx electron-builder --dir --mac` ile denenebilir; Windows kurulumu Mac'te üretilemez.)
+
+Not: `kurulum.bat` içindeki istemci seçeneği, masaüstü uygulaması dağıtılana kadar mevcut kısayol yöntemiyle çalışmaya devam eder.
+
 ## Hesap onayı ve yönetici
 
 - Sunucuda **ilk açılan hesap otomatik yönetici** olur ve doğrudan giriş yapar.

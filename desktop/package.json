@@ -5,13 +5,37 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --win"
   },
   "engines": {
     "node": ">=22.5.0"
   },
   "main": "src/main.js",
   "devDependencies": {
-    "electron": "^45.3.2"
-  }
+    "electron": "45.3.2",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.ipchat.desktop",
+    "productName": "Ipchat",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    }
+  },
+  "description": "Ipchat masaüstü uygulaması",
+  "author": "Ipchat"
 }
