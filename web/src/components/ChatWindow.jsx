@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store.js';
 import { api } from '../lib/api.js';
 import { getSocket } from '../lib/socket.js';
+import { initial, avatarColor } from '../lib/avatar.js';
 
 export default function ChatWindow() {
   const { activeConversation, messages, setMessages, conversationKey, currentUser, serverUrl } = useStore();
@@ -65,7 +66,12 @@ export default function ChatWindow() {
         handleFile(e.dataTransfer.files?.[0]);
       }}
     >
-      <div className="chat-header">{activeConversation.type === 'group' ? `# ${activeConversation.name}` : activeConversation.name}</div>
+      <div className="chat-header">
+        <span className="avatar small" style={{ background: avatarColor(activeConversation.name) }}>
+          {activeConversation.type === 'group' ? '#' : initial(activeConversation.name)}
+        </span>
+        {activeConversation.name}
+      </div>
 
       <div className="message-list">
         {list.map((m) => (

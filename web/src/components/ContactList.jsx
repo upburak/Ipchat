@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../state/store.js';
 import GroupCreateModal from './GroupCreateModal.jsx';
+import { initial, avatarColor } from '../lib/avatar.js';
 
 export default function ContactList() {
   const { contacts, groups, activeConversation, setActiveConversation } = useStore();
@@ -18,7 +19,10 @@ export default function ContactList() {
             className={`contact-item ${activeConversation?.type === 'user' && activeConversation.id === c.id ? 'active' : ''}`}
             onClick={() => setActiveConversation({ type: 'user', id: c.id, name: c.username })}
           >
-            <span className={`status-dot ${c.online ? 'online' : 'offline'}`} />
+            <span className="avatar" style={{ background: avatarColor(c.username) }}>
+              {initial(c.username)}
+              <span className={`status-dot ${c.online ? 'online' : 'offline'}`} />
+            </span>
             {c.username}
           </button>
         ))}
@@ -37,7 +41,10 @@ export default function ContactList() {
             className={`contact-item ${activeConversation?.type === 'group' && activeConversation.id === g.id ? 'active' : ''}`}
             onClick={() => setActiveConversation({ type: 'group', id: g.id, name: g.name })}
           >
-            # {g.name}
+            <span className="avatar" style={{ background: avatarColor(g.name) }}>
+              #
+            </span>
+            {g.name}
           </button>
         ))}
       </div>
