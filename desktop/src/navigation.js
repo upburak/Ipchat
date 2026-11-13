@@ -11,3 +11,12 @@ export function shouldAllowNavigation(targetUrl, serverUrl, connectFileUrl) {
     return false;
   }
 }
+
+export function isServerSender(senderUrl, serverUrl) {
+  if (typeof senderUrl !== 'string' || typeof serverUrl !== 'string') return false;
+  try {
+    return new URL(senderUrl).origin === new URL(serverUrl).origin;
+  } catch {
+    return false;
+  }
+}

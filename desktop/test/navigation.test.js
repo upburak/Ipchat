@@ -27,3 +27,20 @@ test('app icon is at least 256x256 so electron-builder accepts it for Windows', 
   assert.equal(png.readUInt32BE(16) >= 256, true);
   assert.equal(png.readUInt32BE(20) >= 256, true);
 });
+
+import { isServerSender } from '../src/navigation.js';
+
+test('isServerSender accepts the connected server origin', () => {
+  assert.equal(isServerSender('http://192.168.1.10:3000/', 'http://192.168.1.10:3000'), true);
+  assert.equal(isServerSender('http://192.168.1.10:3000/some/page?x=1', 'http://192.168.1.10:3000'), true);
+});
+
+test('isServerSender rejects other origins, file urls, undefined and a missing server', () => {
+  const server = 'http://192.168.1.10:3000';
+  assert.equal(isServerSender('http://192.168.1.10:3001/', server), false);
+  assert.equal(isServerSender('http://evil.example/', server), false);
+  assert.equal(isServerSender('file:///app/src/connect.html', server), false);
+  assert.equal(isServerSender(undefined, server), false);
+  assert.equal(isServerSender('http://192.168.1.10:3000/', null), false);
+  assert.equal(isServerSender('not a url', server), false);
+});

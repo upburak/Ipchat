@@ -1,12 +1,12 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, Notification, ipcMain, shell } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer, isReachable } from './resolve-server.js';
 import { loadConfig, saveConfig } from './config.js';
 import { normalizeServerUrl } from './normalize-url.js';
-import { windowOptions } from './window-options.js';
-import { isTrustedSender, shouldAllowNavigation } from './navigation.js';
+import { windowOptions, webPreferences } from './window-options.js';
+import { isTrustedSender, isServerSender, shouldAllowNavigation } from './navigation.js';
 import { createTray } from './tray.js';
 import { startServerProcess, lanUrls } from './server-host.js';
 
@@ -35,6 +35,28 @@ function serverPaths() {
   const root = path.join(here, '..', '..');
   return { entry: path.join(root, 'server', 'src', 'index.js'), webDist: path.join(root, 'web', 'dist') };
 }
+
+function setBadge(count) {
+  tray?.update({ badge: count });
+  if (process.platform === 'darwin') app.dock?.setBadge(count > 0 ? String(count) : '');
+}
+
+const clip = (value, max = 120) => String(value ?? '').slice(0, max);
+
+ipcMain.handle('app:notify', (event, payload) => {
+  if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
+  const notification = new Notification({ title: clip(payload?.title), body: clip(payload?.body) });
+  notification.on('click', () => {
+    showWindow();
+    if (alive()) win.webContents.send('ipchat:open-admin');
+  });
+  notification.show();
+});
+
+ipcMain.handle('app:badge', (event, count) => {
+  if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
+  setBadge(Number.isInteger(count) && count > 0 ? Math.min(count, 99) : 0);
+});
 
 function updateTray() {
   tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [] });
@@ -145,12 +167,7 @@ function createWindow() {
   win = new BrowserWindow({
     ...windowOptions(),
     icon: path.join(here, '..', 'assets', 'icon.png'),
-    webPreferences: {
-      preload: path.join(here, 'preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
+    webPreferences: webPreferences(path.join(here, 'preload.cjs')),
   });
   win.once('ready-to-show', () => win.show());
 

@@ -10,3 +10,13 @@ export function windowOptions() {
     show: false,
   };
 }
+
+export function webPreferences(preloadPath) {
+  return {
+    preload: preloadPath,
+    contextIsolation: true,
+    nodeIntegration: false,
+    sandbox: true,
+    backgroundThrottling: false,
+  };
+}

@@ -9,10 +9,12 @@ const image = (name) =>
 export function createTray({ showWindow, changeServer, hostServer, stopHosting, quit, isAutoStart, setAutoStart }) {
   const normalIcon = image('icon.png');
   const serverIcon = image('icon-server.png');
+  const alertIcon = image('icon-alert.png');
+  const serverAlertIcon = image('icon-server-alert.png');
   const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const state = { running: false, urls: [] };
+  const state = { running: false, urls: [], badge: 0 };
 
   const rebuild = () => {
     const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
@@ -40,8 +42,13 @@ export function createTray({ showWindow, changeServer, hostServer, stopHosting, 
       { label: 'Çık', click: quit }
     );
     tray.setContextMenu(Menu.buildFromTemplate(items));
-    tray.setImage(state.running ? serverIcon : normalIcon);
-    tray.setToolTip(state.running ? `Ipchat sunucusu çalışıyor\n${state.urls.join('\n')}` : 'Ipchat');
+    const alert = state.badge > 0;
+    tray.setImage(state.running ? (alert ? serverAlertIcon : serverIcon) : alert ? alertIcon : normalIcon);
+    if (process.platform === 'darwin') tray.setTitle(alert ? String(state.badge) : '');
+    const lines = [];
+    if (alert) lines.push(`${state.badge} bekleyen hesap`);
+    if (state.running) lines.push('Ipchat sunucusu çalışıyor', ...state.urls);
+    tray.setToolTip(lines.length ? lines.join('\n') : 'Ipchat');
   };
 
   rebuild();
