@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 
 import { authRouter } from './routes/auth.js';
 import { createAdminRouter } from './routes/admin.js';
+import { startDiscovery } from './discovery.js';
 import { messagesRouter } from './routes/messages.js';
 import { uploadRouter } from './routes/upload.js';
 import { attachSockets } from './sockets/index.js';
@@ -63,6 +64,7 @@ function lanAddresses() {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
+  startDiscovery(Number(PORT));
   console.log('');
   console.log('======================================================');
   console.log('  Ipchat sunucusu calisiyor!');
