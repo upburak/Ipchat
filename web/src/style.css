@@ -633,12 +633,31 @@ input {
 
 .admin-row small {
   color: var(--muted);
-  margin-left: 6px;
 }
 
+/* Panel 780px pencerede yalnizca ~460px: ad, etiket ve iki dugme yan yana sigmiyor.
+   Ad kendi satirinda tam gorunur, durum etiketleri altinda. Boylece her satir ayni
+   yukseklikte kalir ve hicbir kullanici adi kesilmez. */
 .admin-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+}
+
+.admin-username {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .admin-actions {

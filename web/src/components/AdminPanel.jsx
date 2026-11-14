@@ -90,9 +90,14 @@ export default function AdminPanel() {
     <div key={u.id} className="admin-item">
       <div className="admin-row">
         <span className="admin-name">
-          {u.username} {u.isAdmin && <em>(yönetici)</em>}
-          <span className={`chip ${STATUS_CHIPS[u.status] || 'chip-off'}`}>{STATUS_LABELS[u.status] || u.status}</span>
-          <small>{u.online ? 'Çevrimiçi' : 'Çevrimdışı'}</small>
+          <span className="admin-username" title={u.username}>
+            {u.username}
+            {u.isAdmin && <em> (yönetici)</em>}
+          </span>
+          <span className="admin-meta">
+            <span className={`chip ${STATUS_CHIPS[u.status] || 'chip-off'}`}>{STATUS_LABELS[u.status] || u.status}</span>
+            <small>{u.online ? 'Çevrimiçi' : 'Çevrimdışı'}</small>
+          </span>
         </span>
         <span className="admin-actions">
           {actionsFor(u).map(([action, label]) => (
