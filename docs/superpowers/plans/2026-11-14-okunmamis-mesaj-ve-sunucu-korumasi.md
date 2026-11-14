@@ -30,7 +30,7 @@
 
 ---
 
-### Görev 1: Sunucuda okunmamış mesaj takibi
+### Task 1: Sunucuda okunmamış mesaj takibi
 
 **Files:**
 - Modify: `server/src/db.js:50-64` (tablo ve indeks)
@@ -230,7 +230,7 @@ git commit -m "feat(sunucu): okunmamis mesaj takibi (read_state tablosu ve basel
 
 ---
 
-### Görev 2: `/api/unread` ve `/api/read` uçları
+### Task 2: `/api/unread` ve `/api/read` uçları
 
 **Files:**
 - Create: `server/src/routes/unread.js`
@@ -305,7 +305,7 @@ git commit -m "feat(sunucu): GET /api/unread ve POST /api/read uclari"
 
 ---
 
-### Görev 3: Web — okunmamış ve bildirim mantığı (saf işlevler)
+### Task 3: Web — okunmamış ve bildirim mantığı (saf işlevler)
 
 **Files:**
 - Create: `web/src/lib/unread.js`
@@ -418,7 +418,7 @@ git commit -m "feat(web): okunmamis mesaj ve bildirim mantigi"
 
 ---
 
-### Görev 4: Web — arayüz bağlantısı (nokta, bildirim, okundu işareti)
+### Task 4: Web — arayüz bağlantısı (nokta, bildirim, okundu işareti)
 
 Bu görevin mantığı Görev 3'te test edildi; buradaki değişiklik bağlantı (wiring) ve CSS'tir. Doğrulama `npm run build` ve kullanıcının gerçek ortam denemesiyle yapılır; otomatik test eklenmez.
 
@@ -484,7 +484,7 @@ git commit -m "feat(web): okunmamis mesaj noktasi, anlik bildirim ve okundu isar
 
 ---
 
-### Görev 5: Masaüstü — okunmamış sayısı ve bildirimle sohbet açma
+### Task 5: Masaüstü — okunmamış sayısı ve bildirimle sohbet açma
 
 **Files:**
 - Modify: `desktop/src/preload.cjs:3-12`
@@ -575,7 +575,7 @@ git commit -m "feat(masaustu): okunmamis mesaj rozeti ve bildirimden sohbet acma
 
 ---
 
-### Görev 6: İkinci sunucu koruması
+### Task 6: İkinci sunucu koruması
 
 **Files:**
 - Create: `desktop/src/server-guard.js`
@@ -677,7 +677,7 @@ git commit -m "feat(masaustu): agda sunucu varken ikinci sunucu kurulmasini enge
 
 ---
 
-### Görev 7: Sürüm, belgeler ve yayın hazırlığı
+### Task 7: Sürüm, belgeler ve yayın hazırlığı
 
 **Files:**
 - Modify: `desktop/package.json:4` (`version`)
