@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { bumpUnread as bumpCount, clearUnread as clearCount } from '../lib/unread.js';
 
 const LS_SERVER_URL = 'ipchat.serverUrl';
 const LS_DEVICE_TOKEN = 'ipchat.deviceToken';
@@ -20,6 +21,7 @@ export const useStore = create((set, get) => ({
 
   activeConversation: null, // { type: 'user'|'group', id, name }
   messages: {}, // { 'user:5': [...], 'group:2': [...] }
+  unread: {}, // { 'user:5': 2, 'group:1': 5 }
 
   setServerUrl: (url) => {
     localStorage.setItem(LS_SERVER_URL, url);
@@ -46,7 +48,7 @@ export const useStore = create((set, get) => ({
     set({ deviceToken: '', rememberedUsername: '' });
   },
 
-  logout: (notice) => set({ notice: typeof notice === 'string' ? notice : '', token: '', pendingCount: 0, currentUser: null, contacts: [], groups: [], messages: {}, activeConversation: null }),
+  logout: (notice) => set({ notice: typeof notice === 'string' ? notice : '', token: '', pendingCount: 0, currentUser: null, contacts: [], groups: [], messages: {}, unread: {}, activeConversation: null }),
 
   setContacts: (contacts) => set({ contacts }),
   setPendingCount: (pendingCount) => set({ pendingCount }),
@@ -58,6 +60,10 @@ export const useStore = create((set, get) => ({
       presence: { ...state.presence, [userId]: online },
       contacts: state.contacts.map((c) => (c.id === userId ? { ...c, online } : c)),
     })),
+
+  setUnread: (unread) => set({ unread }),
+  markConversationRead: (key) => set((s) => ({ unread: clearCount(s.unread, key) })),
+  bumpUnread: (key) => set((s) => ({ unread: bumpCount(s.unread, key) })),
 
   setActiveConversation: (conversation) => set({ activeConversation: conversation }),
 

@@ -5,7 +5,7 @@ import { getSocket } from '../lib/socket.js';
 import { initial, avatarColor } from '../lib/avatar.js';
 
 export default function ChatWindow() {
-  const { activeConversation, messages, setMessages, conversationKey, currentUser, serverUrl } = useStore();
+  const { activeConversation, messages, setMessages, markConversationRead, conversationKey, currentUser, serverUrl } = useStore();
   const key = conversationKey(activeConversation);
   const list = messages[key] || [];
   const [text, setText] = useState('');
@@ -16,7 +16,14 @@ export default function ChatWindow() {
   useEffect(() => {
     const params =
       activeConversation.type === 'user' ? { withUser: activeConversation.id } : { withGroup: activeConversation.id };
-    api.listMessages(params).then((msgs) => setMessages(key, msgs));
+    api
+      .listMessages(params)
+      .then((msgs) => {
+        setMessages(key, msgs);
+        return api.markRead(activeConversation.type, activeConversation.id);
+      })
+      .then(() => markConversationRead(key))
+      .catch(() => {});
   }, [key]);
 
   useEffect(() => {

@@ -244,6 +244,27 @@ input {
   color: var(--text);
 }
 
+.contact-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-item.unread {
+  font-weight: 600;
+}
+
+.unread-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
 .contact-item:hover {
   background: var(--bg);
 }

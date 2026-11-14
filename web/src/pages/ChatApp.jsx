@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store.js';
 import { api } from '../lib/api.js';
 import { connectSocket, disconnectSocket } from '../lib/socket.js';
 import ContactList from '../components/ContactList.jsx';
 import ChatWindow from '../components/ChatWindow.jsx';
 import AdminPanel from '../components/AdminPanel.jsx';
+import {
+  conversationKeyOf,
+  totalUnread,
+  pageTitle,
+  shouldNotify,
+  shouldCoalesce,
+  notificationFor,
+} from '../lib/unread.js';
 import { mergeContacts, trackPending, notificationText, startPoller } from '../lib/polling.js';
 
 export default function ChatApp() {
@@ -25,6 +33,7 @@ export default function ChatApp() {
   } = useStore();
 
   const [showAdmin, setShowAdmin] = useState(false);
+  const lastNotifiedAt = useRef({});
 
   useEffect(() => {
     const socket = connectSocket(serverUrl, token);
@@ -37,7 +46,29 @@ export default function ChatApp() {
       if (err.message === 'Yetkisiz') dropToLogin();
     });
     socket.on('presence:update', ({ userId, online }) => setPresence(userId, online));
-    socket.on('message:new', (message) => appendMessage(message));
+    socket.on('message:new', (message) => {
+      appendMessage(message);
+      const state = useStore.getState();
+      const myId = state.currentUser?.id;
+      if (message.sender_id === myId) return;
+      const key = conversationKeyOf(message, myId);
+      const activeKey = state.activeConversation ? state.conversationKey(state.activeConversation) : null;
+      if (shouldNotify({ message, myId, activeKey, focused: document.hasFocus() })) {
+        const now = Date.now();
+        if (!shouldCoalesce(lastNotifiedAt.current[key], now)) {
+          const sender = state.contacts.find((c) => c.id === message.sender_id);
+          window.ipchat?.notify?.(notificationFor(message, sender?.username || 'Ipchat', myId));
+          lastNotifiedAt.current[key] = now;
+        }
+        state.bumpUnread(key);
+        const counts = useStore.getState().unread;
+        window.ipchat?.setUnread?.(totalUnread(counts));
+        document.title = pageTitle(totalUnread(counts));
+      } else {
+        api.markRead(message.recipient_type, message.recipient_type === 'group' ? message.recipient_id : message.sender_id).catch(() => {});
+        state.markConversationRead(key);
+      }
+    });
     socket.on('group:created', (group) => upsertGroup(group));
 
     api.listUsers().then(setContacts).catch(() => {});
@@ -48,6 +79,18 @@ export default function ChatApp() {
       if (isStopped()) return;
       setContacts(mergeContacts(users, useStore.getState().presence));
       clearPresence();
+      const counts = await api.listUnread();
+      if (isStopped()) return;
+      useStore.getState().setUnread(counts);
+      window.ipchat?.setUnread?.(totalUnread(counts));
+      document.title = pageTitle(totalUnread(counts));
+    });
+
+    window.ipchat?.onOpenConversation?.(({ type, id }) => {
+      const { contacts, groups } = useStore.getState();
+      const found = type === 'group' ? groups.find((g) => g.id === id) : contacts.find((c) => c.id === id);
+      const name = (type === 'group' ? found?.name : found?.username) || String(id);
+      useStore.getState().setActiveConversation({ type, id, name });
     });
 
     let stopPending = null;
@@ -71,6 +114,8 @@ export default function ChatApp() {
       stopContacts();
       if (stopPending) stopPending();
       window.ipchat?.setBadge?.(0);
+      window.ipchat?.setUnread?.(0);
+      document.title = 'Ipchat';
       disconnectSocket();
     };
   }, []);

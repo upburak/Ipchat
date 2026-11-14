@@ -34,6 +34,8 @@ export const api = {
 
   listUsers: () => request('/api/users', { auth: true }),
   listGroups: () => request('/api/groups', { auth: true }),
+  listUnread: () => request('/api/unread', { auth: true }),
+  markRead: (type, id) => request('/api/read', { method: 'POST', body: { type, id }, auth: true }),
   listMessages: (params) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/messages?${qs}`, { auth: true });

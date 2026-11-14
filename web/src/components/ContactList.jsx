@@ -4,7 +4,7 @@ import GroupCreateModal from './GroupCreateModal.jsx';
 import { initial, avatarColor } from '../lib/avatar.js';
 
 export default function ContactList() {
-  const { contacts, groups, activeConversation, setActiveConversation } = useStore();
+  const { contacts, groups, activeConversation, setActiveConversation, unread } = useStore();
   const [showGroupModal, setShowGroupModal] = useState(false);
 
   return (
@@ -16,14 +16,15 @@ export default function ContactList() {
         {contacts.map((c) => (
           <button
             key={c.id}
-            className={`contact-item ${activeConversation?.type === 'user' && activeConversation.id === c.id ? 'active' : ''}`}
+            className={`contact-item ${activeConversation?.type === 'user' && activeConversation.id === c.id ? 'active' : ''} ${unread[`user:${c.id}`] > 0 ? 'unread' : ''}`}
             onClick={() => setActiveConversation({ type: 'user', id: c.id, name: c.username })}
           >
             <span className="avatar" style={{ background: avatarColor(c.username) }}>
               {initial(c.username)}
               <span className={`status-dot ${c.online ? 'online' : 'offline'}`} />
             </span>
-            {c.username}
+            <span className="contact-name">{c.username}</span>
+            {unread[`user:${c.id}`] > 0 && <span className="unread-dot" />}
           </button>
         ))}
       </div>
@@ -38,13 +39,14 @@ export default function ContactList() {
         {groups.map((g) => (
           <button
             key={g.id}
-            className={`contact-item ${activeConversation?.type === 'group' && activeConversation.id === g.id ? 'active' : ''}`}
+            className={`contact-item ${activeConversation?.type === 'group' && activeConversation.id === g.id ? 'active' : ''} ${unread[`group:${g.id}`] > 0 ? 'unread' : ''}`}
             onClick={() => setActiveConversation({ type: 'group', id: g.id, name: g.name })}
           >
             <span className="avatar" style={{ background: avatarColor(g.name) }}>
               #
             </span>
-            {g.name}
+            <span className="contact-name">{g.name}</span>
+            {unread[`group:${g.id}`] > 0 && <span className="unread-dot" />}
           </button>
         ))}
       </div>
