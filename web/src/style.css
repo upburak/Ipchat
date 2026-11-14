@@ -473,6 +473,59 @@ input {
   gap: 8px;
 }
 
+.confirm-message {
+  margin: 0 0 18px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.confirm-actions {
+  justify-content: space-between;
+}
+
+.btn-danger,
+.btn-secondary,
+.btn-primary {
+  min-height: 32px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.btn-danger {
+  background: #fdecec;
+  color: var(--danger);
+  border: 1px solid #f7c4c4;
+}
+
+.btn-danger:hover {
+  background: #fbd9d9;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+}
+
+.btn-primary:focus-visible,
+.btn-danger:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
 .admin-panel {
   padding: 20px;
   overflow-y: auto;
