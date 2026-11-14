@@ -557,9 +557,73 @@ input {
   box-shadow: 0 1px 2px rgba(29, 36, 51, 0.06);
 }
 
+.admin-item {
+  margin-bottom: 6px;
+}
+
+.admin-item .admin-row {
+  margin-bottom: 0;
+}
+
 .admin-row small {
   color: var(--muted);
   margin-left: 6px;
+}
+
+.admin-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-row-error {
+  margin: 4px 12px 0;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chip-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.chip-wait {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.chip-off {
+  background: #eceef3;
+  color: #5b6478;
 }
 
 .badge {
