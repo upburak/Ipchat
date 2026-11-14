@@ -386,6 +386,34 @@ input {
   display: block;
 }
 
+.day-separator {
+  align-self: center;
+  margin: 8px 0 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.message-sender {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-dark);
+  overflow-wrap: anywhere;
+}
+
+.message-time {
+  display: block;
+  margin-top: 2px;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.message.own .message-time {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .drop-hint {
   position: absolute;
   inset: 0;

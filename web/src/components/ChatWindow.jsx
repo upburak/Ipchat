@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store.js';
 import { api } from '../lib/api.js';
 import { getSocket } from '../lib/socket.js';
 import { initial, avatarColor } from '../lib/avatar.js';
+import { messageTime, dayKey, dayLabel } from '../lib/format.js';
 
 export default function ChatWindow() {
-  const { activeConversation, messages, setMessages, markConversationRead, conversationKey, currentUser, serverUrl } = useStore();
+  const { activeConversation, messages, setMessages, markConversationRead, conversationKey, currentUser, serverUrl, contacts } = useStore();
   const key = conversationKey(activeConversation);
   const list = messages[key] || [];
   const [text, setText] = useState('');
@@ -81,19 +82,35 @@ export default function ChatWindow() {
       </div>
 
       <div className="message-list">
-        {list.map((m) => (
-          <div key={m.id} className={`message ${m.sender_id === currentUser.id ? 'own' : ''}`}>
-            {m.body && <p>{m.body}</p>}
-            {m.file_url && m.file_type?.startsWith('image/') && (
-              <img src={`${serverUrl}${m.file_url}`} alt={m.file_name} className="message-image" />
-            )}
-            {m.file_url && !m.file_type?.startsWith('image/') && (
-              <a href={`${serverUrl}${m.file_url}`} target="_blank" rel="noreferrer">
-                📎 {m.file_name}
-              </a>
-            )}
-          </div>
-        ))}
+        {list.map((m, i) => {
+          const day = dayKey(m.created_at);
+          const prevDay = i > 0 ? dayKey(list[i - 1].created_at) : null;
+          const label = day && day !== prevDay ? dayLabel(m.created_at) : '';
+          const own = m.sender_id === currentUser.id;
+          const senderName =
+            activeConversation.type === 'group' && !own
+              ? contacts.find((c) => c.id === m.sender_id)?.username
+              : '';
+          const time = messageTime(m.created_at);
+          return (
+            <Fragment key={m.id}>
+              {label && <div className="day-separator">{label}</div>}
+              <div className={`message ${own ? 'own' : ''}`}>
+                {senderName && <span className="message-sender">{senderName}</span>}
+                {m.body && <p>{m.body}</p>}
+                {m.file_url && m.file_type?.startsWith('image/') && (
+                  <img src={`${serverUrl}${m.file_url}`} alt={m.file_name} className="message-image" />
+                )}
+                {m.file_url && !m.file_type?.startsWith('image/') && (
+                  <a href={`${serverUrl}${m.file_url}`} target="_blank" rel="noreferrer">
+                    📎 {m.file_name}
+                  </a>
+                )}
+                {time && <span className="message-time">{time}</span>}
+              </div>
+            </Fragment>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
