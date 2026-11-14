@@ -1,9 +1,19 @@
 name: Masaustu uygulamasi (Windows ve Mac)
 
+# Kullanim:
+# - Actions > bu is akisi > Run workflow: yalnizca derler. "tag" alanina bir ad yazarsan (ornek: test-0.2.3)
+#   derleme bitince o adla bir Release olusturur ve dosyalari ona ekler.
+# - GitHub'da bir etiket (v* veya test-*) olusturursan (Releases > Draft a new release) ayni sekilde derler
+#   ve dosyalari o Release'e ekler.
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Yayin etiketi (bos birakirsan yalnizca derlenir)"
+        required: false
+        default: ''
   push:
-    tags: ['v*']
+    tags: ['v*', 'test-*']
 
 jobs:
   windows:
@@ -37,3 +47,32 @@ jobs:
           name: Ipchat-Mac
           path: desktop/dist/*.zip
           if-no-files-found: error
+
+  publish:
+    needs: [windows, mac]
+    if: github.event_name == 'push' || github.event.inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Release olustur ve dosyalari ekle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          cat > notes.md <<'NOTES'
+          Ipchat masaüstü uygulaması test sürümü (Apple/Microsoft tarafından onaylı değil).
+
+          - Windows: `Ipchat Setup x.y.z.exe` — kurulum bir kez yönetici izni ister ("Bilinmeyen yayıncı" uyarısında Yine de çalıştır).
+          - Mac (Apple Silicon): zip'i aç, `Ipchat.app`'i Uygulamalar'a at, aç. İlk bağlanmada çıkan Yerel Ağ iznine İzin ver de.
+
+          Ayrıntılar için README'ye bak.
+          NOTES
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Test sürümü $TAG" --notes-file notes.md
+          find artifacts -type f | while read -r f; do
+            gh release upload "$TAG" "$f" --clobber --repo "$GITHUB_REPOSITORY"
+          done
