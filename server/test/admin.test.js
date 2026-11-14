@@ -103,3 +103,10 @@ test('pending-count caps latest at 5', async () => {
   assert.equal(r.body.count, 8);
   assert.equal(r.body.latest.length, 5);
 });
+
+test('admin kullanici listesi cevrimici alanini tasir', async () => {
+  const r = await call('GET', '/api/admin/users', admin.token);
+  assert.equal(r.status, 200);
+  for (const u of r.body) assert.equal(typeof u.online, 'boolean');
+  assert.equal(r.body.every((u) => u.online === false), true);
+});

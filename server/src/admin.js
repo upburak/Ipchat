@@ -1,4 +1,5 @@
 import { db } from './db.js';
+import { isOnline } from './sockets/presence.js';
 
 export class AdminError extends Error {
   constructor(status, message) {
@@ -17,6 +18,7 @@ export function listUsers() {
       status: u.status,
       isAdmin: u.is_admin === 1,
       createdAt: u.created_at,
+      online: isOnline(u.id),
     }));
 }
 
