@@ -87,6 +87,18 @@ input {
   gap: 10px;
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
 .card input,
 .modal input:not([type='checkbox']) {
   padding: 11px 12px;
@@ -167,6 +179,10 @@ input {
 
 .pin-key:hover {
   background: var(--accent-soft);
+}
+
+.pin-key:disabled {
+  opacity: 0.4;
 }
 
 /* Sabit boyutlu pencere: ekranı kaplamaz, ortada durur */

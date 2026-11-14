@@ -61,7 +61,7 @@ export default function LoginScreen({ onLoggedIn }) {
         {mode === 'pin' && (
           <>
             <p className="subtitle">Merhaba {rememberedUsername}, PIN'ini gir</p>
-            <PinPad onSubmit={handlePinLogin} submitLabel="Giriş yap" error={error} />
+            <PinPad onSubmit={handlePinLogin} error={error} />
             <button
               className="link"
               onClick={() => {
@@ -79,18 +79,24 @@ export default function LoginScreen({ onLoggedIn }) {
           <>
             <p className="subtitle">{isRegister ? 'Yeni hesap oluştur' : 'Kullanıcı adı ve şifre ile giriş yap'}</p>
             <form onSubmit={handlePasswordSubmit}>
-              <input
-                placeholder="Kullanıcı adı"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoFocus
-              />
-              <input
-                type="password"
-                placeholder="Şifre"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="field">
+                <label className="field-label" htmlFor="login-username">Kullanıcı adı</label>
+                <input
+                  id="login-username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="login-password">Şifre</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
               {error && <p className="error">{error}</p>}
               <button type="submit">{isRegister ? 'Kayıt ol' : 'Giriş yap'}</button>
             </form>
@@ -119,7 +125,7 @@ export default function LoginScreen({ onLoggedIn }) {
         {mode === 'setpin' && (
           <>
             <p className="subtitle">Bu cihaz için 4 haneli hızlı giriş PIN'i belirle</p>
-            <PinPad onSubmit={handleSetPin} submitLabel="PIN'i kaydet" error={error} />
+            <PinPad onSubmit={handleSetPin} error={error} />
           </>
         )}
       </div>

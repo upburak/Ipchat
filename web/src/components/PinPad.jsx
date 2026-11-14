@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function PinPad({ onSubmit, submitLabel = 'Giriş', error }) {
+export default function PinPad({ onSubmit, error }) {
   const [pin, setPin] = useState('');
 
   function press(digit) {
@@ -26,6 +26,7 @@ export default function PinPad({ onSubmit, submitLabel = 'Giriş', error }) {
             type="button"
             key={key}
             className="pin-key"
+            disabled={key === '✓' && pin.length !== 4}
             onClick={() => {
               if (key === '⌫') setPin((prev) => prev.slice(0, -1));
               else if (key === '✓') handleSubmit({ preventDefault: () => {} });
@@ -36,9 +37,6 @@ export default function PinPad({ onSubmit, submitLabel = 'Giriş', error }) {
           </button>
         ))}
       </div>
-      <button type="submit" disabled={pin.length !== 4}>
-        {submitLabel}
-      </button>
     </form>
   );
 }
