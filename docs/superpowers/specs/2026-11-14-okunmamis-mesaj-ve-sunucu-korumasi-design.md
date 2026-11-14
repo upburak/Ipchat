@@ -1,7 +1,7 @@
 # Okunmamış Mesaj Noktası, Anlık Mesaj Bildirimi ve İkinci Sunucu Koruması (kısa tasarım)
 
 Tarih: 2026-11-14
-Durum: onay bekliyor
+Durum: onaylandı ve uygulandı (0.3.0)
 Önceki belgeler: `2026-11-13-bildirim-yenileme-kurulum-tasarim-design.md` (3 sn yenileme, rozet, B tasarımı)
 
 ## 1. Amaç ve neden

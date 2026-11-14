@@ -45,6 +45,7 @@ GitHub Actions "Masaustu uygulamasi (Windows ve Mac)" iş akışı derler ve Rel
 - **Aynı ağda cihazlar birbirini görmeyebilir:** mesh/modemde istemci yalıtımı ya da farklı düğümlere bağlı olmak. Teşhis için ARP, `ping`, telefon hotspot'u testi kullanıldı.
 - **Google Drive/senkronize klasörler** `node_modules` içinde `dosya 2`, `dosya 3` kopyaları üretebilir (esbuild bozulmuştu). Proje senkronize bir klasörde tutulmamalı.
 - **NSIS (Windows kurulumu):** `desktop/build/installer.nsh`. Güncelleme sırasında (`isUpdated`) kaldırma temizliği ve veri sorusu atlanır; sessiz kaldırmada veri silinmez. Otomatik başlatma kaydı adı `Ipchat` (`desktop/src/autostart.js`). Bu betik yalnızca CI'da derlenip gerçek Windows'ta elle denenebildi.
+- **Okunmamış sayımı baseline'a dayanır:** `meta.unread_baseline_id` kurulum/yükseltmede bir kez yazılır (o anki en büyük mesaj no), eski geçmiş "okunmuş" sayılır. Veritabanı sıfırlanırsa baseline de sıfırlanır ve tüm geçmiş okunmuş sayılır.
 - **Kullanıcı verisi:** Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (sunucu verisi altındaki `server-data`). Uygulama kaldırılınca otomatik silinmez (Windows kaldırıcısı sorar; Mac'te tepsiden "Ipchat'i tamamen kaldır…").
 
 ## Kullanıcıyla çalışma notları (konuşmalardan)
@@ -55,17 +56,14 @@ GitHub Actions "Masaustu uygulamasi (Windows ve Mac)" iş akışı derler ve Rel
 - Dosyalar GitHub Release üzerinden verilir (yukarıdaki etiket yöntemi). Kullanıcıdan bilgisayarında klasör açmasını/Terminal kullanmasını beklememeye çalış.
 - Public işlemlerden önce (Release, `main`'e push) kısa bilgi ver; repo herkese açık, içine gizli bilgi, parola, hesap verisi koyma.
 
-## Bekleyen karar
-
-`docs/superpowers/specs/2026-11-14-okunmamis-mesaj-ve-sunucu-korumasi-design.md` kullanıcıya sunuldu ve **onayı bekleniyor**. Kullanıcı okunmamış mesaj takibinin sunucuda tutulmasını (A seçeneği, uygulama kapalıyken gelen mesajlar da görünsün) seçti. Kullanıcı "onaylıyorum" derse `superpowers:writing-plans` ile plan yaz, sonra uygula (önce başarısız test), bağımsız inceleme yaptır, sürüm numarasını artırıp etiketle yayınla.
-
 ## Güncel durum (2026-11-14)
 
 Tamam ve çalışıyor: hesap onayı ve yönetici paneli (M1), Electron kabuğu + UDP keşif (M2), sunucu modu, 3 sn yenileme, yönetici bildirimi ve rozet, yönetici izinli Windows kurulumu/kaldırma, B tasarımı, Mac imza düzeltmesi (0.2.2). Mac↔Windows bağlantısı hotspot'ta doğrulandı.
 
+0.3.0'da kodlandı: okunmamış mesaj noktası (sunucuda tutulur, uygulama kapalıyken gelenler de görünür), anlık mesaj bildirimi (başlıkta gönderenin adı, gövdede hep `Yeni mesaj`; mesaj içeriği gösterilmez), tepsi/Dock rozeti ve bildirime tıklayınca sohbetin açılması, ikinci sunucu koruması (ağda sunucu varken "Bu bilgisayarı sunucu yap" gizlenir; sunucu modunu açarken onay sorulur). **Bunların yalnızca saf mantık kısımları otomatik testlerle denendi (sunucu 53, web 23, masaüstü 62 test). `main.js`, `preload.cjs`, `tray.js` ve `connect.html` Electron'a bağlı olduğu için hiç çalıştırılmadı; gerçek Windows ve Mac'te denenmedi. Kullanıcının elle testi bekleniyor; test edilene kadar bu sürümü "çalışıyor" diye yazma.** Test adımları: okunmamış noktası, uygulama kapalıyken gelen mesajın açılışta görünmesi, bildirime tıklayınca doğru sohbetin açılması, tepsi ipucu, ağda sunucu varken sunucu seçeneğinin görünmemesi. Release etiketi henüz atılmadı.
+
 Sıradaki işler:
-1. **Okunmamış mesaj noktası + anlık mesaj bildirimi + ikinci sunucu koruması:** tasarım belgesi hazır (`docs/superpowers/specs/2026-11-14-okunmamis-mesaj-ve-sunucu-korumasi-design.md`), kullanıcı onayı bekleniyor. Sonra plan ve kodlama.
-2. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
-3. Emoji seçici ve diğer mesajlaşma özellikleri (kullanıcı "şu an yok" dedi).
-4. Cihazlar birbirini göremediğinde isteğe bağlı aktarma (relay) modu fikri.
-5. Ertelenen küçük bulgular için git geçmişindeki inceleme notlarına bak (ör. kenar çubuğunda uzun kullanıcı adı taşması, GPO tespiti iyileştirmeleri).
+1. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
+2. Emoji seçici ve diğer mesajlaşma özellikleri (kullanıcı "şu an yok" dedi).
+3. Cihazlar birbirini göremediğinde isteğe bağlı aktarma (relay) modu fikri.
+4. Ertelenen küçük bulgular için git geçmişindeki inceleme notlarına bak (ör. kenar çubuğunda uzun kullanıcı adı taşması, GPO tespiti iyileştirmeleri).
