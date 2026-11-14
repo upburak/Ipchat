@@ -3,7 +3,7 @@
   --bg: #f3f4f8;
   --border: #e6e8ef;
   --text: #1d2433;
-  --muted: #8b93a7;
+  --muted: #6b7280;
   --accent: #6366f1;
   --accent-dark: #4f46e5;
   --accent-soft: #eef0ff;
@@ -43,7 +43,8 @@ input {
   background: none;
   border: none;
   color: var(--accent);
-  padding: 4px 6px;
+  min-height: 32px;
+  padding: 6px;
   font-size: 0.9rem;
   border-radius: 6px;
 }
@@ -133,7 +134,7 @@ input {
 
 .error {
   color: var(--danger);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 
@@ -177,7 +178,7 @@ input {
   font-size: 1.1rem;
 }
 
-.pin-key:hover {
+.pin-key:hover:not(:disabled) {
   background: var(--accent-soft);
 }
 
