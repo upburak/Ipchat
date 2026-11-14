@@ -1,4 +1,4 @@
-import { test, beforeEach, after } from 'node:test';
+import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.IPCHAT_DB_PATH = ':memory:';
@@ -41,6 +41,37 @@ test('markRead noktayi temizler, sonraki mesaj yeniden sayilir', () => {
   assert.deepEqual(unreadCounts(ali), {});
   send(veli, 'user', ali);
   assert.deepEqual(unreadCounts(ali), { [`user:${veli}`]: 1 });
+});
+
+test('markRead grup icin o grubun sayisini temizler', () => {
+  const gid = Number(db.prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)').run('ekip', ali).lastInsertRowid);
+  for (const u of [ali, veli]) db.prepare('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)').run(gid, u);
+  send(veli, 'group', gid);
+  assert.deepEqual(unreadCounts(ali), { [`group:${gid}`]: 1 });
+  markRead(ali, 'group', gid);
+  assert.deepEqual(unreadCounts(ali), {});
+});
+
+test('markRead last_read_id degerini geri almaz', () => {
+  send(veli, 'user', ali);
+  const son = send(veli, 'user', ali);
+  markRead(ali, 'user', veli);
+  const oku = () => db.prepare('SELECT last_read_id FROM read_state WHERE user_id = ?').get(ali).last_read_id;
+  assert.equal(oku(), son);
+  db.prepare('DELETE FROM messages WHERE id = ?').run(son);   // en son mesaj silinince hesaplanan nokta geriye duser
+  markRead(ali, 'user', veli);
+  assert.equal(oku(), son);
+  assert.deepEqual(unreadCounts(ali), {});
+});
+
+test('bir konusmayi okumak digerinin sayisini bozmaz', () => {
+  const uc = auth.register('ucuncu', 'sifre123').userId;
+  db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(uc);
+  send(veli, 'user', ali);
+  send(uc, 'user', ali);
+  send(uc, 'user', ali);
+  markRead(ali, 'user', veli);
+  assert.deepEqual(unreadCounts(ali), { [`user:${uc}`]: 2 });
 });
 
 test('grup mesaji uyeler icin sayilir, gonderen icin sayilmaz', () => {

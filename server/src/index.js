@@ -12,6 +12,7 @@ import { createAdminRouter } from './routes/admin.js';
 import { startDiscovery } from './discovery.js';
 import { messagesRouter } from './routes/messages.js';
 import { uploadRouter } from './routes/upload.js';
+import { unreadRouter } from './routes/unread.js';
 import { attachSockets } from './sockets/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,6 +47,7 @@ app.use('/api', authRouter);
 app.use('/api', createAdminRouter(io));
 app.use('/api', messagesRouter);
 app.use('/api', uploadRouter);
+app.use('/api', unreadRouter);
 
 const webDist = process.env.IPCHAT_WEB_DIST || path.join(__dirname, '..', '..', 'web', 'dist');
 app.use(express.static(webDist));
