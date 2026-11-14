@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { messageTime, dayKey, dayLabel, matchesSearch } from '../src/lib/format.js';
+// Saklanan zaman UTC, gosterim yerel saat. Test anlamli olsun diye saat
+// dilimi sabitlenir; format.js bicimlendiriciyi yuklenirken kurdugu icin
+// TZ atamasi modul yuklenmeden once olmali, bu yuzden dinamik import.
+process.env.TZ = 'Europe/Istanbul';
+const { messageTime, dayKey, dayLabel, matchesSearch } = await import('../src/lib/format.js');
 
 // SQLite datetime('now') UTC uretir, saat dilimi isareti yoktur.
 const UTC = '2026-11-14 09:03:00';
@@ -17,8 +21,8 @@ test('messageTime gecersiz girdide bos doner', () => {
 });
 
 test('dayKey ayni gunun iki mesajinda esittir, ertesi gunde farklidir', () => {
-  assert.equal(dayKey('2026-11-14 09:03:00'), dayKey('2026-11-14 21:40:00'));
-  assert.notEqual(dayKey('2026-11-14 23:59:00'), dayKey('2026-11-15 00:01:00'));
+  assert.equal(dayKey('2026-11-14 07:00:00'), dayKey('2026-11-14 15:00:00')); // yerelde 10:00 ve 18:00, ayni gun
+  assert.notEqual(dayKey('2026-11-14 15:00:00'), dayKey('2026-11-14 22:00:00')); // yerelde 18:00 ve ertesi gun 01:00
   assert.equal(dayKey('abc'), '');
 });
 
