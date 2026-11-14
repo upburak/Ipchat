@@ -46,7 +46,10 @@ Görsel kimliğin baştan tasarlanması, yeni renk paleti/tipografi sistemi, kar
 - **Bekleyen hesaplar öne çıkar:** kendi bölümünde, sayısı başlıkta (`Bekleyen hesaplar (3)`). Bekleyen yoksa bölüm tek satırlık bir bilgiyle kalır.
 - **Düğme hiyerarşisi:** `Onayla` dolgulu birincil düğme; `Reddet` sönük ikincil. Aynı genişlikte iki eşit bağlantı olmaktan çıkar.
 - **Onay penceresi yalnızca yıkıcı işlemlerde:** `Reddet`, `Kapat`, `Yöneticiliği al`. Metin kişinin adını içerir: *"Ahmet'in hesabı reddedilsin mi? Ahmet giriş yapamaz."* Varsayılan düğme **Vazgeç**. `Onayla`, `Aç`, `Yönetici yap` onaysızdır (yapıcı ve geri alınabilir). *(Benim kararım.)*
-- **Durum renkli etiket olur:** Onay bekliyor (sarı), Aktif (yeşil), Reddedildi / Kapatıldı (gri). Küçük gri yazı yerine.
+- **"Aktif" etiketi "Onaylı" olur.** Mevcut etiket hesabın onaylı olduğunu anlatıyor ama kullanıcı bunu "şu an bağlı" diye okuyor (kullanıcı bizzat bu karışıklığı bildirdi). Etiket kümesi: **Onaylı / Onay bekliyor / Reddedildi / Kapatıldı.**
+- **Durum renkli etiket olur:** Onay bekliyor (sarı), Onaylı (yeşil), Reddedildi / Kapatıldı (gri). Küçük gri yazı yerine.
+- **Çevrimiçi durumu ayrıca gösterilir.** `GET /api/admin/users` yanıtına `online` alanı eklenir (sunucu bunu `sockets/presence.js` içinde zaten tutuyor ve `/api/users` ucunda kullanıyor); satırda **Çevrimiçi / Çevrimdışı** olarak görünür. Böylece "onaylı mı" ile "şu an bağlı mı" iki ayrı bilgi olarak okunur. *(Kullanıcının isteği üzerine eklendi.)*
+  - Sınır: çevrimiçi bilgisi sunucunun belleğindedir; sunucu yeniden başlarsa herkes bağlanana kadar çevrimdışı görünür. Bu kabul edilen davranıştır.
 - **Yenileme fare liste üzerindeyken duraklar**, ayrılınca sürer. Tıklanmak üzere olan satırın altından kayması böylece engellenir. *(Benim kararım.)*
 - **Arama kutusu:** tek satır, yazdıkça süzer, kullanıcı adında arar.
 - **Hata mesajı işlemin yanında görünür** (ilgili satırın altında), yalnızca sayfanın tepesinde değil.
