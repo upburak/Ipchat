@@ -105,7 +105,7 @@ export default function ChatApp() {
     const stopOpenConversation = window.ipchat?.onOpenConversation?.(({ type, id }) => {
       const { contacts, groups } = useStore.getState();
       const found = type === 'group' ? groups.find((g) => g.id === id) : contacts.find((c) => c.id === id);
-      const name = (type === 'group' ? found?.name : found?.username) || String(id);
+      const name = (type === 'group' ? found?.name : found?.username) || 'Sohbet';
       useStore.getState().setActiveConversation({ type, id, name });
     });
 

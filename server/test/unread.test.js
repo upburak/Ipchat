@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 process.env.IPCHAT_DB_PATH = ':memory:';
 const { db } = await import('../src/db.js');
 const auth = await import('../src/auth.js');
-const { unreadCounts, markRead, UnreadError, ensureUnreadBaseline } = await import('../src/unread.js');
+const { unreadCounts, markRead, UnreadError, ensureUnreadBaseline, addGroupMember } = await import('../src/unread.js');
 
 const send = (senderId, type, recipientId, body = 'merhaba') =>
   Number(
@@ -124,4 +124,44 @@ test('markRead aktif olmayan kisi icin 404 atar', () => {
 
 test('markRead gecersiz tur icin 400 atar', () => {
   assert.throws(() => markRead(ali, 'kanal', 1), (err) => err instanceof UnreadError && err.status === 400);
+});
+
+test('pasif gonderenin ozel mesajlari sayilmaz', () => {
+  send(veli, 'user', ali);
+  assert.deepEqual(unreadCounts(ali), { [`user:${veli}`]: 1 });
+  db.prepare("UPDATE users SET status = 'disabled' WHERE id = ?").run(veli);
+  assert.deepEqual(unreadCounts(ali), {});
+});
+
+test('pasif uyenin grup mesajlari sayilmaz', () => {
+  const gid = Number(db.prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)').run('ekip', ali).lastInsertRowid);
+  for (const u of [ali, veli]) addGroupMember(gid, u);
+  send(veli, 'group', gid);
+  assert.deepEqual(unreadCounts(ali), { [`group:${gid}`]: 1 });
+  db.prepare("UPDATE users SET status = 'disabled' WHERE id = ?").run(veli);
+  assert.deepEqual(unreadCounts(ali), {});
+});
+
+test('mevcut gruba sonradan eklenen kullanici eski mesajlari okunmamis gormez', () => {
+  const gid = Number(db.prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)').run('ekip', ali).lastInsertRowid);
+  addGroupMember(gid, veli);
+  for (let i = 0; i < 5; i++) send(veli, 'group', gid);
+  const yeni = auth.register('yeni', 'sifre123').userId;
+  db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(yeni);
+  addGroupMember(gid, yeni);
+  assert.deepEqual(unreadCounts(yeni), {});
+  send(veli, 'group', gid);
+  assert.deepEqual(unreadCounts(yeni), { [`group:${gid}`]: 1 });
+});
+
+test('markRead gecersiz veya eksik id icin 400 firlatir', () => {
+  for (const id of [NaN, undefined, null, 0, -1, 1.5, '3']) {
+    for (const type of ['user', 'group']) {
+      assert.throws(
+        () => markRead(ali, type, id),
+        (e) => e instanceof UnreadError && e.status === 400,
+        `${type} ${String(id)}`
+      );
+    }
+  }
 });

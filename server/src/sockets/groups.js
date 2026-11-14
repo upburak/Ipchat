@@ -1,4 +1,5 @@
 import { db } from '../db.js';
+import { addGroupMember } from '../unread.js';
 
 export function joinExistingGroupRooms(socket) {
   const groups = db
@@ -32,8 +33,7 @@ export function registerGroupHandlers(io, socket) {
     try {
       const info = db.prepare('INSERT INTO groups (name, created_by) VALUES (?, ?)').run(name.trim(), socket.userId);
       groupId = info.lastInsertRowid;
-      const insertMember = db.prepare('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)');
-      for (const userId of memberIds) insertMember.run(groupId, userId);
+      for (const userId of memberIds) addGroupMember(groupId, userId);
       db.exec('COMMIT');
     } catch {
       db.exec('ROLLBACK');

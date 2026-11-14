@@ -23,6 +23,7 @@ export function unreadCounts(userId) {
     .prepare(
       `SELECT m.sender_id AS peer, COUNT(*) AS n
        FROM messages m
+       JOIN users s ON s.id = m.sender_id AND s.status = 'active'
        LEFT JOIN read_state r
          ON r.user_id = ? AND r.kind = 'user' AND r.peer_id = m.sender_id
        WHERE m.recipient_type = 'user' AND m.recipient_id = ? AND m.sender_id != ?
@@ -36,6 +37,7 @@ export function unreadCounts(userId) {
     .prepare(
       `SELECT m.recipient_id AS peer, COUNT(*) AS n
        FROM messages m
+       JOIN users s ON s.id = m.sender_id AND s.status = 'active'
        JOIN group_members gm ON gm.group_id = m.recipient_id AND gm.user_id = ?
        LEFT JOIN read_state r
          ON r.user_id = ? AND r.kind = 'group' AND r.peer_id = m.recipient_id
@@ -49,7 +51,25 @@ export function unreadCounts(userId) {
   return counts;
 }
 
+// Gruba üye ekler ve grubun o anki en yeni mesajını okunmuş işaretler;
+// böylece sonradan katılan kişi eski geçmişi okunmamış görmez.
+// group_members satırı eklemenin tek yolu bu olmalı.
+export function addGroupMember(groupId, userId) {
+  db.prepare('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)').run(groupId, userId);
+  const latest = db
+    .prepare(
+      `SELECT COALESCE(MAX(id), 0) AS m FROM messages WHERE recipient_type = 'group' AND recipient_id = ?`
+    )
+    .get(groupId).m;
+  db.prepare(
+    `INSERT INTO read_state (user_id, kind, peer_id, last_read_id) VALUES (?, 'group', ?, ?)
+     ON CONFLICT(user_id, kind, peer_id)
+     DO UPDATE SET last_read_id = MAX(last_read_id, excluded.last_read_id)`
+  ).run(userId, groupId, latest);
+}
+
 export function markRead(userId, type, id) {
+  if (!Number.isInteger(id) || id <= 0) throw new UnreadError(400, 'Geçersiz sohbet');
   let latest;
   if (type === 'group') {
     const member = db
