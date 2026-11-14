@@ -2,18 +2,33 @@ import { useState } from 'react';
 import { useStore } from '../state/store.js';
 import GroupCreateModal from './GroupCreateModal.jsx';
 import { initial, avatarColor } from '../lib/avatar.js';
+import { matchesSearch } from '../lib/format.js';
 
 export default function ContactList() {
   const { contacts, groups, activeConversation, setActiveConversation, unread } = useStore();
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [query, setQuery] = useState('');
+  const shownContacts = contacts.filter((c) => matchesSearch(c.username, query));
+  const shownGroups = groups.filter((g) => matchesSearch(g.name, query));
+  const noMatch = shownContacts.length === 0 && shownGroups.length === 0 && query.trim() !== '';
 
   return (
+    <>
+    <div className="contact-search">
+      <input
+        type="search"
+        aria-label="Kişi ara"
+        placeholder="Kişi ara"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+    </div>
     <div className="contact-list">
       <div className="section">
         <div className="section-header">
           <span>Kişiler</span>
         </div>
-        {contacts.map((c) => (
+        {shownContacts.map((c) => (
           <button
             key={c.id}
             className={`contact-item ${activeConversation?.type === 'user' && activeConversation.id === c.id ? 'active' : ''} ${unread[`user:${c.id}`] > 0 ? 'unread' : ''}`}
@@ -36,7 +51,7 @@ export default function ContactList() {
             + Yeni
           </button>
         </div>
-        {groups.map((g) => (
+        {shownGroups.map((g) => (
           <button
             key={g.id}
             className={`contact-item ${activeConversation?.type === 'group' && activeConversation.id === g.id ? 'active' : ''} ${unread[`group:${g.id}`] > 0 ? 'unread' : ''}`}
@@ -51,7 +66,10 @@ export default function ContactList() {
         ))}
       </div>
 
+      {noMatch && <div className="contact-empty">Eşleşen kişi veya grup yok.</div>}
+
       {showGroupModal && <GroupCreateModal onClose={() => setShowGroupModal(false)} />}
     </div>
+    </>
   );
 }

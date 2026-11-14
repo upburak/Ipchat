@@ -210,8 +210,29 @@ input {
   font-size: 1rem;
 }
 
+.contact-search {
+  flex: none;
+  padding: 10px 12px 4px;
+}
+
+.contact-search input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.contact-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .contact-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
