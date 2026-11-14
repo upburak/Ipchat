@@ -66,6 +66,14 @@ Tamam ve çalışıyor: hesap onayı ve yönetici paneli (M1), Electron kabuğu 
 
 **Henüz gerçek ortamda denenmedi** (doğrulanmış gibi yazma): uygulama kapalıyken gelen mesajın açılışta görünmesi, bildirime tıklayınca doğru sohbetin açılması, pencere odağa dönünce noktanın temizlenmesi, sunucu modu onay penceresinin gizli pencerede görünmesi, kapatılan hesabın hayalet rozet bırakmaması, gruba sonradan eklenen kullanıcının sessiz açılışı.
 
+## 0.4.0'da kodlandı: arayüz ergonomisi
+
+Hesap ekranı: bekleyenler önde ve sayılı, "Onayla" dolgulu / "Reddet" sönük, **Reddet/Kapat/Yöneticiliği al için onay penceresi** (varsayılan Vazgeç), `Aktif` → **`Onaylı`** (kullanıcı bunu "şu an bağlı" sanıyordu) ve ayrı **Çevrimiçi/Çevrimdışı** göstergesi, renkli durum etiketleri, arama, satır başına hata, fare listedeyken yenilemenin durması, çift tıklamada sahte hata vermeyen koruma. Sohbet: her mesajda saat, grupta gönderen adı, gün ayracı. Kişi listesinde arama. Girişte kalıcı etiketler, PIN'de tek gönder yolu. Okunabilirlik: `--muted` ve `--danger` koyulaştı, düğmeler ≥32px.
+
+**Tarayıcıda ölçülerek doğrulandı** (Playwright, bu depoda): saatlerin UTC→yerel çevrimi (07:20 UTC → 10:20), hesap satırlarının eşit yüksekliği ve uzun adın kesilmemesi, eşleşmeyen aramada "Eşleşen hesap yok.", çift tıklamada hata çıkmaması. **Electron kabuğu (tepsi menüsü, onay penceresi, durum satırı) yine çalıştırılamadı**; gerçek Windows/Mac testi bekliyor.
+
+Bilinen eksik: `.message.own .message-time` beyaz metni mor baloncukta 4.47:1 — standardın 0.03 altında. Kapatmak uygulamanın imza rengini değiştirmeyi gerektirirdi, bilinçli olarak yapılmadı.
+
 Sıradaki işler:
 1. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
 2. Emoji seçici ve diğer mesajlaşma özellikleri (kullanıcı "şu an yok" dedi).
