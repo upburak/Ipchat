@@ -9,3 +9,7 @@ test('mac app declares why it needs the local network so macOS shows the permiss
   assert.equal(typeof info.NSLocalNetworkUsageDescription, 'string');
   assert.ok(info.NSLocalNetworkUsageDescription.length > 20);
 });
+
+test('mac build is ad-hoc signed so the bundle has a valid, stable code identity', () => {
+  assert.equal(pkg.build.mac.identity, '-');
+});

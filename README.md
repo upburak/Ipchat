@@ -33,6 +33,8 @@ Tek program hem **istemci** hem de **sunucu** olabilir; Node.js kurmak veya term
 
 **Sunucu olarak kullanım:** Uygulamayı aç, ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Sunucu arka planda çalışır (pencere/terminal yok). Sistem tepsisinde (Mac'te menü çubuğunda) yeşil noktalı ikon ve **adres** görünür; ikona sağ tıklayıp adresi kopyalayabilirsin. Bu ayar hatırlanır, uygulama her açıldığında sunucu da başlar. Kapatmak için tepsi menüsünden "Sunucu modunu kapat". İlk açılan hesap yöneticidir.
 
+**Mac imzası:** Uygulama "geçici imza" (ad-hoc) ile imzalanır. Bu imza olmadan macOS uygulamaya kalıcı bir kimlik veremez ve Yerel Ağ iznini sessizce reddederdi (0.2.1'e kadarki sürümlerde bağlantı `No route to host` ile hiç denenmeden düşüyordu). Hâlâ Apple tarafından onaylı değildir, bu yüzden ilk açılışta sağ tık → Aç gerekir.
+
 **Mac yerel ağ izni:** macOS, uygulamanın ağdaki başka bilgisayarlara bağlanmasına izin vermeni ister. Ipchat'i ilk kez bir sunucuya bağlamayı denediğinde çıkan **"Ipchat yerel ağdaki cihazları bulmak ve bağlanmak istiyor"** penceresinde **İzin ver**'e bas. Pencere çıkmadıysa ya da yanlışlıkla reddettiysen: Sistem Ayarları → Gizlilik ve Güvenlik → **Yerel Ağ** → Ipchat'i aç. İzin verilmezse bağlantı denemeleri `No route to host` ile sessizce başarısız olur.
 
 **İstemci olarak kullanım:** Uygulama sunucuyu ağda kendisi bulur (UDP `41234`), bulunanı listede gösterir; bulamazsa adres elle yazılır. Sunucu bilgisayarında UDP `41234` ve TCP `3000` gelen bağlantıya açık olmalı (güvenlik duvarı izni istenirse *izin ver*).
