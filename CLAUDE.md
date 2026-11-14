@@ -47,6 +47,18 @@ GitHub Actions "Masaustu uygulamasi (Windows ve Mac)" iş akışı derler ve Rel
 - **NSIS (Windows kurulumu):** `desktop/build/installer.nsh`. Güncelleme sırasında (`isUpdated`) kaldırma temizliği ve veri sorusu atlanır; sessiz kaldırmada veri silinmez. Otomatik başlatma kaydı adı `Ipchat` (`desktop/src/autostart.js`). Bu betik yalnızca CI'da derlenip gerçek Windows'ta elle denenebildi.
 - **Kullanıcı verisi:** Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (sunucu verisi altındaki `server-data`). Uygulama kaldırılınca otomatik silinmez (Windows kaldırıcısı sorar; Mac'te tepsiden "Ipchat'i tamamen kaldır…").
 
+## Kullanıcıyla çalışma notları (konuşmalardan)
+
+- Kullanıcı yazılımcı değil, projeyi test eden ve yöneten kişi. Türkçe, sade ve adım adım anlat; teknik terimi kısa açıkla. Windows/Mac'te yapması gereken adımları numaralı ve **Terminal komutu olmadan** (mümkünse) ver; komut şartsa tek satırlık ve açıklamalı yaz.
+- Gerçek testleri kullanıcı yapar: bir Windows PC (Wi-Fi, Intel kart) ve bir Mac (Apple Silicon). Sen uygulamaları gözle deneyemezsin; neyi nasıl denetleyeceğini adım adım söyle, çıktısını/ekran görüntüsünü iste ve **tahmin yürütme, ölç**: komut çıktısı ve gerçek deneme olmadan "bu sebep" deme. (Yanlış teşhisler: Windows GPO yanılgısı, Mac imza sorunu uzun sürdü.)
+- Kullanıcı bir şeyin "olmadı" dediğinde neyin olmadığını, hangi cihazda, ekranda ne yazdığını sor.
+- Dosyalar GitHub Release üzerinden verilir (yukarıdaki etiket yöntemi). Kullanıcıdan bilgisayarında klasör açmasını/Terminal kullanmasını beklememeye çalış.
+- Public işlemlerden önce (Release, `main`'e push) kısa bilgi ver; repo herkese açık, içine gizli bilgi, parola, hesap verisi koyma.
+
+## Bekleyen karar
+
+`docs/superpowers/specs/2026-11-14-okunmamis-mesaj-ve-sunucu-korumasi-design.md` kullanıcıya sunuldu ve **onayı bekleniyor**. Kullanıcı okunmamış mesaj takibinin sunucuda tutulmasını (A seçeneği, uygulama kapalıyken gelen mesajlar da görünsün) seçti. Kullanıcı "onaylıyorum" derse `superpowers:writing-plans` ile plan yaz, sonra uygula (önce başarısız test), bağımsız inceleme yaptır, sürüm numarasını artırıp etiketle yayınla.
+
 ## Güncel durum (2026-11-14)
 
 Tamam ve çalışıyor: hesap onayı ve yönetici paneli (M1), Electron kabuğu + UDP keşif (M2), sunucu modu, 3 sn yenileme, yönetici bildirimi ve rozet, yönetici izinli Windows kurulumu/kaldırma, B tasarımı, Mac imza düzeltmesi (0.2.2). Mac↔Windows bağlantısı hotspot'ta doğrulandı.
