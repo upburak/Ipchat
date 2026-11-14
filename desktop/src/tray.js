@@ -6,7 +6,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const image = (name) =>
   nativeImage.createFromPath(path.join(here, '..', 'assets', name)).resize({ width: 18, height: 18 });
 
-import { applyState } from './tray-state.js';
+import { applyState, alertCount, tooltipLines } from './tray-state.js';
 
 export function createTray({ showWindow, changeServer, uninstall, hostServer, stopHosting, quit, isAutoStart, setAutoStart }) {
   const normalIcon = image('icon.png');
@@ -16,7 +16,7 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
   const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const state = { running: false, urls: [], badge: 0, warning: false };
+  const state = { running: false, urls: [], badge: 0, unread: 0, warning: false };
 
   const rebuild = () => {
     const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
@@ -48,13 +48,10 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
       { label: 'Çık', click: quit }
     );
     tray.setContextMenu(Menu.buildFromTemplate(items));
-    const alert = state.badge > 0;
+    const alert = alertCount(state) > 0;
     tray.setImage(state.running ? (alert ? serverAlertIcon : serverIcon) : alert ? alertIcon : normalIcon);
-    if (process.platform === 'darwin') tray.setTitle(alert ? String(state.badge) : '');
-    const lines = [];
-    if (alert) lines.push(`${state.badge} bekleyen hesap`);
-    if (state.running) lines.push('Ipchat sunucusu çalışıyor', ...state.urls);
-    if (state.running && state.warning) lines.push('Güvenlik duvarı kurum ilkesiyle yönetiliyor');
+    if (process.platform === 'darwin') tray.setTitle(alert ? String(alertCount(state)) : '');
+    const lines = tooltipLines(state);
     tray.setToolTip(lines.length ? lines.join('\n') : 'Ipchat');
   };
 

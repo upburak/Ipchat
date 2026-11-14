@@ -43,23 +43,46 @@ function serverPaths() {
   return { entry: path.join(root, 'server', 'src', 'index.js'), webDist: path.join(root, 'web', 'dist') };
 }
 
+function refreshCounts() {
+  tray?.update({ badge: pendingCount, unread: unreadCount });
+  const total = pendingCount + unreadCount;
+  if (process.platform === 'darwin' && total !== lastTotal) app.dock?.setBadge(total > 0 ? String(total) : '');
+  lastTotal = total;
+}
+
 function setBadge(count) {
-  tray?.update({ badge: count });
-  if (process.platform === 'darwin' && count !== lastBadge) app.dock?.setBadge(count > 0 ? String(count) : '');
-  lastBadge = count;
+  pendingCount = count;
+  refreshCounts();
+}
+
+function setUnreadCount(count) {
+  unreadCount = count;
+  refreshCounts();
+}
+
+const validCount = (count) => (Number.isInteger(count) && count > 0 ? Math.min(count, 99) : 0);
+
+function validOpenTarget(open) {
+  if (!open || (open.type !== 'user' && open.type !== 'group') || !Number.isInteger(open.id)) return null;
+  return { type: open.type, id: open.id };
 }
 
 const activeNotifications = new Set();
-let lastBadge = 0;
+let pendingCount = 0;
+let unreadCount = 0;
+let lastTotal = 0;
 const clip = (value, max = 120) => String(value ?? '').slice(0, max);
 
 ipcMain.handle('app:notify', (event, payload) => {
   if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
   const notification = new Notification({ title: clip(payload?.title), body: clip(payload?.body) });
+  const open = validOpenTarget(payload?.open);
   activeNotifications.add(notification);
   notification.on('click', () => {
     showWindow();
-    if (alive()) win.webContents.send('ipchat:open-admin');
+    if (!alive()) return;
+    if (open) win.webContents.send('ipchat:open-conversation', open);
+    else win.webContents.send('ipchat:open-admin');
   });
   notification.on('close', () => activeNotifications.delete(notification));
   notification.on('click', () => activeNotifications.delete(notification));
@@ -68,7 +91,12 @@ ipcMain.handle('app:notify', (event, payload) => {
 
 ipcMain.handle('app:badge', (event, count) => {
   if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
-  setBadge(Number.isInteger(count) && count > 0 ? Math.min(count, 99) : 0);
+  setBadge(validCount(count));
+});
+
+ipcMain.handle('app:unread', (event, count) => {
+  if (!isServerSender(event.senderFrame?.url, serverUrl)) return;
+  setUnreadCount(validCount(count));
 });
 
 function updateTray() {
@@ -187,6 +215,7 @@ function showWindow() {
 
 function showConnectPage(mode, servers = []) {
   setBadge(0);
+  setUnreadCount(0);
   const query = { mode };
   if (servers.length) query.servers = JSON.stringify(servers);
   serverUrl = null;
@@ -196,6 +225,7 @@ function showConnectPage(mode, servers = []) {
 
 function openServer(url) {
   setBadge(0);
+  setUnreadCount(0);
   serverUrl = url;
   onConnectPage = false;
   win.loadURL(url).catch(() => {});

@@ -102,7 +102,7 @@ export default function ChatApp() {
       reflectUnread(counts);
     });
 
-    window.ipchat?.onOpenConversation?.(({ type, id }) => {
+    const stopOpenConversation = window.ipchat?.onOpenConversation?.(({ type, id }) => {
       const { contacts, groups } = useStore.getState();
       const found = type === 'group' ? groups.find((g) => g.id === id) : contacts.find((c) => c.id === id);
       const name = (type === 'group' ? found?.name : found?.username) || String(id);
@@ -130,6 +130,7 @@ export default function ChatApp() {
       window.removeEventListener('focus', markActiveRead);
       document.removeEventListener('visibilitychange', markActiveRead);
       stopContacts();
+      if (typeof stopOpenConversation === 'function') stopOpenConversation();
       if (stopPending) stopPending();
       window.ipchat?.setBadge?.(0);
       window.ipchat?.setUnread?.(0);
