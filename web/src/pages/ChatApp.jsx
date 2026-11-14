@@ -38,6 +38,25 @@ export default function ChatApp() {
   useEffect(() => {
     const socket = connectSocket(serverUrl, token);
 
+    const reflectUnread = (counts) => {
+      window.ipchat?.setUnread?.(totalUnread(counts));
+      document.title = pageTitle(totalUnread(counts));
+    };
+
+    // Pencere yeniden odaklanınca açık sohbet okundu sayılır.
+    const markActiveRead = () => {
+      if (!document.hasFocus()) return;
+      const state = useStore.getState();
+      const active = state.activeConversation;
+      if (!active) return;
+      const key = state.conversationKey(active);
+      api.markRead(active.type, active.id).catch(() => {});
+      state.markConversationRead(key);
+      reflectUnread(useStore.getState().unread);
+    };
+    window.addEventListener('focus', markActiveRead);
+    document.addEventListener('visibilitychange', markActiveRead);
+
     const dropToLogin = () => logout('Oturumun sonlandırıldı. Lütfen tekrar giriş yap.');
     socket.on('disconnect', (reason) => {
       if (reason === 'io server disconnect') dropToLogin();
@@ -61,9 +80,7 @@ export default function ChatApp() {
           lastNotifiedAt.current[key] = now;
         }
         state.bumpUnread(key);
-        const counts = useStore.getState().unread;
-        window.ipchat?.setUnread?.(totalUnread(counts));
-        document.title = pageTitle(totalUnread(counts));
+        reflectUnread(useStore.getState().unread);
       } else {
         api.markRead(message.recipient_type, message.recipient_type === 'group' ? message.recipient_id : message.sender_id).catch(() => {});
         state.markConversationRead(key);
@@ -82,8 +99,7 @@ export default function ChatApp() {
       const counts = await api.listUnread();
       if (isStopped()) return;
       useStore.getState().setUnread(counts);
-      window.ipchat?.setUnread?.(totalUnread(counts));
-      document.title = pageTitle(totalUnread(counts));
+      reflectUnread(counts);
     });
 
     window.ipchat?.onOpenConversation?.(({ type, id }) => {
@@ -111,6 +127,8 @@ export default function ChatApp() {
     }
 
     return () => {
+      window.removeEventListener('focus', markActiveRead);
+      document.removeEventListener('visibilitychange', markActiveRead);
       stopContacts();
       if (stopPending) stopPending();
       window.ipchat?.setBadge?.(0);
