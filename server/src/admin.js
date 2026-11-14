@@ -55,7 +55,7 @@ export function applyAction(actorId, targetId, action, io) {
   const isLastAdmin = target.is_admin === 1 && target.status === 'active' && activeAdminCount() <= 1;
 
   if (action === 'promote') {
-    if (target.status !== 'active') throw new AdminError(400, 'Yalnızca aktif hesap yönetici yapılabilir');
+    if (target.status !== 'active') throw new AdminError(400, 'Yalnızca onaylı hesap yönetici yapılabilir');
     db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(targetId);
     return;
   }

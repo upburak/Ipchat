@@ -24,7 +24,7 @@ export function registerGroupHandlers(io, socket) {
       .all(...requested)
       .map((r) => r.id);
     if (activeIds.length !== requested.length) {
-      return ack?.({ error: 'Geçersiz veya aktif olmayan üye var' });
+      return ack?.({ error: 'Geçersiz veya onaylı olmayan üye var' });
     }
     const memberIds = requested;
 

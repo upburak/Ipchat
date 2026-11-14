@@ -18,7 +18,7 @@ const STATUS_ERRORS = {
 
 function assertActive(user) {
   if (user.status !== 'active') {
-    throw new Error(STATUS_ERRORS[user.status] || 'Hesap aktif değil');
+    throw new Error(STATUS_ERRORS[user.status] || 'Hesap onaylı değil');
   }
 }
 

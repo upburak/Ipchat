@@ -8,7 +8,7 @@
   --accent-dark: #4f46e5;
   --accent-soft: #eef0ff;
   --online: #22c55e;
-  --danger: #ef4444;
+  --danger: #b91c1c;
   --radius: 12px;
 }
 
@@ -449,7 +449,7 @@ input {
 }
 
 .message.own .message-time {
-  color: rgba(255, 255, 255, 0.75);
+  color: #fff;
 }
 
 .drop-hint {
@@ -689,7 +689,6 @@ input {
 
 .chip {
   display: inline-block;
-  margin-left: 8px;
   padding: 1px 8px;
   border-radius: 9px;
   font-size: 0.75rem;

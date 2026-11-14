@@ -26,7 +26,9 @@ function actionsFor(user) {
 
 export default function AdminPanel() {
   const [users, setUsers] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [busyId, setBusyId] = useState(null);
   const [rowError, setRowError] = useState(null); // { id, message }
   const [query, setQuery] = useState('');
   // Onay bekleyen islem: satir kimligi ve ad burada sabitlenir; liste yenilense de ayni kisiyi hedefler.
@@ -39,6 +41,7 @@ export default function AdminPanel() {
       .adminListUsers()
       .then((list) => {
         setUsers(list);
+        setLoaded(true);
         setLoadError('');
       })
       .catch((err) => setLoadError(err.message));
@@ -61,12 +64,16 @@ export default function AdminPanel() {
   }, []);
 
   async function run(id, action) {
+    if (busyId !== null) return;
+    setBusyId(id);
     setRowError(null);
     try {
       await api.adminAction(id, action);
       await load();
     } catch (err) {
       setRowError({ id, message: err.message });
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -85,6 +92,8 @@ export default function AdminPanel() {
   const pending = visible.filter((u) => u.status === 'pending');
   const others = visible.filter((u) => u.status !== 'pending');
   const pendingTotal = users.filter((u) => u.status === 'pending').length;
+  const filtering = query.trim() !== '';
+  const noMatch = <p className="subtitle">Eşleşen hesap yok.</p>;
 
   const renderRow = (u) => (
     <div key={u.id} className="admin-item">
@@ -104,6 +113,7 @@ export default function AdminPanel() {
             <button
               key={action}
               type="button"
+              disabled={busyId === u.id}
               className={action === 'approve' ? 'btn-primary' : 'btn-secondary'}
               onClick={() => onActionClick(u, action)}
             >
@@ -129,9 +139,14 @@ export default function AdminPanel() {
         onMouseLeave={() => { hoveringRef.current = false; }}
       >
         <h3>Bekleyen hesaplar ({pendingTotal})</h3>
-        {pendingTotal === 0 ? <p className="subtitle">Bekleyen hesap yok.</p> : pending.map(renderRow)}
+        {pending.map(renderRow)}
+        {pending.length === 0 && filtering && noMatch}
+        {pending.length === 0 && !filtering && loaded && pendingTotal === 0 && (
+          <p className="subtitle">Bekleyen hesap yok.</p>
+        )}
         <h3>Tüm hesaplar</h3>
         {others.map(renderRow)}
+        {others.length === 0 && filtering && noMatch}
       </div>
       {confirming && (
         <ConfirmDialog
