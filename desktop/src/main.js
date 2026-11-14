@@ -30,6 +30,7 @@ let connecting = false;
 let serverHost = null;
 let firewallWarned = false;
 let serverKnown = false;
+let confirmingHost = false;
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -198,13 +199,19 @@ async function enableServerMode() {
 }
 
 async function requestServerMode() {
-  const { response } = await dialog.showMessageBox(alive() ? win : undefined, HOST_CONFIRM);
-  if (response !== 0) return { cancelled: true };
+  if (confirmingHost) return { cancelled: true };
+  confirmingHost = true;
   try {
+    // Pencere tepsiye gizliyken ona bagli pencere (sheet) macOS'ta hic gorunmeyebilir.
+    const parent = alive() && win.isVisible() ? win : undefined;
+    const { response } = await dialog.showMessageBox(parent, HOST_CONFIRM);
+    if (response !== 0) return { cancelled: true };
     await enableServerMode();
     return { ok: true };
   } catch {
     return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
+  } finally {
+    confirmingHost = false;
   }
 }
 
