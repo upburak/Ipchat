@@ -12,6 +12,7 @@
   input { border: 1px solid #e6e8ef; }
   button { border: 0; background: #6366f1; color: #fff; cursor: pointer; }
   button.server { background: #eef0ff; color: #4f46e5; text-align: left; }
+  button:disabled { opacity: .55; cursor: default; }
   .error { color: #ef4444; font-size: 13px; min-height: 18px; }
 </style>
 </head>
@@ -30,6 +31,7 @@
     </form>
   </div>
   <button id="host" class="server" type="button">Bu bilgisayar sunucu olsun</button>
+  <p id="host-note" hidden>Yukarıdaki sunuculardan birine bağlan. İkinci bir sunucu kurarsan kullanıcılar birbirini göremez.</p>
   <div class="error" id="error"></div>
 </div>
 <script>
@@ -60,6 +62,12 @@
       b.addEventListener('click', () => connect(s.url));
       document.getElementById('list').appendChild(b);
     }
+    if (servers.length) {
+      const hostButton = document.getElementById('host');
+      hostButton.disabled = true;
+      hostButton.textContent = 'Ağda zaten bir sunucu var';
+      document.getElementById('host-note').hidden = false;
+    }
   }
   document.getElementById('host').addEventListener('click', async () => {
     if (busy) return;
@@ -68,6 +76,7 @@
     try {
       const result = await window.ipchat.hostServer();
       errorEl.textContent = result && result.error ? result.error : '';
+      // result.cancelled: onay penceresinde vazgecildi, ustteki satir durumu temizler
     } catch (err) {
       errorEl.textContent = 'Sunucu başlatılamadı';
     } finally {

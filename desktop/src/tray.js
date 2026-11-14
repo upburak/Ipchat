@@ -16,7 +16,7 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
   const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const state = { running: false, urls: [], badge: 0, unread: 0, warning: false };
+  const state = { running: false, urls: [], badge: 0, unread: 0, warning: false, networkServerKnown: false };
 
   const rebuild = () => {
     const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
@@ -30,7 +30,11 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
       }
       items.push({ label: 'Sunucu modunu kapat', click: stopHosting });
     } else {
-      items.push({ label: 'Bu bilgisayarı sunucu yap', click: hostServer });
+      items.push(
+        state.networkServerKnown
+          ? { label: 'Ağda zaten bir sunucu var', enabled: false }
+          : { label: 'Bu bilgisayarı sunucu yap', click: hostServer }
+      );
       items.push({ label: 'Sunucuyu değiştir', click: changeServer });
     }
     items.push(

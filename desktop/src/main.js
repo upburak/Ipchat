@@ -13,6 +13,7 @@ import { readFirewallPolicy } from './firewall-policy.js';
 import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
 import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
+import { networkServerKnown, HOST_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const connectFileUrl = pathToFileURL(path.join(here, 'connect.html')).href;
@@ -28,6 +29,7 @@ let retried = false;
 let connecting = false;
 let serverHost = null;
 let firewallWarned = false;
+let serverKnown = false;
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -100,7 +102,7 @@ ipcMain.handle('app:unread', (event, count) => {
 });
 
 function updateTray() {
-  tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [] });
+  tray?.update({ running: Boolean(serverHost), urls: serverHost ? lanUrls(HOST_PORT) : [], networkServerKnown: serverKnown });
 }
 
 async function uninstallEverything() {
@@ -195,6 +197,17 @@ async function enableServerMode() {
   openServer(`http://127.0.0.1:${HOST_PORT}`);
 }
 
+async function requestServerMode() {
+  const { response } = await dialog.showMessageBox(alive() ? win : undefined, HOST_CONFIRM);
+  if (response !== 0) return { cancelled: true };
+  try {
+    await enableServerMode();
+    return { ok: true };
+  } catch {
+    return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
+  }
+}
+
 async function disableServerMode() {
   saveConfig(configDir(), { ...loadConfig(configDir()), serverMode: false, lastServer: undefined });
   await serverHost?.stop();
@@ -246,6 +259,8 @@ async function connectToServer() {
       }
     }
     const result = await resolveServer({ configDir: configDir() });
+    serverKnown = networkServerKnown(result);
+    updateTray();
     if (!alive()) return;
     if (result.status === 'ok') openServer(result.url);
     else showConnectPage(result.status, result.servers);
@@ -261,6 +276,8 @@ async function retryInBackground() {
   connecting = true;
   try {
     const result = await resolveServer({ configDir: configDir() });
+    serverKnown = networkServerKnown(result);
+    updateTray();
     if (result.status === 'ok' && alive()) {
       retried = false;
       openServer(result.url);
@@ -351,12 +368,7 @@ ipcMain.handle('server:submit', async (event, text) => {
 
 ipcMain.handle('server:host', async (event) => {
   if (!isTrustedSender(event.senderFrame?.url, connectFileUrl)) return { error: 'İzin verilmedi' };
-  try {
-    await enableServerMode();
-    return { ok: true };
-  } catch {
-    return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
-  }
+  return requestServerMode();
 });
 
 function start() {
@@ -380,7 +392,7 @@ function start() {
       showWindow,
       changeServer,
       uninstall: uninstallEverything,
-      hostServer: () => enableServerMode().catch(() => {}),
+      hostServer: () => requestServerMode().catch(() => {}),
       stopHosting: disableServerMode,
       quit: async () => {
         quitting = true;
