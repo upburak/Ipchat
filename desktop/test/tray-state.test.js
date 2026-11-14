@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyState, alertCount, tooltipLines } from '../src/tray-state.js';
+import { applyState, alertCount, tooltipLines, connectionLine } from '../src/tray-state.js';
 
 test('applyState reports no change for equal values and arrays', () => {
   const state = { running: true, urls: ['a', 'b'], badge: 2 };
@@ -43,4 +43,18 @@ test('tooltipLines guvenlik duvari uyarisini yalnizca sunucu calisirken ekler', 
 
 test('tooltipLines sessizken bos dizi doner', () => {
   assert.deepEqual(tooltipLines(base), []);
+});
+
+test('connectionLine bagli sunucunun adini yazar', () => {
+  assert.equal(connectionLine({ connected: true, serverLabel: 'mudur-pc' }), 'Bağlı: mudur-pc');
+});
+
+test('connectionLine bagli degilken sabit metin yazar', () => {
+  assert.equal(connectionLine({ connected: false, serverLabel: 'mudur-pc' }), 'Bağlı değil');
+  assert.equal(connectionLine({}), 'Bağlı değil');
+});
+
+test('connectionLine ad bos ise genel bir sozcuk kullanir', () => {
+  assert.equal(connectionLine({ connected: true, serverLabel: '' }), 'Bağlı: sunucu');
+  assert.equal(connectionLine({ connected: true }), 'Bağlı: sunucu');
 });

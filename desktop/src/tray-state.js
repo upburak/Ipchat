@@ -24,3 +24,8 @@ export function tooltipLines(state) {
   if (state.running && state.warning) lines.push('Güvenlik duvarı kurum ilkesiyle yönetiliyor');
   return lines;
 }
+
+export function connectionLine(state) {
+  if (!state.connected) return 'Bağlı değil';
+  return `Bağlı: ${state.serverLabel || 'sunucu'}`;
+}

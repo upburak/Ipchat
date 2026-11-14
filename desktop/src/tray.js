@@ -6,7 +6,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const image = (name) =>
   nativeImage.createFromPath(path.join(here, '..', 'assets', name)).resize({ width: 18, height: 18 });
 
-import { applyState, alertCount, tooltipLines } from './tray-state.js';
+import { applyState, alertCount, tooltipLines, connectionLine } from './tray-state.js';
 
 export function createTray({ showWindow, changeServer, uninstall, hostServer, stopHosting, quit, isAutoStart, setAutoStart }) {
   const normalIcon = image('icon.png');
@@ -16,10 +16,10 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
   const tray = new Tray(normalIcon);
   tray.setToolTip('Ipchat');
 
-  const state = { running: false, urls: [], badge: 0, unread: 0, warning: false, networkServerKnown: false };
+  const state = { running: false, urls: [], badge: 0, unread: 0, warning: false, networkServerKnown: false, connected: false, serverLabel: '' };
 
   const rebuild = () => {
-    const items = [{ label: 'Aç', click: showWindow }, { type: 'separator' }];
+    const items = [{ label: connectionLine(state), enabled: false }, { label: 'Aç', click: showWindow }, { type: 'separator' }];
     if (state.running) {
       items.push({ label: 'Sunucu: Çalışıyor', enabled: false });
       for (const url of state.urls) {
@@ -35,7 +35,7 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
           ? { label: 'Ağda zaten bir sunucu var', enabled: false }
           : { label: 'Bu bilgisayarı sunucu yap', click: hostServer }
       );
-      items.push({ label: 'Sunucuyu değiştir', click: changeServer });
+      items.push({ label: 'Başka bir sunucuya bağlan…', click: changeServer });
     }
     items.push(
       { type: 'separator' },
@@ -48,6 +48,7 @@ export function createTray({ showWindow, changeServer, uninstall, hostServer, st
           rebuild();
         },
       },
+      { type: 'separator' },
       { label: process.platform === 'win32' ? 'Ipchat\'i kaldır…' : 'Ipchat\'i tamamen kaldır…', click: uninstall },
       { label: 'Çık', click: quit }
     );

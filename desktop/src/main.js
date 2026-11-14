@@ -13,7 +13,7 @@ import { readFirewallPolicy } from './firewall-policy.js';
 import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
 import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
-import { networkServerKnown, HOST_CONFIRM } from './server-guard.js';
+import { networkServerKnown, HOST_CONFIRM, CHANGE_SERVER_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const connectFileUrl = pathToFileURL(path.join(here, 'connect.html')).href;
@@ -31,6 +31,8 @@ let serverHost = null;
 let firewallWarned = false;
 let serverKnown = false;
 let confirmingHost = false;
+let confirmingChange = false;
+let knownServers = [];
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -233,9 +235,22 @@ function showWindow() {
   retryInBackground();
 }
 
+function serverLabelFor(url) {
+  const found = knownServers.find((server) => server.url === url);
+  if (found?.name) return found.name;
+  try {
+    const host = new URL(url).hostname;
+    return ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(host) ? 'bu bilgisayar' : host;
+  } catch {
+    return '';
+  }
+}
+
 function showConnectPage(mode, servers = []) {
   setBadge(0);
   setUnreadCount(0);
+  if (servers.length) knownServers = servers;
+  tray?.update({ connected: false, serverLabel: '' });
   const query = { mode };
   if (servers.length) query.servers = JSON.stringify(servers);
   serverUrl = null;
@@ -248,6 +263,7 @@ function openServer(url) {
   setUnreadCount(0);
   serverUrl = url;
   onConnectPage = false;
+  tray?.update({ connected: true, serverLabel: serverLabelFor(url) });
   win.loadURL(url).catch(() => {});
 }
 
@@ -296,8 +312,18 @@ async function retryInBackground() {
   }
 }
 
-function changeServer() {
-  disableServerMode();
+async function changeServer() {
+  if (confirmingChange) return;
+  confirmingChange = true;
+  try {
+    // Pencere tepsiye gizliyken ona bagli pencere (sheet) macOS'ta hic gorunmeyebilir.
+    const parent = alive() && win.isVisible() ? win : undefined;
+    const { response } = await dialog.showMessageBox(parent, CHANGE_SERVER_CONFIRM);
+    if (response !== 0) return;
+    await disableServerMode();
+  } finally {
+    confirmingChange = false;
+  }
 }
 
 function createWindow() {

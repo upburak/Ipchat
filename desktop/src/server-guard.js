@@ -23,3 +23,13 @@ export const HOST_CONFIRM = {
   defaultId: 1,
   cancelId: 1,
 };
+
+export const CHANGE_SERVER_CONFIRM = {
+  type: 'question',
+  title: 'Ipchat',
+  message: 'Şu anki sunucuyla bağlantın kesilecek.',
+  detail: 'Başka bir Ipchat sunucusuna bağlanmak için yeniden arama ekranı açılır. Devam edilsin mi?',
+  buttons: ['Devam et', 'Vazgeç'],
+  defaultId: 1,
+  cancelId: 1,
+};
