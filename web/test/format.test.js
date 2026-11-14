@@ -14,10 +14,17 @@ test('messageTime dizeyi UTC sayar ve 24 saat bicimiyle yazar', () => {
     hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(new Date('2026-11-14T09:03:00Z'));
   assert.equal(messageTime(UTC), beklenen);
+  assert.equal(messageTime(UTC), '12:03');
 });
 
 test('messageTime gecersiz girdide bos doner', () => {
-  for (const v of [null, undefined, '', 'abc', {}]) assert.equal(messageTime(v), '');
+  for (const v of [null, undefined, '', 'abc', {}, [], 42, '2026-13-45 99:99:99', '2026-02-30 10:00:00']) {
+    assert.equal(messageTime(v), '');
+  }
+  for (const v of ['2026-13-45 99:99:99', '2026-02-30 10:00:00']) {
+    assert.equal(dayKey(v), '');
+    assert.equal(dayLabel(v), '');
+  }
 });
 
 test('dayKey ayni gunun iki mesajinda esittir, ertesi gunde farklidir', () => {
@@ -31,6 +38,8 @@ test('dayLabel bugun ve dun icin kelime, oncesi icin tarih yazar', () => {
   assert.equal(dayLabel('2026-11-14 09:03:00', now), 'Bugün');
   assert.equal(dayLabel('2026-11-13 09:03:00', now), 'Dün');
   assert.equal(dayLabel('2026-11-12 09:03:00', now), '12 Kasım');
+  // 13 Kasim 22:00 UTC = 14 Kasim 01:00 Istanbul, yani "Bugün"
+  assert.equal(dayLabel('2026-11-13 22:00:00', now), 'Bugün');
 });
 
 test('dayLabel farkli yilda yili da yazar', () => {

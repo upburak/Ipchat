@@ -18,7 +18,15 @@ function parseUtc(createdAt) {
   if (!m) return null;
   const [, y, mo, d, h, mi, s] = m.map(Number);
   const date = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
-  return Number.isNaN(date.getTime()) ? null : date;
+  // Date.UTC tasmayi sessizce ileri alir (2026-02-30 -> 2 Mart); gecersiz alan
+  // icin geri okuma eslesmez, o zaman null.
+  const roundTrip = [
+    date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(),
+    date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(),
+  ];
+  const parsed = [y, mo, d, h, mi, s];
+  if (roundTrip.some((v, i) => v !== parsed[i])) return null;
+  return date;
 }
 
 function localDayKey(date) {
