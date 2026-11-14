@@ -3,15 +3,18 @@ import { dialogOutcome } from '../lib/dialog.js';
 
 export default function ConfirmDialog({ message, confirmLabel, onConfirm, onCancel }) {
   const cancelRef = useRef(null);
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
 
+  // Yalnizca acilista calisir: ust bilesen her 3 sn yeniden cizilse de odak calinmaz.
   useEffect(() => {
     cancelRef.current?.focus();
     function onKey(e) {
-      if (dialogOutcome({ key: e.key }) === 'cancel') onCancel();
+      if (dialogOutcome({ key: e.key }) === 'cancel') onCancelRef.current();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onCancel]);
+  }, []);
 
   function onOverlayClick(e) {
     if (dialogOutcome({ isBackdrop: e.target === e.currentTarget }) === 'cancel') onCancel();
