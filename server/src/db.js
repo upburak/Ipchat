@@ -61,6 +61,17 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_messages_conversation
     ON messages (recipient_type, recipient_id, sender_id);
+
+  CREATE TABLE IF NOT EXISTS read_state (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('user','group')),
+    peer_id INTEGER NOT NULL,
+    last_read_id INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, kind, peer_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_messages_unread
+    ON messages (recipient_type, recipient_id, id);
 `);
 
 migrate(db);

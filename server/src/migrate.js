@@ -1,3 +1,5 @@
+import { ensureUnreadBaseline } from './unread-baseline.js';
+
 export function migrate(db) {
   const columns = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
 
@@ -20,4 +22,6 @@ export function migrate(db) {
   if (!hasAdmin) {
     db.exec('UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users)');
   }
+
+  ensureUnreadBaseline(db);
 }
