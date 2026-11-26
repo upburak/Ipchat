@@ -108,5 +108,7 @@ NSIS'te `server-data` hariç silmenin nasıl yazılacağı (klasörü geçici bi
 ## 9. Riskler
 
 - NSIS betiği yalnızca CI'da derlenip gerçek Windows'ta elle denenebiliyor; `server-data` hariç silme mantığı orada doğrulanmalı. Yanlış yazılırsa ya veri silinir ya da artık kalır — ikisi de sessizce olur.
+
+  > **Sonuç (2026-11-26):** sunucu bilgisayarında gerçek Windows'ta denendi ve doğru çalıştı: `server-data` korundu, geçici klasör kalmadı, yeniden kurulumdan sonra eski hesapla giriş yapıldı ve eski yazışma sohbet ekranında göründü. İstemci bilgisayarındaki kaldırma hâlâ denenmedi.
 - "Sunucu mu?" tespiti klasörün varlığına dayanır. Sunucu modu açılıp hemen kapatılmış bir istemcide klasör kalmış olabilir; o bilgisayarda birkaç KB veri korunur. Zararsız tarafta hata.
 - Kaldırma sırasında uygulama çalışıyorsa dosya kilitli olabilir; mevcut `taskkill` adımı korunmalı ve silmeden önce çalışmalı.

@@ -1,7 +1,7 @@
 # Arayüz Ergonomisi (kısa tasarım)
 
 Tarih: 2026-11-14
-Durum: onay bekliyor
+Durum: onaylandı (kullanıcı 2026-11-14); 0.4.0 olarak yayınlandı, okuldaki Windows bilgisayarlarda denendi (26 Kasım) ve `main`'e alındı
 Öncesi: `2026-11-14-okunmamis-mesaj-ve-sunucu-korumasi-design.md` (0.3.0)
 
 ## 1. Amaç ve neden
@@ -80,6 +80,8 @@ Görsel kimliğin baştan tasarlanması, yeni renk paleti/tipografi sistemi, kar
 ### 7.6 Okunabilirlik (tüm ekranlar)
 
 - Sönük yazı rengi `--muted` **`#8b93a7` → `#6b7280`** olur (beyaz üzerinde kontrast ~3:1'den ~4.6:1'e çıkar, standardı geçer).
+
+  > **Düzeltme (2026-11-14, inceleme sırasında):** `#6b7280` beyaz zemine göre hesaplanmıştı; uygulamanın zemini (`--bg`) beyaz değil ve orada kontrast 4.40:1'de kalıyordu. Uygulanan değer **`#656c7a`** oldu. `--danger` da aynı sebeple `#b91c1c`'ye koyulaştırıldı.
 - İşlem düğmelerinin tıklama alanı **en az 32px yükseklik**.
 - Hata metinleri `0.85rem` → `0.9rem`.
 
