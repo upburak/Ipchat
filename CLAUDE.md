@@ -37,6 +37,11 @@ GitHub Actions "Masaustu uygulamasi (Windows ve Mac)" iş akışı derler ve Rel
 - Commit mesajının sonuna `Co-Authored-By` satırı eklenir (ortamın verdiği ifadeyle).
 - Herkese açık işlemler (Release oluşturma, `main`'e push) kullanıcının isteğiyle yapılır; repo public.
 - Doğrulamadığın şeyi doğrulanmış gibi yazma; hangi testin elle/gerçek ortamda yapıldığını söyle.
+- **`main`'e her alıştan sonra belgeler sorulmadan güncellenir** (kullanıcının kalıcı isteği, 26 Kasım 2026). Birleştirmeyle aynı turda, ayrı bir commit olarak:
+  1. **README → Sürüm geçmişi** tablosuna yeni sürümün satırı eklenir: sürüm no, tarih, kullanıcının anlayacağı dille ne geldiği, ve **gerçek bilgisayarda denenip denenmediği**. Denenmeyeni "denenmedi" diye yaz; tahminle "çalışıyor" yazma.
+  2. README'nin **eskiyen yerleri** düzeltilir: kullanım ve kaldırma anlatımı, `Yayın` bölümündeki örnek etiket (bir sonraki sürüm no olacak), `Sınırlar`.
+  3. CLAUDE.md'deki **"Güncel durum"** ve ilgili tasarım belgesinin **Durum** satırı güncellenir.
+  4. **Release açıklaması metni hazırlanıp kullanıcıya yapıştırması için verilir.** Bu ortamdaki GitHub araçları Release'i okuyabilir ama **metnini değiştiremez** (`gh` yalnızca arama için kullanılabilir). Metin: bu sürümde ne geldiği, denenip denenmediği, Windows/Mac kurulum adımları (Mac'te `xattr -cr /Applications/Ipchat.app` dahil) ve README'nin sürüm geçmişine bağlantı.
 
 ## Bilinen tuzaklar (bunlar vakit kaybettirdi)
 
