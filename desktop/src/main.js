@@ -13,6 +13,7 @@ import { readFirewallPolicy } from './firewall-policy.js';
 import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
 import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
+import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData } from './cleanup.js';
 import { networkServerKnown, HOST_CONFIRM, CHANGE_SERVER_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -119,18 +120,19 @@ async function uninstallEverything() {
     dialog.showMessageBox({ type: 'info', title: 'Ipchat', message: 'Bu işlem şu an kullanılamıyor.', detail: blocked });
     return;
   }
-  const { response, checkboxChecked } = await dialog.showMessageBox({
+  // Sunucu verisi dosya sisteminden okunur (sunucu modu kapalıyken de veri durabilir); silmeden önce.
+  const serverDataPath = path.join(configDir(), 'server-data');
+  let entries = null;
+  try {
+    entries = fs.readdirSync(serverDataPath);
+  } catch {
+    entries = null;
+  }
+  const keepServerData = hasServerData(entries);
+  const { response } = await dialog.showMessageBox({
     type: 'question',
     title: 'Ipchat',
-    message: 'Ipchat tamamen kaldırılsın mı?',
-    detail:
-      "Sunucu durdurulur, otomatik başlatma kaldırılır ve uygulama Çöp Kutusu'na taşınır." +
-      (serverHost ? ' Bu bilgisayar sunucu olduğu için, geçmişi silersen tüm kullanıcıların hesapları ve mesajları da silinir.' : ''),
-    buttons: ['Kaldır', 'Vazgeç'],
-    defaultId: 0,
-    cancelId: 1,
-    checkboxLabel: 'Sohbet geçmişi ve ayarlar da silinsin (geri alınamaz)',
-    checkboxChecked: true,
+    ...uninstallConfirm(keepServerData, serverDataPath),
   });
   if (response !== 0) return;
   quitting = true;
@@ -151,12 +153,10 @@ async function uninstallEverything() {
       return;
     }
   }
-  if (checkboxChecked) {
-    spawn('/bin/sh', ['-c', 'sleep 2; rm -rf "$1"', 'sh', app.getPath('userData')], {
-      detached: true,
-      stdio: 'ignore',
-    }).unref();
-  }
+  spawn('/bin/sh', purgeArgs(app.getPath('userData'), keepServerData), {
+    detached: true,
+    stdio: 'ignore',
+  }).unref();
   app.exit(0);
 }
 
@@ -420,6 +420,14 @@ function start() {
     if (app.isPackaged && !config.autostartInitialized) {
       app.setLoginItemSettings(loginItemSettings(true));
       saveConfig(configDir(), { ...config, autostartInitialized: true });
+    }
+    if (process.platform === 'darwin' && app.isPackaged && shouldShowInstallNotice(loadConfig(configDir()))) {
+      dialog.showMessageBox({ type: 'info', title: 'Ipchat', ...INSTALL_NOTICE });
+      try {
+        saveConfig(configDir(), { ...loadConfig(configDir()), installNoticeShown: true });
+      } catch {
+        /* ayar yazılamadıysa bildirim bir sonraki açılışta tekrar görünür; uygulama açılmaya devam eder */
+      }
     }
     tray = createTray({
       showWindow,
