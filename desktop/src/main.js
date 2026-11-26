@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { resolveServer, isReachable } from './resolve-server.js';
+import { resolveServer } from './resolve-server.js';
+import { verifyServer } from './verify-server.js';
+import { getPinned, withConnection, withoutServer, readLocalIdentity } from './identity-store.js';
+import { connectAction, confirmAction, ownServerAction } from './connect-policy.js';
 import { loadConfig, saveConfig } from './config.js';
 import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions, webPreferences } from './window-options.js';
@@ -20,6 +23,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const connectFileUrl = pathToFileURL(path.join(here, 'connect.html')).href;
 const RETRY_INTERVAL_MS = 10_000;
 const HOST_PORT = 3000;
+const LOCAL_URL = `http://127.0.0.1:${HOST_PORT}`;
 
 let win = null;
 let tray = null;
@@ -195,11 +199,39 @@ async function hostServer() {
   checkFirewall();
 }
 
-async function enableServerMode() {
+// Bağlanılan sunucuyu (adres ve kimlik) kaydeder. identity: nesne = sabitle, null = sabitlemeyi sil,
+// undefined = dokunma. Ayar yazılamasa da bağlanmaya devam edilir.
+function rememberConnection(url, identity, extra = {}) {
+  try {
+    saveConfig(configDir(), { ...withConnection(loadConfig(configDir()), url, identity), ...extra });
+  } catch {
+    /* ayar yazilamasa da baglanmaya devam et */
+  }
+}
+
+// Kendi sunucumuz (sunucu modu): alt süreci başlatır, kimliği server-data'daki identity.pub'dan
+// okur ve 127.0.0.1 yanıtının bu kimlikle eşleşmesini ister (aynı portu başka bir süreç tutuyorsa
+// eşleşmez, bağlanılmaz). Eşleşirse sorusuz hatırlanır. Başarıda true, aksi halde false döner.
+async function openOwnServer(extra = {}) {
   await hostServer();
-  saveConfig(configDir(), { ...loadConfig(configDir()), serverMode: true, lastServer: `http://127.0.0.1:${HOST_PORT}` });
+  const own = readLocalIdentity(path.join(configDir(), 'server-data'));
+  const action = own ? ownServerAction(await verifyServer(LOCAL_URL, own)) : { action: 'fail' };
+  if (action.action !== 'open') {
+    // Zaten bağlantı sayfasındaysak yeniden yükleme: sayfadaki hata satırı kaybolmasın.
+    if (alive() && !onConnectPage) showConnectPage('manual');
+    return false;
+  }
+  rememberConnection(LOCAL_URL, action.identity, extra);
   retried = false;
-  openServer(`http://127.0.0.1:${HOST_PORT}`);
+  if (alive()) openServer(LOCAL_URL);
+  return true;
+}
+
+async function enableServerMode() {
+  if (!(await openOwnServer({ serverMode: true }))) {
+    return { error: 'Bu bilgisayardaki sunucunun kimliği doğrulanamadı; sunucuya bağlanılmadı' };
+  }
+  return undefined;
 }
 
 async function requestServerMode() {
@@ -210,8 +242,8 @@ async function requestServerMode() {
     const parent = alive() && win.isVisible() ? win : undefined;
     const { response } = await dialog.showMessageBox(parent, HOST_CONFIRM);
     if (response !== 0) return { cancelled: true };
-    await enableServerMode();
-    return { ok: true };
+    const failed = await enableServerMode();
+    return failed ?? { ok: true };
   } catch {
     return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
   } finally {
@@ -220,7 +252,8 @@ async function requestServerMode() {
 }
 
 async function disableServerMode() {
-  saveConfig(configDir(), { ...loadConfig(configDir()), serverMode: false, lastServer: undefined });
+  // Adresle birlikte hatırlanan kimlik de silinir; yoksa eski kendi sunucusu yüzünden uyarı görülürdü.
+  saveConfig(configDir(), { ...withoutServer(loadConfig(configDir())), serverMode: false });
   await serverHost?.stop();
   serverHost = null;
   updateTray();
@@ -248,13 +281,16 @@ function serverLabelFor(url) {
   }
 }
 
-function showConnectPage(mode, servers = []) {
+// extra: kimliği değişen sunucu ({ url, name, fingerprint, legacy }), 'changed' ekranı için.
+function showConnectPage(mode, servers = [], extra) {
   setBadge(0);
   setUnreadCount(0);
   if (servers.length) knownServers = servers;
+  else if (extra?.url && extra?.name) knownServers = [{ url: extra.url, name: extra.name }];
   tray?.update({ connected: false, serverLabel: '' });
   const query = { mode };
   if (servers.length) query.servers = JSON.stringify(servers);
+  if (extra) query.changed = JSON.stringify(extra);
   serverUrl = null;
   onConnectPage = true;
   win.loadFile(path.join(here, 'connect.html'), { query }).catch(() => {});
@@ -275,8 +311,7 @@ async function connectToServer() {
   try {
     if (loadConfig(configDir()).serverMode) {
       try {
-        await hostServer();
-        if (alive()) openServer(`http://127.0.0.1:${HOST_PORT}`);
+        await openOwnServer();
         return;
       } catch {
         if (alive()) showConnectPage('manual');
@@ -287,8 +322,15 @@ async function connectToServer() {
     serverKnown = networkServerKnown(result);
     updateTray();
     if (!alive()) return;
-    if (result.status === 'ok') openServer(result.url);
-    else showConnectPage(result.status, result.servers);
+    if (result.status === 'ok') {
+      rememberConnection(result.url, result.identity);
+      openServer(result.url);
+    } else if (result.status === 'changed') {
+      const { url, name, fingerprint, legacy } = result;
+      showConnectPage('changed', [], { url, name, fingerprint, legacy });
+    } else {
+      showConnectPage(result.status, result.servers);
+    }
   } catch {
     if (alive()) showConnectPage('manual');
   } finally {
@@ -303,7 +345,9 @@ async function retryInBackground() {
     const result = await resolveServer({ configDir: configDir() });
     serverKnown = networkServerKnown(result);
     updateTray();
+    // Yalnızca 'ok' işlenir; 'changed' arka planda ekran açmaz (kullanıcı zaten bağlantı sayfasında).
     if (result.status === 'ok' && alive()) {
+      rememberConnection(result.url, result.identity);
       retried = false;
       openServer(result.url);
     }
@@ -390,12 +434,34 @@ ipcMain.handle('server:submit', async (event, text) => {
   } catch (err) {
     return { error: err.message };
   }
-  if (!(await isReachable(url))) return { error: 'Bu adreste Ipchat sunucusu bulunamadı' };
-  try {
-    saveConfig(configDir(), { ...loadConfig(configDir()), lastServer: url });
-  } catch {
-    /* ayar yazilamasa da baglanmaya devam et */
+  // verifyServer'a yalnızca normalizeServerUrl çıktısı (http://host:port) verilir.
+  const action = connectAction(await verifyServer(url, getPinned(loadConfig(configDir()))));
+  if (action.action === 'confirm') {
+    // Kimlik değişmiş: bağlanılmaz, hiçbir şey yazılmaz; sayfa onay ekranını gösterir.
+    return { confirm: { url, name: serverLabelFor(url), ...action.info } };
   }
+  if (action.action !== 'open') return { error: action.message };
+  rememberConnection(url, action.identity);
+  retried = false;
+  openServer(url);
+  return { ok: true };
+});
+
+// Kullanıcı "Bağlan ve yeni sunucuyu hatırla" dedi: yeni nonce ile yeniden doğrula ve yalnızca
+// kullanıcının gördüğü kimlik (kısa parmak izi; eski sunucu için '') hâlâ aynıysa bağlan.
+ipcMain.handle('server:confirm', async (event, text, shown) => {
+  if (!isTrustedSender(event.senderFrame?.url, connectFileUrl)) return { error: 'İzin verilmedi' };
+  if (typeof text !== 'string' || typeof shown !== 'string') return { error: 'Geçersiz istek' };
+  let url;
+  try {
+    url = normalizeServerUrl(text);
+  } catch (err) {
+    return { error: err.message };
+  }
+  const action = confirmAction(await verifyServer(url, getPinned(loadConfig(configDir()))), shown);
+  if (action.action !== 'open') return { error: action.message };
+  // Legacy onayında identity null: eski hatırlanan kimlik silinir.
+  rememberConnection(url, action.identity);
   retried = false;
   openServer(url);
   return { ok: true };

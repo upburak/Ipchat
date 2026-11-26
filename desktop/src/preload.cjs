@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ipchat', {
   submitServer: (text) => ipcRenderer.invoke('server:submit', text),
+  confirmServer: (url, fingerprint) => ipcRenderer.invoke('server:confirm', url, fingerprint),
   hostServer: () => ipcRenderer.invoke('server:host'),
   notify: (payload) => ipcRenderer.invoke('app:notify', payload),
   setBadge: (count) => ipcRenderer.invoke('app:badge', count),

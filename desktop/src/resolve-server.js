@@ -4,17 +4,6 @@ import { verifyServer } from './verify-server.js';
 import { getPinned } from './identity-store.js';
 import { shortFingerprint } from './identity.js';
 
-// Eski yol: yalnızca main.js kullanıyor (Task 7'de kalkacak). Davranışı değişmedi.
-export async function isReachable(url, timeoutMs = 1500) {
-  try {
-    const res = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(timeoutMs) });
-    const data = await res.json();
-    return data?.app === 'ipchat';
-  } catch {
-    return false;
-  }
-}
-
 function hostnameOf(url) {
   try {
     return new URL(url).hostname;

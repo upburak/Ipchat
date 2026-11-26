@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>Ipchat</title>
 <style>
-  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f8; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f8; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px 0; box-sizing: border-box; }
   .card { background: #fff; border-radius: 12px; padding: 28px; width: 360px; box-shadow: 0 4px 24px rgba(29,36,51,.08); }
   h1 { margin: 0 0 8px; font-size: 22px; }
   p { color: #8b93a7; margin: 0 0 16px; font-size: 14px; }
@@ -13,7 +13,12 @@
   button { border: 0; background: #6366f1; color: #fff; cursor: pointer; }
   button.server { background: #eef0ff; color: #4f46e5; text-align: left; }
   button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible { outline: 2px solid #1d2433; outline-offset: 2px; }
   .error { color: #ef4444; font-size: 13px; min-height: 18px; }
+  h2 { margin: 0 0 10px; font-size: 17px; color: #1d2433; }
+  #changed p { color: #4b5263; }
+  #changed .detail { color: #1d2433; overflow-wrap: anywhere; }
+  .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #fff4e5; color: #9a4a00; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -30,6 +35,14 @@
       <button type="submit">Bağlan</button>
     </form>
   </div>
+  <div id="changed" hidden>
+    <h2 id="changed-title"></h2>
+    <p>Sunucu bilgisayarı değiştirildiyse ya da Ipchat yeniden kuruldu ve veriler silindiyse bu normaldir. Böyle bir şey beklemiyorsan <strong>bağlanma</strong>; ağdaki başka bir bilgisayar sunucu gibi davranıyor olabilir.</p>
+    <p class="detail">Sunucu: <em id="changed-name"></em> (<em id="changed-url"></em>)</p>
+    <p class="detail" id="changed-fp-line">Kimlik: <span id="changed-fp"></span></p>
+    <button id="changed-cancel" type="button">Vazgeç</button>
+    <button id="changed-confirm" class="server" type="button">Bağlan ve yeni sunucuyu hatırla</button>
+  </div>
   <button id="host" class="server" type="button">Bu bilgisayar sunucu olsun</button>
   <p id="host-note" hidden>Yukarıdaki sunuculardan birine bağlan. İkinci bir sunucu kurarsan kullanıcılar birbirini göremez.</p>
   <div class="error" id="error"></div>
@@ -45,12 +58,62 @@
     try {
       const result = await window.ipchat.submitServer(text);
       errorEl.textContent = result && result.error ? result.error : '';
+      if (result && result.confirm) showChanged(result.confirm);
     } catch (err) {
       errorEl.textContent = 'Bağlanılamadı';
     } finally {
       busy = false;
     }
   }
+  // Kimliği değişen sunucu için onay ekranı. Ad ve adres ağdan gelir: yalnızca textContent.
+  const changedEl = document.getElementById('changed');
+  const otherViews = ['choose', 'manual', 'host', 'host-note'].map((id) => document.getElementById(id));
+  let changedInfo = null;
+  let hiddenBefore = [];
+  function showChanged(info) {
+    if (!info || typeof info.url !== 'string' || info.url === '') return;
+    const legacy = info.legacy === true;
+    const fingerprint = !legacy && typeof info.fingerprint === 'string' ? info.fingerprint : '';
+    changedInfo = { url: info.url, fingerprint };
+    document.getElementById('changed-title').textContent = legacy
+      ? 'Bu sunucu kimlik bilgisi vermiyor (eski sürüm olabilir).'
+      : 'Bu sunucu daha önce bağlandığın sunucu değil.';
+    document.getElementById('changed-name').textContent = typeof info.name === 'string' && info.name ? info.name : info.url;
+    document.getElementById('changed-url').textContent = info.url;
+    document.getElementById('changed-fp').textContent = fingerprint;
+    document.getElementById('changed-fp-line').hidden = legacy || !fingerprint;
+    if (changedEl.hidden) hiddenBefore = otherViews.map((el) => el.hidden);
+    otherViews.forEach((el) => { el.hidden = true; });
+    changedEl.hidden = false;
+    document.getElementById('changed-cancel').focus();
+  }
+  function hideChanged() {
+    changedEl.hidden = true;
+    changedInfo = null;
+    otherViews.forEach((el, i) => { el.hidden = hiddenBefore[i]; });
+    errorEl.textContent = '';
+    document.getElementById('addr').focus();
+  }
+  document.getElementById('changed-cancel').addEventListener('click', () => {
+    if (busy) return;
+    hideChanged();
+  });
+  document.getElementById('changed-confirm').addEventListener('click', async () => {
+    if (busy || !changedInfo) return;
+    busy = true;
+    const buttons = changedEl.querySelectorAll('button');
+    buttons.forEach((b) => { b.disabled = true; });
+    errorEl.textContent = 'Bağlanılıyor...';
+    try {
+      const result = await window.ipchat.confirmServer(changedInfo.url, changedInfo.fingerprint);
+      errorEl.textContent = result && result.error ? result.error : '';
+    } catch (err) {
+      errorEl.textContent = 'Bağlanılamadı';
+    } finally {
+      buttons.forEach((b) => { b.disabled = false; });
+      busy = false;
+    }
+  });
   if (params.get('mode') === 'choose') {
     document.getElementById('choose').hidden = false;
     document.getElementById('manual-text').textContent = 'Ya da adresi elle yaz:';
@@ -59,6 +122,12 @@
       const b = document.createElement('button');
       b.className = 'server';
       b.textContent = s.name ? s.name + '  (' + s.url + ')' : s.url;
+      if (s.unfamiliar === true) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = 'Tanımadığın sunucu';
+        b.appendChild(tag);
+      }
       b.addEventListener('click', () => connect(s.url));
       document.getElementById('list').appendChild(b);
     }
@@ -68,6 +137,15 @@
       hostButton.textContent = 'Ağda zaten bir sunucu var';
       document.getElementById('host-note').hidden = false;
     }
+  }
+  if (params.get('mode') === 'changed') {
+    let info = null;
+    try {
+      info = JSON.parse(params.get('changed') || 'null');
+    } catch (err) {
+      info = null;
+    }
+    showChanged(info);
   }
   document.getElementById('host').addEventListener('click', async () => {
     if (busy) return;
