@@ -2,16 +2,8 @@
 // main.js ve kurulum betiği bu dosyadan karar ve metin alır.
 import path from 'node:path';
 
-// Yalnızca Mac'te gösterilir (Windows metni installer.nsh içinde ayrı).
-export const INSTALL_NOTICE = {
-  message: 'Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz.',
-  detail:
-    'Program, ayarlar ve otomatik başlatma kaydı silinir.\n\n' +
-    'Kaldırmak için tepsi menüsünden "Ipchat\'i tamamen kaldır…" seçeneğini kullan; uygulamayı yalnızca Çöp Kutusu\'na atmak veriyi geride bırakır.\n\n' +
-    'Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.',
-};
-
 // İlk açılış ekranındaki kaldırma kuralı; metin platforma göre değişir (tasarım §7.1, §7.4.1).
+// Mac'teki eski ayrı ilk açılış bildirimi (INSTALL_NOTICE) bu ekranla birleşti.
 // Sunucu cümlesi ikisinde de aynıdır. Windows dışındaki bilinmeyen değerler Windows metnini alır.
 const SERVER_KEPT_SENTENCE =
   'Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.';
@@ -68,10 +60,6 @@ export function purgeArgs(userDataDir, keepServerData, delaySeconds = 2) {
     ? `${wait}; find -- "$1" -mindepth 1 -maxdepth 1 ! -name server-data -exec rm -rf {} +`
     : `${wait}; rm -rf -- "$1"`;
   return ['-c', script, 'ipchat-purge', userDataDir];
-}
-
-export function shouldShowInstallNotice(config) {
-  return !config?.installNoticeShown;
 }
 
 // Kural: yalnızca server-data'nın olmadığından eminsek istemci sayılır (ENOENT).

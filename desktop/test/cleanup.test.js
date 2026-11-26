@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, writeFileSync,
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice, removalRule } from '../src/cleanup.js';
+import { uninstallConfirm, purgeArgs, hasServerData, leftoverServerDataNotice, removalRule } from '../src/cleanup.js';
 
 // Gerçek kabukta çalıştırılan temizlik: metin testleri yanlış betiği de geçirebilir.
 function makeFixture() {
@@ -19,11 +19,13 @@ function makeFixture() {
   return { root, dir };
 }
 
-test('kurulum metni iz birakmamayi ve sunucu istisnasini soyler', () => {
-  const t = `${INSTALL_NOTICE.message} ${INSTALL_NOTICE.detail}`;
-  assert.match(t, /iz bırakmaz/);
-  assert.match(t, /otomatik başlatma/);
-  assert.match(t, /hesapları ve mesaj geçmişi silinmez/);
+// Eski Mac INSTALL_NOTICE testleri ilk açılış ekranının kaldırma kuralına taşındı.
+test('kaldirma kurali iz birakmamayi ve otomatik baslatmanin silinecegini her platformda soyler', () => {
+  for (const platform of ['darwin', 'win32']) {
+    const t = removalRule(platform);
+    assert.match(t, /iz bırakmaz/, platform);
+    assert.match(t, /otomatik başlatma/, platform);
+  }
 });
 
 test('istemcide onay metni her seyin silinecegini ve geri alinamayacagini soyler', () => {
@@ -97,11 +99,10 @@ test('istemci onayi gelecek zamanda yazilir', () => {
   assert.match(uninstallConfirm(false, '/x').message, /silinecek/);
 });
 
-test('kurulum metni Mac icin: guvenlik duvari yok, Cop Kutusu uyarisi var', () => {
-  const t = INSTALL_NOTICE.detail;
+test('Mac kaldirma kurali: guvenlik duvari ve kayit defteri yok, tepsideki kaldirma secenegi var', () => {
+  const t = removalRule('darwin');
   assert.doesNotMatch(t, /güvenlik duvarı|kayıt defteri/);
   assert.match(t, /Ipchat'i tamamen kaldır/);
-  assert.match(t, /Çöp Kutusu/);
 });
 
 test('onceki kaldirmadan kalan gecici klasor yoksa uyari yok', () => {
@@ -139,12 +140,6 @@ test('istemci temizligi gercek kabukta tum klasoru siler', () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-});
-
-test('ilk acilis bildirimi yalnizca bir kez gosterilir', () => {
-  assert.equal(shouldShowInstallNotice({}), true);
-  assert.equal(shouldShowInstallNotice({ installNoticeShown: false }), true);
-  assert.equal(shouldShowInstallNotice({ installNoticeShown: true }), false);
 });
 
 test('removalRule for darwin mentions the tray menu and the Trash but not the firewall', () => {

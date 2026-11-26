@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>Ipchat'i kullanmaya başlamadan önce</title>
+<style>
+  /* connect.html ile aynı yazı tipi, renkler ve kart. Pencere 800x620 sabit. */
+  html, body { height: 100%; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f8; margin: 0; padding: 16px; box-sizing: border-box; color: #1d2433; }
+  .card { background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 4px 24px rgba(29,36,51,.08); height: 100%; box-sizing: border-box; display: flex; flex-direction: column; max-width: 720px; margin: 0 auto; }
+  h1 { margin: 0 0 12px; font-size: 22px; flex: none; }
+  /* Yalnızca metin kayar; onay kutuları ve düğmeler bu alanın dışında, altta sabit durur. */
+  .text { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 8px; font-size: 14px; line-height: 1.5; color: #4b5263; }
+  .text:focus-visible { outline: 2px solid #1d2433; outline-offset: 2px; border-radius: 4px; }
+  .text p { margin: 0 0 12px; }
+  .text ul { margin: 0 0 12px; padding-left: 20px; }
+  .text li { margin-bottom: 6px; }
+  h2 { margin: 16px 0 8px; font-size: 16px; color: #1d2433; }
+  .footer { flex: none; border-top: 1px solid #e6e8ef; padding-top: 12px; margin-top: 8px; }
+  label.check { display: flex; align-items: center; gap: 10px; min-height: 32px; font-size: 14px; cursor: pointer; }
+  label.check input { width: 18px; height: 18px; margin: 0; flex: none; cursor: pointer; }
+  label.check input:disabled, label.check input:disabled + span { cursor: default; opacity: .55; }
+  label.check input:focus-visible { outline: 2px solid #1d2433; outline-offset: 2px; }
+  .actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 8px; }
+  .status { flex: 1; font-size: 13px; min-height: 18px; color: #4b5263; }
+  .status.error { color: #ef4444; }
+  button { min-height: 36px; padding: 8px 18px; border-radius: 8px; font-size: 15px; border: 0; cursor: pointer; }
+  button.primary { background: #6366f1; color: #fff; }
+  button.secondary { background: #eef0ff; color: #4f46e5; }
+  button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible { outline: 2px solid #1d2433; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Ipchat'i kullanmaya başlamadan önce</h1>
+  <div class="text" id="text" tabindex="0" aria-label="Ipchat'in sınırları ve kaldırma kuralı">
+    <p>Ipchat yalnızca okulun kendi yerel ağında çalışır. Mesajlar ve dosyalar internete çıkmaz, bir buluta ya da başka bir şirkete gitmez; yalnızca sunucu olarak seçilen bilgisayarda durur.</p>
+    <p>Bu yapı sade olduğu için bazı sınırları var. Bunlar bir arıza değil, uygulamanın böyle kurulmuş olmasının sonucu:</p>
+    <ul>
+      <li>Veri aynı ağ içinde açık taşınır. Ağa girebilen ve araya girmeyi bilen biri mesajları okuyabilir. Ipchat banka uygulamaları gibi şifreli bir hat kurmaz.</li>
+      <li>Mesajlar ve hesaplar sunucu bilgisayarında durur. O bilgisayara erişen kişi veriye de erişir. O bilgisayarı korumak ve yedeğini almak okulun sorumluluğundadır.</li>
+      <li>Sunucu internete açılmamalıdır. Modemde yönlendirme yapılırsa uygulama dışarıdan erişilebilir hale gelir.</li>
+      <li>Kimlik doğrulama basittir: kullanıcı adı, şifre ve cihaza bağlı PIN. Şifreler paylaşılmamalıdır.</li>
+    </ul>
+    <p>Bu nedenle öğrenci kişisel verileri, sağlık ve kimlik bilgileri, sınav soruları, maaş ve banka bilgileri gibi hassas içerikleri Ipchat üzerinden göndermeyin. Uygulama günlük yazışma ve sıradan iş dosyaları için tasarlandı.</p>
+    <h2>Kaldırma kuralı</h2>
+    <div id="removal"></div>
+  </div>
+  <div class="footer">
+    <label class="check"><input type="checkbox" id="limits" /><span>Yukarıdaki sınırları okudum, anladım.</span></label>
+    <label class="check"><input type="checkbox" id="removal-ok" disabled /><span>Kaldırma kuralını okudum, anladım.</span></label>
+    <div class="actions">
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <button type="button" class="secondary" id="quit">Çık</button>
+      <button type="button" class="primary" id="accept" disabled>Devam et</button>
+    </div>
+  </div>
+</div>
+<script>
+  const limitsBox = document.getElementById('limits');
+  const removalBox = document.getElementById('removal-ok');
+  const acceptButton = document.getElementById('accept');
+  const quitButton = document.getElementById('quit');
+  const statusEl = document.getElementById('status');
+  let busy = false;
+  let accepted = false;
+
+  function showStatus(text, isError) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle('error', Boolean(isError));
+  }
+
+  // "Devam et" yalnızca iki kutu da işaretliyken açıktır.
+  function refresh() {
+    acceptButton.disabled = busy || accepted || !(limitsBox.checked && removalBox.checked);
+  }
+  limitsBox.addEventListener('change', refresh);
+  removalBox.addEventListener('change', refresh);
+
+  // Kaldırma kuralı ana süreçten gelir (platforma göre). Yalnızca textContent: metin HTML sayılmaz.
+  // Metin gelmeden ikinci kutu açılmaz; okunmamış bir kurala onay verilemesin.
+  (async () => {
+    try {
+      const result = await window.ipchat.getWelcomeText();
+      const removal = result && typeof result.removal === 'string' ? result.removal : '';
+      if (!removal) throw new Error('bos');
+      const container = document.getElementById('removal');
+      for (const part of removal.split('\n\n')) {
+        const p = document.createElement('p');
+        p.textContent = part;
+        container.appendChild(p);
+      }
+      removalBox.disabled = false;
+    } catch (err) {
+      showStatus('Kaldırma kuralı yüklenemedi. Ipchat\'i kapatıp yeniden aç.', true);
+    }
+  })();
+
+  acceptButton.addEventListener('click', async () => {
+    if (busy || accepted || !(limitsBox.checked && removalBox.checked)) return;
+    busy = true;
+    refresh();
+    showStatus('Ipchat açılıyor...', false);
+    try {
+      const result = await window.ipchat.acceptWelcome();
+      if (result && result.ok) {
+        accepted = true; // sayfa birazdan bağlantı ekranına geçer; düğme kapalı kalır
+        return;
+      }
+      showStatus(result && result.error ? result.error : 'Devam edilemedi, tekrar dene.', true);
+    } catch (err) {
+      showStatus('Devam edilemedi, tekrar dene.', true);
+    } finally {
+      busy = false;
+      refresh();
+    }
+  });
+
+  // "Çık" hiçbir şey kaydetmez; yalnızca uygulamayı kapatır.
+  quitButton.addEventListener('click', () => {
+    window.ipchat.quitApp();
+  });
+</script>
+</body>
+</html>

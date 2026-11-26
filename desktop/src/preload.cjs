@@ -4,6 +4,10 @@ contextBridge.exposeInMainWorld('ipchat', {
   submitServer: (text) => ipcRenderer.invoke('server:submit', text),
   confirmServer: (url, fingerprint) => ipcRenderer.invoke('server:confirm', url, fingerprint),
   hostServer: () => ipcRenderer.invoke('server:host'),
+  // İlk açılış onayı (yalnızca welcome.html kullanabilir; ana süreç göndericiyi denetler).
+  getWelcomeText: () => ipcRenderer.invoke('welcome:text'),
+  acceptWelcome: () => ipcRenderer.invoke('welcome:accept'),
+  quitApp: () => ipcRenderer.invoke('welcome:quit'),
   notify: (payload) => ipcRenderer.invoke('app:notify', payload),
   setBadge: (count) => ipcRenderer.invoke('app:badge', count),
   setUnread: (count) => ipcRenderer.invoke('app:unread', count),

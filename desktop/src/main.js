@@ -16,11 +16,13 @@ import { readFirewallPolicy } from './firewall-policy.js';
 import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
 import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
-import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice } from './cleanup.js';
+import { uninstallConfirm, purgeArgs, hasServerData, leftoverServerDataNotice, removalRule } from './cleanup.js';
+import { needsWelcome, welcomeRecord } from './welcome.js';
 import { networkServerKnown, HOST_CONFIRM, CHANGE_SERVER_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const connectFileUrl = pathToFileURL(path.join(here, 'connect.html')).href;
+const welcomeFileUrl = pathToFileURL(path.join(here, 'welcome.html')).href;
 const RETRY_INTERVAL_MS = 10_000;
 const HOST_PORT = 3000;
 const LOCAL_URL = `http://127.0.0.1:${HOST_PORT}`;
@@ -45,6 +47,9 @@ const stillCurrent = (startedGeneration, needsConnectPage = false) =>
   isResultCurrent({ startedGeneration, currentGeneration: connectGeneration, alive: Boolean(alive()), needsConnectPage, onConnectPage });
 // Bir bağlanma sürerken gelen connectToServer isteği kaybolmasın: süren iş bitince bir kez çalışır.
 let reconnectPending = false;
+// İlk açılış onayı bekleniyor (tasarım §7.4). Doğruyken yalnızca pencere ve welcome.html vardır:
+// keşif/bağlanma, sunucu modu, otomatik başlatma kaydı, tepsi ve kalıntı uyarısı çalışmaz.
+let welcomePending = false;
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -421,6 +426,14 @@ function createWindow() {
   win.once('ready-to-show', () => win.show());
 
   win.on('close', (event) => {
+    if (welcomePending) {
+      // Onay yokken tepsi de yok: kapatma düğmesi uygulamayı kapatır, arkada onaysız süreç kalmaz.
+      if (!quitting) {
+        quitting = true;
+        app.quit();
+      }
+      return;
+    }
     if (!quitting) {
       event.preventDefault();
       win.hide();
@@ -436,7 +449,8 @@ function createWindow() {
   });
 
   const guardNavigation = (event, url) => {
-    if (shouldAllowNavigation(url, serverUrl, connectFileUrl)) return;
+    // Onay ekranı hiçbir yere gidemez (welcome.html programla yüklenir; loadFile bu olayı tetiklemez).
+    if (!welcomePending && shouldAllowNavigation(url, serverUrl, connectFileUrl)) return;
     event.preventDefault();
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
   };
@@ -461,9 +475,6 @@ function createWindow() {
     retried = true;
     await connectToServer();
   });
-
-  connectToServer();
-  setInterval(retryInBackground, RETRY_INTERVAL_MS).unref();
 }
 
 ipcMain.handle('server:submit', async (event, text) => {
@@ -514,6 +525,79 @@ ipcMain.handle('server:host', async (event) => {
   return requestServerMode();
 });
 
+// Onaydan sonra (ya da onay gerekmiyorsa hemen) çalışan açılış sırası. Normal açılış ve onay sonrası
+// aynı fonksiyonu kullanır, iki yol birbirinden ayrışamaz. Yalnızca bir kez çalışır.
+let startupDone = false;
+function startApp() {
+  if (startupDone) return;
+  startupDone = true;
+  const config = loadConfig(configDir());
+  if (app.isPackaged && !config.autostartInitialized) {
+    app.setLoginItemSettings(loginItemSettings(true));
+    try {
+      saveConfig(configDir(), { ...config, autostartInitialized: true });
+    } catch {
+      /* ayar yazılamadıysa bir sonraki açılışta yeniden kaydedilir; uygulama açılmaya devam eder */
+    }
+  }
+  if (process.platform === 'win32' && app.isPackaged) {
+    // Önceki kaldırma hesapları geçici klasörde bıraktıysa yönetici bilsin; klasöre dokunulmaz.
+    let tmpExists = false;
+    try {
+      tmpExists = fs.existsSync(path.join(path.dirname(configDir()), 'ipchat-server-data-tmp'));
+    } catch {
+      tmpExists = false;
+    }
+    const leftover = leftoverServerDataNotice(configDir(), tmpExists);
+    if (leftover) dialog.showMessageBox({ type: 'warning', title: 'Ipchat', message: leftover.message, detail: leftover.detail });
+  }
+  tray = createTray({
+    showWindow,
+    changeServer,
+    uninstall: uninstallEverything,
+    hostServer: () => requestServerMode().catch(() => {}),
+    stopHosting: disableServerMode,
+    quit: async () => {
+      quitting = true;
+      await serverHost?.stop();
+      app.quit();
+    },
+    isAutoStart: () => app.getLoginItemSettings(loginItemQuery()).openAtLogin,
+    setAutoStart: (value) => app.setLoginItemSettings(loginItemSettings(value)),
+  });
+  if (!alive()) createWindow(); // onay yolunda pencere zaten açık
+  connectToServer();
+  setInterval(retryInBackground, RETRY_INTERVAL_MS).unref();
+}
+
+// İlk açılış onayı köprüleri: yalnızca welcome.html kullanabilir.
+ipcMain.handle('welcome:text', (event) => {
+  if (!isTrustedSender(event.senderFrame?.url, welcomeFileUrl)) return { error: 'İzin verilmedi' };
+  return { removal: removalRule(process.platform) };
+});
+
+ipcMain.handle('welcome:accept', (event) => {
+  if (!isTrustedSender(event.senderFrame?.url, welcomeFileUrl)) return { error: 'İzin verilmedi' };
+  // Onay beklenmiyorsa (zaten verildi) açılış yeniden çalıştırılmaz.
+  if (!welcomePending) return { error: 'Onay zaten verildi' };
+  try {
+    saveConfig(configDir(), { ...loadConfig(configDir()), welcomeAccepted: welcomeRecord(new Date()) });
+  } catch {
+    /* onay kaydedilemedi: bu oturum devam eder, bir sonraki açılışta ekran yeniden çıkar (tasarım §7.4.1) */
+  }
+  welcomePending = false;
+  startApp();
+  return { ok: true };
+});
+
+ipcMain.handle('welcome:quit', (event) => {
+  if (!isTrustedSender(event.senderFrame?.url, welcomeFileUrl)) return { error: 'İzin verilmedi' };
+  // Hiçbir şey kaydedilmez; bir sonraki açılışta ekran yeniden çıkar.
+  quitting = true;
+  app.quit();
+  return { ok: true };
+});
+
 function start() {
   app.on('second-instance', showWindow);
   app.on('activate', showWindow);
@@ -526,45 +610,14 @@ function start() {
   });
 
   app.whenReady().then(() => {
-    const config = loadConfig(configDir());
-    if (app.isPackaged && !config.autostartInitialized) {
-      app.setLoginItemSettings(loginItemSettings(true));
-      saveConfig(configDir(), { ...config, autostartInitialized: true });
+    if (needsWelcome(loadConfig(configDir()), app.isPackaged)) {
+      // Kapı (tasarım §7.4): yalnızca pencere ve onay ekranı. Gerisi welcome:accept'te startApp ile.
+      welcomePending = true;
+      createWindow();
+      win.loadFile(path.join(here, 'welcome.html')).catch(() => {});
+      return;
     }
-    if (process.platform === 'win32' && app.isPackaged) {
-      // Önceki kaldırma hesapları geçici klasörde bıraktıysa yönetici bilsin; klasöre dokunulmaz.
-      let tmpExists = false;
-      try {
-        tmpExists = fs.existsSync(path.join(path.dirname(configDir()), 'ipchat-server-data-tmp'));
-      } catch {
-        tmpExists = false;
-      }
-      const leftover = leftoverServerDataNotice(configDir(), tmpExists);
-      if (leftover) dialog.showMessageBox({ type: 'warning', title: 'Ipchat', message: leftover.message, detail: leftover.detail });
-    }
-    if (process.platform === 'darwin' && app.isPackaged && shouldShowInstallNotice(loadConfig(configDir()))) {
-      dialog.showMessageBox({ type: 'info', title: 'Ipchat', ...INSTALL_NOTICE });
-      try {
-        saveConfig(configDir(), { ...loadConfig(configDir()), installNoticeShown: true });
-      } catch {
-        /* ayar yazılamadıysa bildirim bir sonraki açılışta tekrar görünür; uygulama açılmaya devam eder */
-      }
-    }
-    tray = createTray({
-      showWindow,
-      changeServer,
-      uninstall: uninstallEverything,
-      hostServer: () => requestServerMode().catch(() => {}),
-      stopHosting: disableServerMode,
-      quit: async () => {
-        quitting = true;
-        await serverHost?.stop();
-        app.quit();
-      },
-      isAutoStart: () => app.getLoginItemSettings(loginItemQuery()).openAtLogin,
-      setAutoStart: (value) => app.setLoginItemSettings(loginItemSettings(value)),
-    });
-    createWindow();
+    startApp();
   });
 }
 
