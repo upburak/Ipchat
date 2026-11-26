@@ -70,8 +70,31 @@
   const otherViews = ['choose', 'manual', 'host', 'host-note'].map((id) => document.getElementById(id));
   let changedInfo = null;
   let hiddenBefore = [];
+  // Ağda bir sunucu var: ikinci sunucu kurulmasın (tepsi de aynı kuralı uygular, server-guard.js).
+  function markServerExists(note) {
+    const hostButton = document.getElementById('host');
+    if (hostButton.disabled) return; // zaten işaretli (ör. keşif listesi): notu değiştirme
+    hostButton.disabled = true;
+    hostButton.textContent = 'Ağda zaten bir sunucu var';
+    const noteEl = document.getElementById('host-note');
+    if (note) noteEl.textContent = note;
+    noteEl.hidden = false;
+  }
+  const LOOPBACK = ['127.0.0.1', 'localhost', '[::1]', '::1'];
+  function isNetworkUrl(url) {
+    try {
+      return !LOOPBACK.includes(new URL(url).hostname);
+    } catch (err) {
+      return false;
+    }
+  }
   function showChanged(info) {
     if (!info || typeof info.url !== 'string' || info.url === '') return;
+    // Kimliği değişmiş de olsa ağda bir sunucu var: Vazgeç'ten sonra da "sunucu olsun" kapalı kalır.
+    // Önce işaretlenir ki Vazgeç'in geri getirdiği görünüm (hiddenBefore) notu da içersin.
+    if (isNetworkUrl(info.url)) {
+      markServerExists('Ağda zaten bir Ipchat sunucusu var. İkinci bir sunucu kurarsan kullanıcılar birbirini göremez.');
+    }
     const legacy = info.legacy === true;
     const fingerprint = !legacy && typeof info.fingerprint === 'string' ? info.fingerprint : '';
     changedInfo = { url: info.url, fingerprint };
@@ -131,12 +154,7 @@
       b.addEventListener('click', () => connect(s.url));
       document.getElementById('list').appendChild(b);
     }
-    if (servers.length) {
-      const hostButton = document.getElementById('host');
-      hostButton.disabled = true;
-      hostButton.textContent = 'Ağda zaten bir sunucu var';
-      document.getElementById('host-note').hidden = false;
-    }
+    if (servers.length) markServerExists();
   }
   if (params.get('mode') === 'changed') {
     let info = null;
