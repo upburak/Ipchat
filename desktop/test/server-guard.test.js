@@ -16,6 +16,17 @@ test('kendi bilgisayarindaki sunucu agda baska sunucu sayilmaz', () => {
   assert.equal(networkServerKnown({ status: 'ok', url: 'http://[::1]:3000' }), false);
 });
 
+test('kimligi degismis uzak sunucu da agda bilinen sunucu sayilir', () => {
+  assert.equal(networkServerKnown({ status: 'changed', url: 'http://192.168.1.5:3000' }), true);
+});
+
+test('kimligi degismis ama kendi bilgisayarindaki adres agda sunucu sayilmaz', () => {
+  assert.equal(networkServerKnown({ status: 'changed', url: 'http://127.0.0.1:3000' }), false);
+  assert.equal(networkServerKnown({ status: 'changed', url: 'http://localhost:3000' }), false);
+  assert.equal(networkServerKnown({ status: 'changed', url: 'http://[::1]:3000' }), false);
+  assert.equal(networkServerKnown({ status: 'changed', url: 'bozuk adres' }), false);
+});
+
 test('sunucu bulunamadiysa bilinmez', () => {
   assert.equal(networkServerKnown({ status: 'manual' }), false);
   assert.equal(networkServerKnown({ status: 'choose', servers: [] }), false);

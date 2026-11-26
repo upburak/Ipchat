@@ -4,7 +4,8 @@ const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', '::1']);
 export function networkServerKnown(result) {
   if (!result) return false;
   if (result.status === 'choose') return Array.isArray(result.servers) && result.servers.length > 0;
-  if (result.status === 'ok') {
+  // 'changed': kimliği değişmiş de olsa ağdaki bir sunucudur (adres döngü-geri değilse).
+  if (result.status === 'ok' || result.status === 'changed') {
     try {
       return !LOOPBACK_HOSTS.has(new URL(result.url).hostname);
     } catch {
