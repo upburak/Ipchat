@@ -154,3 +154,32 @@ test('makeNonce gives 64 lowercase hex and is different each time', () => {
   assert.match(b, /^[0-9a-f]{64}$/);
   assert.notEqual(a, b);
 });
+
+test('rejects a genuine EC P-256 key and signature (key-type check, under the length caps)', () => {
+  const nonce = makeNonce();
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const publicKeyB64 = publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  const signature = crypto.sign(null, Buffer.from(IDENTITY_PREFIX + nonce), privateKey).toString('base64');
+  // Önkoşul: alanlar 200 sınırının altında ve imza gerçekten geçerli; yalnızca anahtar türü denetimi reddedebilir.
+  assert.ok(publicKeyB64.length <= 200 && signature.length <= 200);
+  assert.equal(
+    crypto.verify(null, Buffer.from(IDENTITY_PREFIX + nonce), publicKey, Buffer.from(signature, 'base64')),
+    true
+  );
+  const reply = { app: 'ipchat', publicKey: publicKeyB64, signature };
+  assert.deepEqual(verifyIdentityReply(reply, nonce), { ok: false });
+  assert.deepEqual(verifyIdentityReply({ ...reply, fingerprint: fingerprintOf(publicKeyB64) }, nonce), { ok: false });
+});
+
+test('fingerprintOf never throws on bad input', () => {
+  for (const bad of [undefined, null, 123, {}, [], Symbol('x'), 'x'.repeat(5_000_000)]) {
+    let result;
+    assert.doesNotThrow(() => {
+      result = fingerprintOf(bad);
+    });
+    assert.equal(typeof result, 'string');
+  }
+  for (const bad of [undefined, null, 123, {}, [], Symbol('x')]) {
+    assert.equal(fingerprintOf(bad), '');
+  }
+});

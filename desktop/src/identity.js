@@ -17,8 +17,14 @@ export function makeNonce() {
 }
 
 // Parmak izi: SPKI DER baytlarının SHA-256'sı, küçük harfli hex (sunucuyla aynı).
+// String olmayan girdi için hata fırlatmaz, boş string döner.
 export function fingerprintOf(publicKeyB64) {
-  return crypto.createHash('sha256').update(Buffer.from(publicKeyB64, 'base64')).digest('hex');
+  try {
+    if (typeof publicKeyB64 !== 'string') return '';
+    return crypto.createHash('sha256').update(Buffer.from(publicKeyB64, 'base64')).digest('hex');
+  } catch {
+    return '';
+  }
 }
 
 // Ekranda gösterilen kısa biçim: ilk 12 hex, büyük harf, 4'lü gruplar (A1B2-C3D4-E5F6).
