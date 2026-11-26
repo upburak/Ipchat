@@ -13,11 +13,12 @@ const CLIENT_CONFIRM = {
   detail: 'Bu işlem geri alınamaz.',
 };
 
+// Onay penceresi silmeden önce açılır: gelecek zaman kullanılır.
 function serverConfirm(serverDataPath) {
   return {
-    message: 'Bu bilgisayar Ipchat sunucusuydu.',
+    message: 'Bu bilgisayar bir Ipchat sunucusu.',
     detail:
-      'Kullanıcıların hesapları ve mesaj geçmişi silinmedi, şurada duruyor:\n' +
+      'Kullanıcıların hesapları ve mesaj geçmişi korunacak, silinmeyecek. Şurada duruyor:\n' +
       `${serverDataPath}\n\n` +
       'Bunları da silmek istersen bu klasörü elle sil.',
   };
@@ -36,11 +37,13 @@ export function uninstallConfirm(hasServerData, serverDataPath) {
 }
 
 // Kabuk betiği argümanları. Yol metne gömülmez; "$1" olarak geçirilir (boşluklu Mac yolu için).
-// Dosyaları uygulama kapanana kadar 2 sn bekleyerek siler. Gizli dosyalar da silinir.
-export function purgeArgs(userDataDir, keepServerData) {
+// Önce uygulamanın kapanmasını bekler (varsayılan 2 sn), sonra siler. Gizli dosyalar da silinir.
+// "--" yol "-" ile başlasa bile bir seçenek sayılmasını önler.
+export function purgeArgs(userDataDir, keepServerData, delaySeconds = 2) {
+  const wait = `sleep ${delaySeconds}`;
   const script = keepServerData
-    ? 'sleep 2; find "$1" -mindepth 1 -maxdepth 1 ! -name server-data -exec rm -rf {} +'
-    : 'sleep 2; rm -rf "$1"';
+    ? `${wait}; find -- "$1" -mindepth 1 -maxdepth 1 ! -name server-data -exec rm -rf {} +`
+    : `${wait}; rm -rf -- "$1"`;
   return ['-c', script, 'ipchat-purge', userDataDir];
 }
 

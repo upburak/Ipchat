@@ -1,6 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData } from '../src/cleanup.js';
+
+// Gerçek kabukta çalıştırılan temizlik: metin testleri yanlış betiği de geçirebilir.
+function makeFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'ipchat-purge-'));
+  const dir = join(root, 'ipchat desktop');
+  mkdirSync(join(dir, 'server-data', 'db'), { recursive: true });
+  writeFileSync(join(dir, 'server-data', 'db', 'users.db'), 'kullanicilar');
+  writeFileSync(join(dir, '.hidden'), 'gizli');
+  writeFileSync(join(dir, 'a b'), 'bosluklu');
+  writeFileSync(join(dir, '-dash'), 'tire');
+  writeFileSync(join(dir, 'new\nline'), 'satir');
+  return { root, dir };
+}
 
 test('kurulum metni iz birakmamayi ve sunucu istisnasini soyler', () => {
   const t = `${INSTALL_NOTICE.message} ${INSTALL_NOTICE.detail}`;
@@ -58,6 +75,27 @@ test('bos server-data sunucu sayilmaz, NSIS ile ayni davranis', () => {
   assert.equal(hasServerData(['ipchat.db']), true);
   assert.equal(hasServerData([]), false);
   assert.equal(hasServerData(null), false);
+});
+
+test('sunucu temizligi gercek kabukta yalniz server-data\'yi birakir', () => {
+  const { root, dir } = makeFixture();
+  try {
+    execFileSync('/bin/sh', purgeArgs(dir, true, 0));
+    assert.deepEqual(readdirSync(dir), ['server-data']);
+    assert.equal(readFileSync(join(dir, 'server-data', 'db', 'users.db'), 'utf8'), 'kullanicilar');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('istemci temizligi gercek kabukta tum klasoru siler', () => {
+  const { root, dir } = makeFixture();
+  try {
+    execFileSync('/bin/sh', purgeArgs(dir, false, 0));
+    assert.equal(existsSync(dir), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('ilk acilis bildirimi yalnizca bir kez gosterilir', () => {
