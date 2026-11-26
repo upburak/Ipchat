@@ -75,7 +75,7 @@ Bugünkü "Sohbet geçmişi ve ayarlar da silinsin mi?" sorusu **kaldırılır**
 
 **Kaldırma sırasında, istemci bilgisayarda:**
 
-> Ipchat ve bu bilgisayardaki tüm verisi siliniyor. Bu işlem geri alınamaz.
+> Ipchat ve bu bilgisayardaki tüm verisi silindi. Bu işlem geri alınamaz.
 
 **Kaldırma sırasında, sunucu bilgisayarda:**
 
@@ -87,6 +87,8 @@ Bugünkü "Sohbet geçmişi ve ayarlar da silinsin mi?" sorusu **kaldırılır**
 > Bunları da silmek istersen bu klasörü elle sil.
 
 **Mac, tepsideki "Ipchat'i tamamen kaldır…" onayında:** aynı kural anlatılır, "Sohbet geçmişi ve ayarlar da silinsin" onay kutusu kaldırılır. Onay penceresinin kendisi kalır (yıkıcı işlem), varsayılanı **Vazgeç** olur. Sunucu verisi varsa metin onun korunacağını ve yolunu (`~/Library/Application Support/ipchat-desktop/server-data`) söyler.
+
+> **Düzeltme 2 (2026-11-26, inceleme sırasında):** İstemci metni de geçmiş zamana alındı ("siliniyor" → "silindi"). Windows'ta bu mesaj silme bittikten sonra gösteriliyor; şimdiki zaman o anda yanlıştı.
 
 > **Düzeltme (2026-11-26, inceleme sırasında):** Yukarıdaki sunucu metni *geçmiş zamandadır* ("silinmedi") çünkü Windows'ta kaldırma **bittikten sonra** gösterilir. Mac'te aynı metin onay penceresinde, yani **hiçbir şey olmadan önce** çıkar; orada geçmiş zaman yanlıştır. Mac onayında gelecek zaman kullanılır ("silinmeyecek"), anlam ve yol aynı kalır.
 
