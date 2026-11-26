@@ -97,8 +97,11 @@ Kural (spec: `docs/superpowers/specs/2026-11-26-temiz-kaldirma-design.md`): kald
 
 **Hâlâ gerçek ortamda denenmedi** (doğrulanmış gibi yazma): kurulum sonu bilgi kutusu, sessiz kaldırma, güncelleme atlaması, kilitli dosya kalıntı uyarısı, çok kullanıcılı bilgisayarda diğer profillerin kalıntısı. Mac'te 0.5.0'ın hiçbir parçası (ilk açılış bildirimi, tepsiden kaldırma onayı) denenmedi; 0.4.0 da Mac'te denenmedi (okulda Mac yok). Mac'te ilk açılış bildirimi ve kaldırma onayı da gerçek bir Mac'te çalışmadı (Electron kabuğu otomatik testle kapsanmıyor). Yani bu özellik şu an kimse tarafından elle denenmedi; yayından önce okuldaki Windows'ta hem sunucu hem istemci olarak kaldırmayı dene.
 
+**Karar: uygulamada otomatik güncelleme ya da "yeni sürüm var" kontrolü OLMAYACAK** (kullanıcı, 26 Kasım 2026). Sebep: Windows kurulumu yönetici izni ister, Mac'te Apple imzası yok; kullanıcılar bu ayrıntılarla kurulum yapamaz. Sorun olursa kullanıcı yardım ister ve yeni sürümü okuldaki kullanıcılara kendisi kurar. Bu yüzden Ipchat internete hiç çıkmaz; tekrar önerme.
+
 Sıradaki işler:
-1. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
-2. Emoji seçici ve diğer mesajlaşma özellikleri (kullanıcı "şu an yok" dedi).
-3. Cihazlar birbirini göremediğinde isteğe bağlı aktarma (relay) modu fikri.
-4. Ertelenen küçük bulgular için git geçmişindeki inceleme notlarına bak (ör. kenar çubuğunda uzun kullanıcı adı taşması, GPO tespiti iyileştirmeleri).
+1. Sunucu kimliği (`docs/superpowers/specs/2026-11-26-sunucu-kimligi-design.md`, anahtar çifti, sertifikasız) ve ilk açılış onayı (`docs/superpowers/specs/2026-11-26-ilk-acilis-onayi-design.md`, iki ayrı onaylı tek ekran): tasarım yazıldı, onay bekliyor. Bunlar dosya paylaşımından önce yapılır.
+2. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği ve ardından trafiğin şifrelenmesi (ayrı tasarım) gerekir.
+3. Emoji seçici ve diğer mesajlaşma özellikleri (kullanıcı "şu an yok" dedi).
+4. Cihazlar birbirini göremediğinde isteğe bağlı aktarma (relay) modu fikri.
+5. Ertelenen küçük bulgular için git geçmişindeki inceleme notlarına bak (ör. kenar çubuğunda uzun kullanıcı adı taşması, GPO tespiti iyileştirmeleri).
