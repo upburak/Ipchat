@@ -283,7 +283,15 @@ async function openOwnServer(extra = {}, startedGeneration) {
   }
   if (action.action !== 'open') {
     // Zaten bağlantı sayfasındaysak yeniden yükleme: sayfadaki hata satırı kaybolmasın.
+    // (Ekran beklemeden önce değişir: aşağıdaki durdurma sırasında gelen bir kullanıcı kararını ezmez.)
     if (alive() && !onConnectPage) showConnectPage('manual');
+    // Doğrulanamayan sunucu arkada çalışıp ağa yayın yapmasın: yalnızca BU çağrının başlattığı
+    // alt süreç durdurulur; başka bir akışın başlattığına (hadHost) dokunulmaz.
+    if (startedHere && serverHost === startedHere) {
+      await startedHere.stop();
+      if (serverHost === startedHere) serverHost = null;
+      updateTray();
+    }
     return false;
   }
   connectGeneration += 1; // bağlantı değişti: süren arka plan denemeleri sonuçlarını atsın
