@@ -95,6 +95,12 @@ Kaldırırken **ne silineceği sorulmaz**. Ne silineceği şudur:
 
 `server-data` klasörü: Windows `%APPDATA%\ipchat-desktop\server-data`, Mac `~/Library/Application Support/ipchat-desktop/server-data`.
 
+### Yedek almak
+
+Hesapları ve mesaj geçmişini yedeklemek için **`server-data` klasörünün tamamını** kopyala (USB'ye, başka bir klasöre). Geri almak için aynı klasörü yerine koy.
+
+> **Dikkat:** içindeki `ipchat.db` dosyası tek başına kopyalanmaz. Uygulama açıkken bu dosya boş (4 KB) görünebilir; son kayıtlar yanındaki `ipchat.db-wal` dosyasında durur. Yalnızca `ipchat.db`'yi kopyalarsan yedek eksik olur. **Klasörün tamamını kopyala**, en güvenlisi de uygulama kapalıyken kopyalamaktır.
+
 - **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kural kurulumun sonunda bir kez, kaldırma bittiğinde bir kez daha yazılır. Sessiz kaldırma da aynı şeyleri siler, yalnızca ekrana mesaj çıkarmaz.
   **Bilinen sınır:** standart bir kullanıcı kaldırmayı başka bir yönetici hesabının parolasıyla yükseltirse kaldırıcı o hesabın profiline bakar; kendi verisi kalabilir. O zaman `%APPDATA%\ipchat-desktop` klasörünü elle sil.
   Aynı şey **birkaç kişinin kullandığı bilgisayarda** da olur: kaldırıcı yalnızca kaldırmayı yapan hesabın verisini ve otomatik başlatma kaydını temizler; diğer kullanıcıların her birinde kendi `%APPDATA%\ipchat-desktop` klasörü ve otomatik başlatma kaydı kalır. Onları o kullanıcılar kendi hesaplarından elle silmelidir.
@@ -148,8 +154,26 @@ npm test -w desktop
 Derleme ve dosyalar GitHub Actions ile üretilir, bilgisayara bağlı değildir:
 
 1. `desktop/package.json` içindeki `version` alanını artır.
-2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.4.1` gibi bir ad yaz ve yayınla.
+2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.5.1` gibi bir ad yaz ve yayınla.
 3. İş akışı derler, `.exe` ve Mac zip'ini o Release'e ekler (~3 dakika).
+
+---
+
+## Sürüm geçmişi
+
+Kurulum dosyaları [Releases](https://github.com/upburak/Ipchat/releases) sayfasındadır; her sürümün etiketi `test-0.5.0` gibidir. En yenisi en üstte.
+
+| Sürüm | Tarih | Ne geldi | Gerçek bilgisayarda denendi mi? |
+|---|---|---|---|
+| **0.5.0** | 26 Kas 2026 | **Temiz kaldırma.** Kaldırma artık soru sormaz. Çalışanın bilgisayarında program, ayarlar, otomatik başlatma, kayıt defteri girdileri, güvenlik duvarı kuralları ve veri klasörünün tamamı silinir. Sunucu bilgisayarında hesaplar ve mesaj geçmişi **silinmez**, nerede durduğu söylenir. Güncellemede hiçbir şeye dokunulmaz. | Windows'ta **hem sunucu hem istemci olarak denendi ve doğrulandı**: sunucuda geçmiş korundu ve yeniden kurulumdan sonra eski hesapla girildi, istemcide hiç iz kalmadı. Mac tarafı (ilk açılış bildirimi, tepsiden kaldırma) denenmedi. |
+| **0.4.0** | 14 Kas 2026 | **Arayüz ergonomisi.** Hesap ekranında bekleyenler önde ve sayılı; geri alınamayan işlemler onay sorar; `Aktif` etiketi **`Onaylı`** oldu ve **Çevrimiçi/Çevrimdışı** ayrı bir bilgi olarak eklendi; hesap ve kişi listelerinde arama. Sohbette saat, grupta gönderenin adı, gün ayracı. Giriş ekranında kalıcı etiketler. Yazılar ve düğmeler daha okunur. | Okuldaki Windows bilgisayarlarda kullanıldı, sorun çıkmadı. Mac'te denenmedi. |
+| **0.3.0** | 14 Kas 2026 | **Okunmamış mesaj ve bildirimler.** Okunmamış mesajı olan kişide kırmızı nokta (sayı sunucuda tutulduğu için uygulama kapalıyken gelenler de görünür), mesaj gelince işletim sistemi bildirimi (başlıkta gönderenin adı, gövdede yalnızca "Yeni mesaj"), tepsi/Dock rozeti, pencere başlığında sayı. Ağda sunucu varken ikinci sunucu kurulması engellendi. | Windows ve Mac'te kısmen görüldü: kırmızı nokta, başlıktaki sayı, Mac bildirimi ve "Ağda zaten bir sunucu var" uyarısı. Bildirime tıklayınca sohbetin açılması gibi ayrıntılar denenmedi. |
+| **0.2.2** | 14 Kas 2026 | Mac sürümünün imzası düzeltildi. İmza eksik olduğunda macOS, Yerel Ağ iznini sessizce reddediyor ve bağlantı hiç kurulmuyordu. | **Mac ↔ Windows bağlantısı** telefon hotspot'unda çalıştığı görüldü. |
+| **0.2.1** | 14 Kas 2026 | Mac'te "Yerel Ağ" izin penceresinin çıkabilmesi için gereken açıklama eklendi. | 0.2.2 ile birlikte denendi. |
+| **0.2.0** | 13 Kas 2026 | Windows kurulumu yönetici izniyle çalışıp güvenlik duvarı kurallarını kendisi ekler oldu; kurum ilkesiyle (GPO) yönetilen bilgisayarlar tespit edilip uyarı verilir. Yeni görünüm (avatarlar, yuvarlak baloncuklar). Listeler 3 saniyede bir yenilenir. Yöneticiye bekleyen hesap bildirimi ve rozet. | Windows'ta çalıştığı görüldü. |
+| **0.1.0** | 13 Kas 2026 | İlk masaüstü sürümü. Hesap onayı ve yönetici paneli; Electron kabuğu, tepsi ikonu, sabit pencere; sunucuyu ağda kendiliğinden bulma (UDP 41234) ve **sunucu modu** (uygulamanın kendisi sunucu olabilir). | Windows'ta çalıştığı görüldü. |
+
+**Sırada:** sunucu kimliğinin sabitlenmesi (uygulama bağlandığı sunucuyu tanısın), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
 
 ---
 
@@ -158,4 +182,5 @@ Derleme ve dosyalar GitHub Actions ile üretilir, bilgisayara bağlı değildir:
 - Yalnızca yerel ağ. HTTPS yok, sunucu internete açılmamalı.
 - Sunucu olan bilgisayar açık ve oturumu açık olmalı.
 - Mac uygulaması Apple tarafından onaylı (notarized) değil; her indirmede karantina adımı gerekir.
-- Mesaj geçmişi yalnızca sunucudadır; yedeklenmez.
+- Mesaj geçmişi yalnızca sunucu bilgisayarındadır ve kendiliğinden yedeklenmez — yedeği elle alman gerekir (yukarıdaki "Yedek almak").
+- Giriş ekranı kayıtlı kullanıcıları listelemez; herkes kendi kullanıcı adını yazar. Kaldırma cihaz kaydını da sildiği için PIN'le hızlı giriş sıfırlanır: yeniden kurulumdan sonra herkes bir kez kullanıcı adı + şifreyle girip yeni PIN belirler.
