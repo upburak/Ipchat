@@ -664,6 +664,8 @@ ipcMain.handle('welcome:accept', (event) => {
 
 ipcMain.handle('welcome:quit', (event) => {
   if (!isTrustedSender(event.senderFrame?.url, welcomeFileUrl)) return { error: 'İzin verilmedi' };
+  // Onay verildikten sonra bu köprüyle uygulama kapatılamaz.
+  if (!welcomePending) return { error: 'Onay zaten verildi' };
   // Hiçbir şey kaydedilmez; bir sonraki açılışta ekran yeniden çıkar.
   quitting = true;
   app.quit();

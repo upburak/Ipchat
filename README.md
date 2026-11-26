@@ -34,7 +34,7 @@ Dosyalar [Releases](https://github.com/upburak/Ipchat/releases) sayfasındadır.
 
 ### Tarayıcıdan
 
-Kurulum istemeyenler sunucunun adresine gidebilir (örn. `http://192.168.1.10:3000`). Sayfa sunucudan servis edildiği için adres sorulmaz. Tarayıcıda masaüstüne özel şeyler çalışmaz: işletim sistemi bildirimi, tepsi ikonu ve sunucu keşfi yoktur.
+Kurulum istemeyenler sunucunun adresine gidebilir (örn. `http://192.168.1.10:3000`). Sayfa sunucudan servis edildiği için adres sorulmaz. Tarayıcıda masaüstüne özel şeyler çalışmaz: işletim sistemi bildirimi, tepsi ikonu ve sunucu keşfi yoktur. **Sunucu kimliği denetimi de yoktur** (bkz. "Sunucu kimliği"): tarayıcı yazılan adresi doğrudan açar, karşısındakinin gerçekten okulun sunucusu olup olmadığını denetlemez.
 
 ### Eski yöntem (yalnızca sunucu, Windows)
 
@@ -61,7 +61,7 @@ Ekran **her kullanıcı için bir kez** çıkar. Bu sürüme ilk güncellemede d
 > **Güncelleme günü, sunucu bilgisayarı için önemli (bu sürüme ilk güncellemede):** 0.6.0'dan eski bir sürümden güncellenen **sunucu bilgisayarında** ilk açılışta bu ekran çıkar ve **onaylanana kadar sunucu başlamaz; kimse bağlanamaz.** Yapılacaklar sırayla:
 >
 > 1. Sunucu bilgisayarını yeni sürüme güncelle.
-> 2. **Önce o bilgisayarda** Ipchat'i aç (oturum açılınca kendiliğinden açılır ama ekran onay beklerken sessizce bekler).
+> 2. **Önce o bilgisayarda** Ipchat'i aç (oturum açılınca kendiliğinden de açılır). Pencerede bu bilgilendirme ekranı görünür; **sunucu ise "Devam et"e basılana kadar başlamaz.** Ekran fark edilmezse kimse bağlanamaz, o yüzden sunucu bilgisayarının başına geçip ekrana bak.
 > 3. İki kutuyu işaretleyip **"Devam et"e bas.** Sunucu ancak bundan sonra başlar.
 > 4. Sonra diğer kullanıcılara haber ver; onlar da kendi bilgisayarlarında ekranı bir kez görür.
 >
@@ -142,6 +142,10 @@ Kaldırırken **ne silineceği sorulmaz**. Ne silineceği şudur:
 Hesapları ve mesaj geçmişini yedeklemek için **`server-data` klasörünün tamamını** kopyala (USB'ye, başka bir klasöre). Geri almak için aynı klasörü yerine koy.
 
 **Sunucuyu yeni bir bilgisayara taşırken** `server-data` klasörünün tamamını taşı: **sunucunun kimliği de onunla gelir** ve kullanıcılar hiçbir uyarı görmez. Klasör taşınmazsa yeni sunucu yeni bir kimlik üretir ve **her kullanıcı "Bu sunucu daha önce bağlandığın sunucu değil" ekranını bir kez görür** (bkz. "Sunucu kimliği"). Aynısı `server-data` silinirse de olur.
+
+> **Eski yedeği geri koyarken dikkat:** 0.6.0'dan **önce** alınmış bir yedekte kimlik dosyaları (`identity.key`, `identity.pub`) yoktur. Böyle bir yedeği `server-data` yerine koyarsan sunucu açılışta **yeni bir kimlik** üretir ve **her kullanıcı "Bu sunucu daha önce bağlandığın sunucu değil" ekranını bir kez görür.** Kullanıcılara önceden haber ver.
+>
+> **Yarım geri yükleme:** `identity.pub` dosyası geri konup `identity.key` konmazsa (ya da `identity.key` bozuksa) sunucu **başlamaz**; yeni kimlik üretmez, hiçbir dosyayı silmez. Ipchat bunu "Sunucu başlatılamadı: sunucunun kimlik dosyası bozuk ya da eksik." penceresiyle söyler ve ne yapılacağını adım adım yazar: `server-data`'yı silme; tam yedekten iki kimlik dosyasını birlikte geri koy; yedek yoksa ikisini klasörden başka bir yere taşı (o zaman yukarıdaki gibi herkes bir kez değişim ekranını görür).
 
 > **Yedeği koru:** kimliğin gizli anahtarı `server-data` içindeki **`identity.key`** dosyasındadır, yani yedeğin içinde de bulunur. Yedeği eline geçiren biri sunucuyu taklit edebilir; yedek diski/USB'yi güvende tut.
 
