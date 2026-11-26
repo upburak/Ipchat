@@ -111,7 +111,7 @@ Kimlik ucu olmayan bir sunucu (0.5.0 ve öncesi) için:
 - **Hatırlanmış kimlik yoksa:** bağlanılır (bugünkü davranış), hiçbir şey hatırlanmaz.
 - **Hatırlanmış kimlik varsa:** bunu "kimlik değişti" gibi ele al (7.4). Aksi halde saldırgan "eski sürümüm" diyerek korumayı atlatırdı (sürüm düşürme).
 
-Güncelleme sırası: **önce sunucu bilgisayarı, sonra istemciler.** İstemci önce güncellenirse hatırlanmış kimlik olmadığı için eski sunucuya bağlanmaya devam eder; sunucu güncellenince ilk bağlanışta kimlik hatırlanır. Hiçbir sıra kullanıcıya uyarı çıkarmaz. *(Benim kararım.)*
+Güncelleme sırası: **önce sunucu bilgisayarı, sonra istemciler** (ya da tersi). İstemci önce güncellenirse hatırlanmış kimlik olmadığı için eski sunucuya bağlanmaya devam eder; sunucu güncellenince ilk bağlanışta kimlik hatırlanır. Kimlik yalnızca bir kez **görüldüğünde** hatırlandığı için hiçbir güncelleme sırası uyarı çıkarmaz. Uyarı yalnızca sunucu **eski sürüme geri alınırsa** çıkar. *(Benim kararım.)*
 
 ### 7.7 Kendi sunucusunu barındıran bilgisayar
 
@@ -120,6 +120,15 @@ Sunucu modunu açan bilgisayar kendi sunucusuna (`127.0.0.1`) bağlanır. Bu bil
 ### 7.8 Keşif yanıtı
 
 UDP keşif yanıtına (`{app, port, name}`) **parmak izi eklenir**, yalnızca adayları ayırt etmek içindir. Bu yanıt imzasızdır ve **güvenilmez**; asıl karar her zaman 7.2'deki imzalı doğrulamayla verilir. Saldırgan keşif yanıtında doğru parmak izini yazabilir, imza atamaz.
+
+### 7.9 İnceleme sonrası netleştirmeler (benim kararlarım)
+
+1. **Kayıtlı adres farklı kimlikle yanıt verirse** (DHCP adresi başka bir bilgisayara geçmiş olabilir) hemen uyarı **çıkmaz**: önce keşif çalışır. Kayıtlı kimliği taşıyan bir sunucu bulunursa oraya bağlanılır ve adres güncellenir, kullanıcı hiçbir şey görmez. Hiçbir aday kimliği taşımıyorsa 7.4 ekranı gösterilir. Böylece adres değişimi yanlış alarm üretmez (2. hedef). Bu, `resolveServer` akışına "başka adreste bulundu" sonucunu ekler.
+2. **Kendi sunucusunu barındıran bilgisayar** (7.7): ana süreç, kendi `server-data` klasöründeki **açık anahtarı doğrudan dosyadan okur** ve `127.0.0.1` yanıtının bununla eşleşmesini ister. Aynı portu başka bir süreç tutarsa eşleşmez ve bağlanılmaz. Açık anahtar, ana sürecin okuyabileceği ayrı ve gizli olmayan bir dosyada (ya da gizli dosyadan türetilebilir biçimde) durur; gizli anahtarı **yalnızca sunucu süreci** okur.
+3. **Masaüstü dışı sunucular** (eski `kurulum.bat` yöntemi, `npm run dev`): kimlik ucu sunucu kodunun kendisindedir, bu yüzden onlarda da çalışır. Anahtar `ipchat.db`'nin bulunduğu klasörde (`IPCHAT_DATA_DIR` nereyi gösteriyorsa) durur; kimlik ile hesaplar **aynı kaderi paylaşır**: o klasör silinirse ikisi birlikte gider. `.bat` betiklerine dokunulmaz.
+4. **Tek yuva sınırı**: yalnızca bir kimlik hatırlanır. Okul ile ev arasında taşınan bir dizüstü ya da sunucu modunu kapatıp başka sunucuya bağlanan bir bilgisayar, her geçişte 7.4 ekranını görür. Kabul edilir. Tek istisna: `disableServerMode` zaten `lastServer`'ı sildiği için **hatırlanan kimliği de siler**; yoksa sunucu modunu kapatan yönetici kendi eski sunucusu yüzünden uyarı görürdü.
+5. **Eski sunucu ve "Bağlan"** (7.6): kimliği hatırlanmış bir istemci kimliksiz sunucuya bağlanmaya onay verirse hatırlanan kimlik **silinir** (kullanıcı kararı bilerek verdi; yeni bir kimlik yok, tutulacak bir şey de yok). Ekran metni bu durumda farklıdır: *"Bu sunucu kimlik bilgisi vermiyor (eski sürüm olabilir)"*. Keşifte yalnızca tanınmayan sunucular bulunursa bugünkü **seçim listesi** gösterilir; kullanıcı birini seçince o aday için 7.4 ekranı çıkar (aday başına bir uyarı değil, **seçilen** için bir uyarı).
+6. **Yeniden doğrulamanın kapsamı**: yalnızca **ana sürecin yaptığı yüklemeler** (ilk bağlanış, 3 sn'lik arka plan yeniden deneme, `did-fail-load` sonrası yeniden yükleme). Sayfa içinde yenileme ya da Socket.IO'nun sunucu değişimi sonrası kendiliğinden yeniden bağlanması **kapsanmaz**; bunu yakalamak gezinme olaylarına bağlanmayı ve sürekli doğrulamayı gerektirir ve ayrı, daha büyük bir iştir. Bilinen sınır olarak belgelenir; şifreleme işi (10) bunu kapatır.
 
 ## 8. Builder'a bırakılanlar
 

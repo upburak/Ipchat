@@ -56,11 +56,11 @@ Kullanıcı metni onayladı ("metin çok iyi olmuş"). Başlık: **"Ipchat'i kul
 >
 > Bu nedenle öğrenci kişisel verileri, sağlık ve kimlik bilgileri, sınav soruları, maaş ve banka bilgileri gibi hassas içerikleri Ipchat üzerinden göndermeyin. Uygulama günlük yazışma ve sıradan iş dosyaları için tasarlandı.
 
-Ardından **kaldırma kuralı** (0.5.0 `INSTALL_NOTICE` metninin aynısı; metin kaynağı tek yer olsun, iki yerde çoğaltılmasın):
+Ardından **kaldırma kuralı** (metin platforma göre değişir, bkz. 7.4.1). Örnek, Windows:
 
-> Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz: program, ayarlar ve otomatik başlatma kaydı silinir. Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.
+> Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz: program, ayarlar, otomatik başlatma ve güvenlik duvarı kuralları silinir. Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.
 
-*(Benim kararım: Mac'e özgü cümle "tepsi menüsünden 'Ipchat'i tamamen kaldır…' seçeneğini kullan" Mac'te metne eklenir; Windows'ta eklenmez, orada Ayarlar → Uygulamalar kullanılır.)*
+Mac'te aynı kural "program, ayarlar ve otomatik başlatma kaydı silinir" diye yazılır ve ardından kaldırmanın tepsi menüsünden "Ipchat'i tamamen kaldır…" ile yapıldığı, uygulamayı yalnızca Çöp Kutusu'na atmanın veriyi geride bıraktığı söylenir.
 
 ### 7.2 İki ayrı onay
 
@@ -82,6 +82,12 @@ Eski `installNoticeShown` bayrağı yerini bu yeni bayrağa bırakır: **0.5.0'd
 Onay yokken ana süreç şunları **yapmaz**: sunucu keşfi (UDP yayını), uzak ya da yerel sunucuya bağlanma, kayıtlı sunucu modunu başlatma, otomatik başlatma kaydı (`setLoginItemSettings`), tepsi ikonu ve menüsü, bildirim izni isteme. Yalnızca bu sayfa görünür. Pencerenin kapatma düğmesi bu durumda tepsiye indirmez, **uygulamayı kapatır** (tepsi yok, arkada sessizce bekleyen onaysız bir süreç kalmaz). Onaydan sonra normal akış, bugünkü sırayla başlar.
 
 Geliştirme modunda (`app.isPackaged` yalnızca paketli sürümü işaretler) ekran gösterilmez; geliştiricinin her denemede onaylamasına gerek yok. *(Mac'teki eski bildirimin de aynı davranışı vardı.)*
+
+### 7.4.1 Üç netleştirme (inceleme sonrası, benim kararlarım)
+
+- **Onay kaydedilemezse** (ayar dosyası salt okunur, disk dolu): uygulama **bu oturum için çalışmaya devam eder**, bir sonraki açılışta ekran yeniden çıkar. Engellemek, sunucu bilgisayarını sonsuza kadar kapalı bırakırdı; ekranın tekrar çıkması ise yalnızca can sıkıcıdır, güvenliği düşürmez. Sayfa ayrıca bir hata satırı göstermez; kaydetme hatası sessizce yutulur (0.5.0'daki eski bildirimle aynı yaklaşım).
+- **Mevcut otomatik başlatma kaydı** (bu sürümden önce kurulmuş bilgisayarlar): "Çık" bu kaydı **silmez**. Kapı yalnızca **yeni** kaydı onaya bağlar (7.4). Yani onay vermemiş bir kullanıcı her oturum açışında ekranı yeniden görür; bu, "onay verilince program çalışsın" kuralının doğal sonucudur. Gizli bir silme eklenmez.
+- **Kaldırma kuralının metni platforma göre değişir, kaynağı tek dosyadır** (`cleanup.js`): Windows'ta *"program, ayarlar, otomatik başlatma ve güvenlik duvarı kuralları silinir"*; Mac'te *"program, ayarlar ve otomatik başlatma kaydı silinir"* ve ardından tepsi menüsü ile Çöp Kutusu cümlesi. Sunucu cümlesi ikisinde de aynıdır. Eski Mac `INSTALL_NOTICE` sabiti bu ortak yapıya taşınır. `installer.nsh` metnine dokunulmaz.
 
 ### 7.5 Windows kurulum sonu mesajı
 
