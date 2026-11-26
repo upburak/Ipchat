@@ -82,7 +82,13 @@ Kural (spec: `docs/superpowers/specs/2026-11-26-temiz-kaldirma-design.md`): kald
 
 **Otomatik olarak doğrulanan (Linux'ta):** saf mantık (sunucu mu istemci mi tespiti, silinecekler, ilk açılış bayrağı), Mac kaldırmasının silme komutu Linux'taki gerçek `sh` kabuğunda geçici klasörlerde (Mac'te değil), ve `installer.nsh` **yalnızca metin olarak** (güncelleme, sessiz kaldırma ve geri koyma korumalarının betikte bulunduğu denetlenir; betik çalıştırılmaz). Süitler (belge yazılırken çalıştırıldı): sunucu 58, web 34, masaüstü 83 test geçti, `npm run build` geçti.
 
-**Hiçbir yerde gerçek ortamda denenmedi** (doğrulanmış gibi yazma): NSIS betiği gerçek Windows'ta hiç çalıştırılmadı; özellikle `server-data` taşı-sil-geri koy sırası, kurulum sonu ve kaldırma mesaj kutuları, sessiz kaldırma ve güncelleme atlaması. Mac'te ilk açılış bildirimi ve kaldırma onayı da gerçek bir Mac'te çalışmadı (Electron kabuğu otomatik testle kapsanmıyor). Yani bu özellik şu an kimse tarafından elle denenmedi; yayından önce okuldaki Windows'ta hem sunucu hem istemci olarak kaldırmayı dene.
+**Gerçek Windows'ta doğrulandı (26 Kasım, sunucu bilgisayarı):** kaldırma sonrası `ipchat-desktop` duruyor ve içinde yalnızca `server-data` var; yanında `ipchat-server-data-tmp` **kalmadı** (yani taşı-sil-geri koy sırası sorunsuz tamamlandı); kaldırırken "Bu bilgisayar Ipchat sunucusuydu… silinmedi" penceresi çıktı; yeniden kurulumdan sonra eski kullanıcı adı ve şifresiyle **giriş yapıldı**, yani veri okunabilir durumda. NSIS betiği ilk kez bir bilgisayarda çalıştı ve en riskli dalı doğru çalıştı.
+
+**Dikkat — yedek alırken WAL tuzağı:** uygulama `PRAGMA journal_mode = WAL` kullanıyor, yani uygulama açıkken `ipchat.db` 4 KB (boş) görünebilir ve kayıtlar `ipchat.db-wal` dosyasında durur. Yedek alırken **klasörün tamamı** kopyalanmalı, yalnızca `ipchat.db` değil. Kullanıcı bu yüzden "veri gitmiş" sandı; gitmemişti. (Bir oturumda ben de 4 KB'ı "boş veritabanı" diye yanlış yorumladım; ölçmeden hüküm verme.)
+
+**Giriş ekranı kayıtlı kullanıcıları listelemez** — tasarım böyle. Kaldırma cihaz kaydını da sildiği için PIN'le hızlı giriş sıfırlanır; herkes bir kez kullanıcı adı + şifreyle girip yeni PIN belirler. Bu beklenen davranıştır.
+
+**Hâlâ gerçek ortamda denenmedi** (doğrulanmış gibi yazma): istemci bilgisayarda kaldırma (kullanıcı deneyecek), kurulum sonu bilgi kutusu, sessiz kaldırma, güncelleme atlaması, kilitli dosya kalıntı uyarısı. Mac'te ilk açılış bildirimi ve kaldırma onayı da gerçek bir Mac'te çalışmadı (Electron kabuğu otomatik testle kapsanmıyor). Yani bu özellik şu an kimse tarafından elle denenmedi; yayından önce okuldaki Windows'ta hem sunucu hem istemci olarak kaldırmayı dene.
 
 Sıradaki işler:
 1. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
