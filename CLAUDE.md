@@ -88,7 +88,9 @@ Kural (spec: `docs/superpowers/specs/2026-11-26-temiz-kaldirma-design.md`): kald
 
 **Giriş ekranı kayıtlı kullanıcıları listelemez** — tasarım böyle. Kaldırma cihaz kaydını da sildiği için PIN'le hızlı giriş sıfırlanır; herkes bir kez kullanıcı adı + şifreyle girip yeni PIN belirler. Bu beklenen davranıştır.
 
-**Hâlâ gerçek ortamda denenmedi** (doğrulanmış gibi yazma): istemci bilgisayarda kaldırma (kullanıcı deneyecek), kurulum sonu bilgi kutusu, sessiz kaldırma, güncelleme atlaması, kilitli dosya kalıntı uyarısı. Mac'te ilk açılış bildirimi ve kaldırma onayı da gerçek bir Mac'te çalışmadı (Electron kabuğu otomatik testle kapsanmıyor). Yani bu özellik şu an kimse tarafından elle denenmedi; yayından önce okuldaki Windows'ta hem sunucu hem istemci olarak kaldırmayı dene.
+**Gerçek Windows'ta doğrulandı (26 Kasım, istemci bilgisayarı):** kaldırma sonrası `%APPDATA%\ipchat-desktop` klasörü **hiç kalmadı**. Yani iki dalın ikisi de (sunucu: koru, istemci: tamamen sil) gerçek bir bilgisayarda doğru çalıştı.
+
+**Hâlâ gerçek ortamda denenmedi** (doğrulanmış gibi yazma): kurulum sonu bilgi kutusu, sessiz kaldırma, güncelleme atlaması, kilitli dosya kalıntı uyarısı, çok kullanıcılı bilgisayarda diğer profillerin kalıntısı. Mac'te 0.5.0'ın hiçbir parçası (ilk açılış bildirimi, tepsiden kaldırma onayı) denenmedi; 0.4.0 da Mac'te denenmedi (okulda Mac yok). Mac'te ilk açılış bildirimi ve kaldırma onayı da gerçek bir Mac'te çalışmadı (Electron kabuğu otomatik testle kapsanmıyor). Yani bu özellik şu an kimse tarafından elle denenmedi; yayından önce okuldaki Windows'ta hem sunucu hem istemci olarak kaldırmayı dene.
 
 Sıradaki işler:
 1. Dosya paylaşımı ajanı (M3): `docs/superpowers/specs/2026-11-13-ipchat-dosya-paylasimi-design.md` (onaylı). Öncesinde sunucu kimliği sabitleme (parmak izi) eklenmeli.
