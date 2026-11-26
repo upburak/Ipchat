@@ -70,3 +70,11 @@ export function isResultCurrent(state) {
   if (alive !== true) return false;
   return !needsConnectPage || onConnectPage === true;
 }
+
+// Süren bir bağlanma (connectToServer/retryInBackground) bitince, o sürerken gelen ve
+// "connecting" yüzünden ertelenen yeniden bağlanma isteği şimdi çalıştırılsın mı?
+// Yalnızca gerçekten bekleyen istek varsa, pencere açıksa ve uygulama kapanmıyorsa.
+export function shouldReconnect(state) {
+  const { pending, alive, quitting } = state ?? {};
+  return pending === true && alive === true && quitting === false;
+}

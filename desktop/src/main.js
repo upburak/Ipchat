@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer } from './resolve-server.js';
 import { verifyServer } from './verify-server.js';
 import { getPinned, withConnection, withoutServer, readLocalIdentity } from './identity-store.js';
-import { connectAction, confirmAction, ownServerAction, isResultCurrent } from './connect-policy.js';
+import { connectAction, confirmAction, ownServerAction, isResultCurrent, shouldReconnect } from './connect-policy.js';
 import { loadConfig, saveConfig } from './config.js';
 import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions, webPreferences } from './window-options.js';
@@ -43,6 +43,8 @@ let knownServers = [];
 let connectGeneration = 0;
 const stillCurrent = (startedGeneration, needsConnectPage = false) =>
   isResultCurrent({ startedGeneration, currentGeneration: connectGeneration, alive: Boolean(alive()), needsConnectPage, onConnectPage });
+// Bir bağlanma sürerken gelen connectToServer isteği kaybolmasın: süren iş bitince bir kez çalışır.
+let reconnectPending = false;
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -220,10 +222,21 @@ function rememberConnection(url, identity, extra = {}) {
 // startedGeneration: otomatik çağrıda (connectToServer) verilir; bu arada kullanıcı bağlantıyı
 // değiştirdiyse sonuç atılır. Kullanıcının kendi isteğinde (enableServerMode) verilmez.
 async function openOwnServer(extra = {}, startedGeneration) {
+  const hadHost = Boolean(serverHost);
   await hostServer();
+  const startedHere = hadHost ? null : serverHost; // bu çağrının başlattığı alt süreç
   const own = readLocalIdentity(path.join(configDir(), 'server-data'));
   const action = own ? ownServerAction(await verifyServer(LOCAL_URL, own)) : { action: 'fail' };
-  if (startedGeneration !== undefined && !stillCurrent(startedGeneration)) return false;
+  if (startedGeneration !== undefined && !stillCurrent(startedGeneration)) {
+    // Sonuç atıldı. Bu arada sunucu modu kapatıldıysa (disableServerMode alt süreci henüz
+    // yokken durduramadı) bu çağrının başlattığı sunucu sahipsiz kalmasın.
+    if (startedHere && serverHost === startedHere && !loadConfig(configDir()).serverMode) {
+      await startedHere.stop();
+      if (serverHost === startedHere) serverHost = null;
+      updateTray();
+    }
+    return false;
+  }
   if (action.action !== 'open') {
     // Zaten bağlantı sayfasındaysak yeniden yükleme: sayfadaki hata satırı kaybolmasın.
     if (alive() && !onConnectPage) showConnectPage('manual');
@@ -315,8 +328,19 @@ function openServer(url) {
   win.loadURL(url).catch(() => {});
 }
 
+// Süren bağlanma bittiğinde, o sürerken ertelenmiş bir connectToServer isteği varsa bir kez çalıştırır.
+function runPendingReconnect() {
+  const run = shouldReconnect({ pending: reconnectPending, alive: Boolean(alive()), quitting });
+  reconnectPending = false; // yeniden çalıştırmadan önce temizlenir: sonsuz döngü yok
+  if (run) connectToServer();
+}
+
 async function connectToServer() {
-  if (connecting) return;
+  if (connecting) {
+    // Süren iş (bu arada nesil değiştiyse sonucunu atacak) bitince yeniden çalıştırılır.
+    reconnectPending = true;
+    return;
+  }
   connecting = true;
   const started = connectGeneration; // beklemeden önce
   try {
@@ -347,6 +371,7 @@ async function connectToServer() {
     if (stillCurrent(started)) showConnectPage('manual');
   } finally {
     connecting = false;
+    runPendingReconnect();
   }
 }
 
@@ -369,6 +394,7 @@ async function retryInBackground() {
     /* sessizce gec, sayfa oldugu gibi kalir */
   } finally {
     connecting = false;
+    runPendingReconnect();
   }
 }
 

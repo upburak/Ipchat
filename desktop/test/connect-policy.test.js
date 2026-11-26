@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { connectAction, confirmAction, ownServerAction, isResultCurrent } from '../src/connect-policy.js';
+import { connectAction, confirmAction, ownServerAction, isResultCurrent, shouldReconnect } from '../src/connect-policy.js';
 import { shortFingerprint } from '../src/identity.js';
 
 const ID_A = { publicKey: 'QUJD', fingerprint: 'a1b2c3d4e5f6' + '0'.repeat(52) };
@@ -134,4 +134,24 @@ test('isResultCurrent: eksik/yanlis turde girdi guvenli yonde gecersiz', () => {
   assert.equal(isResultCurrent(undefined), false);
   assert.equal(isResultCurrent({ startedGeneration: '1', currentGeneration: 1, alive: true }), false);
   assert.equal(isResultCurrent({ startedGeneration: 1, currentGeneration: 1, alive: 1 }), false);
+});
+
+// Süren bağlanma bitince bekleyen yeniden bağlanma isteği çalıştırılsın mı
+test('shouldReconnect: bekleyen istek, pencere acik, cikilmiyor -> calistir', () => {
+  assert.equal(shouldReconnect({ pending: true, alive: true, quitting: false }), true);
+});
+
+test('shouldReconnect: bekleyen istek yoksa calistirma (sonsuz dongu yok)', () => {
+  assert.equal(shouldReconnect({ pending: false, alive: true, quitting: false }), false);
+});
+
+test('shouldReconnect: pencere kapali ya da uygulama kapaniyorsa calistirma', () => {
+  assert.equal(shouldReconnect({ pending: true, alive: false, quitting: false }), false);
+  assert.equal(shouldReconnect({ pending: true, alive: true, quitting: true }), false);
+});
+
+test('shouldReconnect: eksik/yanlis turde girdi -> calistirma', () => {
+  assert.equal(shouldReconnect(undefined), false);
+  assert.equal(shouldReconnect({ pending: 1, alive: true, quitting: false }), false);
+  assert.equal(shouldReconnect({ pending: true, alive: true }), false);
 });
