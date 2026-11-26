@@ -59,3 +59,14 @@ export function ownServerAction(result) {
   if (result?.state === 'known' && hasIdentity(result)) return { action: 'open', identity: result.identity };
   return { action: 'fail' };
 }
+
+// Arka planda başlayan bir bağlanma denemesinin sonucu hâlâ uygulanabilir mi?
+// Deneme başlarken alınan nesil (startedGeneration) kullanıcı bağlantıyı değiştirince artar;
+// değiştiyse, pencere kapandıysa ya da (needsConnectPage) artık bağlantı sayfasında değilsek
+// sonuç atılır: kullanıcının kararı arka plan sonucuyla geri alınmasın.
+export function isResultCurrent(state) {
+  const { startedGeneration, currentGeneration, alive, needsConnectPage = false, onConnectPage = false } = state ?? {};
+  if (!Number.isInteger(startedGeneration) || startedGeneration !== currentGeneration) return false;
+  if (alive !== true) return false;
+  return !needsConnectPage || onConnectPage === true;
+}

@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer } from './resolve-server.js';
 import { verifyServer } from './verify-server.js';
 import { getPinned, withConnection, withoutServer, readLocalIdentity } from './identity-store.js';
-import { connectAction, confirmAction, ownServerAction } from './connect-policy.js';
+import { connectAction, confirmAction, ownServerAction, isResultCurrent } from './connect-policy.js';
 import { loadConfig, saveConfig } from './config.js';
 import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions, webPreferences } from './window-options.js';
@@ -38,6 +38,11 @@ let serverKnown = false;
 let confirmingHost = false;
 let confirmingChange = false;
 let knownServers = [];
+// Kullanıcının başlattığı her bağlantı değişikliğinde artar (submit/confirm/sunucu modu aç-kapa).
+// connectToServer ve retryInBackground beklemeden önce bunu alır; sonra farklıysa sonucunu atar.
+let connectGeneration = 0;
+const stillCurrent = (startedGeneration, needsConnectPage = false) =>
+  isResultCurrent({ startedGeneration, currentGeneration: connectGeneration, alive: Boolean(alive()), needsConnectPage, onConnectPage });
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -212,15 +217,19 @@ function rememberConnection(url, identity, extra = {}) {
 // Kendi sunucumuz (sunucu modu): alt süreci başlatır, kimliği server-data'daki identity.pub'dan
 // okur ve 127.0.0.1 yanıtının bu kimlikle eşleşmesini ister (aynı portu başka bir süreç tutuyorsa
 // eşleşmez, bağlanılmaz). Eşleşirse sorusuz hatırlanır. Başarıda true, aksi halde false döner.
-async function openOwnServer(extra = {}) {
+// startedGeneration: otomatik çağrıda (connectToServer) verilir; bu arada kullanıcı bağlantıyı
+// değiştirdiyse sonuç atılır. Kullanıcının kendi isteğinde (enableServerMode) verilmez.
+async function openOwnServer(extra = {}, startedGeneration) {
   await hostServer();
   const own = readLocalIdentity(path.join(configDir(), 'server-data'));
   const action = own ? ownServerAction(await verifyServer(LOCAL_URL, own)) : { action: 'fail' };
+  if (startedGeneration !== undefined && !stillCurrent(startedGeneration)) return false;
   if (action.action !== 'open') {
     // Zaten bağlantı sayfasındaysak yeniden yükleme: sayfadaki hata satırı kaybolmasın.
     if (alive() && !onConnectPage) showConnectPage('manual');
     return false;
   }
+  connectGeneration += 1; // bağlantı değişti: süren arka plan denemeleri sonuçlarını atsın
   rememberConnection(LOCAL_URL, action.identity, extra);
   retried = false;
   if (alive()) openServer(LOCAL_URL);
@@ -252,6 +261,7 @@ async function requestServerMode() {
 }
 
 async function disableServerMode() {
+  connectGeneration += 1; // eski ayarla başlamış denemeler yerel sunucuyu yeniden kaydetmesin
   // Adresle birlikte hatırlanan kimlik de silinir; yoksa eski kendi sunucusu yüzünden uyarı görülürdü.
   saveConfig(configDir(), { ...withoutServer(loadConfig(configDir())), serverMode: false });
   await serverHost?.stop();
@@ -308,20 +318,22 @@ function openServer(url) {
 async function connectToServer() {
   if (connecting) return;
   connecting = true;
+  const started = connectGeneration; // beklemeden önce
   try {
     if (loadConfig(configDir()).serverMode) {
       try {
-        await openOwnServer();
+        await openOwnServer({}, started);
         return;
       } catch {
-        if (alive()) showConnectPage('manual');
+        if (stillCurrent(started)) showConnectPage('manual');
         return;
       }
     }
     const result = await resolveServer({ configDir: configDir() });
     serverKnown = networkServerKnown(result);
     updateTray();
-    if (!alive()) return;
+    // Bu arada kullanıcı başka sunucuya bağlandıysa (ya da onayladıysa) sonuç atılır.
+    if (!stillCurrent(started)) return;
     if (result.status === 'ok') {
       rememberConnection(result.url, result.identity);
       openServer(result.url);
@@ -332,7 +344,7 @@ async function connectToServer() {
       showConnectPage(result.status, result.servers);
     }
   } catch {
-    if (alive()) showConnectPage('manual');
+    if (stillCurrent(started)) showConnectPage('manual');
   } finally {
     connecting = false;
   }
@@ -341,12 +353,14 @@ async function connectToServer() {
 async function retryInBackground() {
   if (!onConnectPage || connecting || !alive()) return;
   connecting = true;
+  const started = connectGeneration; // beklemeden önce
   try {
     const result = await resolveServer({ configDir: configDir() });
     serverKnown = networkServerKnown(result);
     updateTray();
     // Yalnızca 'ok' işlenir; 'changed' arka planda ekran açmaz (kullanıcı zaten bağlantı sayfasında).
-    if (result.status === 'ok' && alive()) {
+    // Bu arada kullanıcı bağlandıysa ya da sayfadan çıkıldıysa sonuç atılır.
+    if (result.status === 'ok' && stillCurrent(started, true)) {
       rememberConnection(result.url, result.identity);
       retried = false;
       openServer(result.url);
@@ -441,6 +455,7 @@ ipcMain.handle('server:submit', async (event, text) => {
     return { confirm: { url, name: serverLabelFor(url), ...action.info } };
   }
   if (action.action !== 'open') return { error: action.message };
+  connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
   rememberConnection(url, action.identity);
   retried = false;
   openServer(url);
@@ -460,6 +475,7 @@ ipcMain.handle('server:confirm', async (event, text, shown) => {
   }
   const action = confirmAction(await verifyServer(url, getPinned(loadConfig(configDir()))), shown);
   if (action.action !== 'open') return { error: action.message };
+  connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
   // Legacy onayında identity null: eski hatırlanan kimlik silinir.
   rememberConnection(url, action.identity);
   retried = false;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { connectAction, confirmAction, ownServerAction } from '../src/connect-policy.js';
+import { connectAction, confirmAction, ownServerAction, isResultCurrent } from '../src/connect-policy.js';
 import { shortFingerprint } from '../src/identity.js';
 
 const ID_A = { publicKey: 'QUJD', fingerprint: 'a1b2c3d4e5f6' + '0'.repeat(52) };
@@ -103,4 +103,35 @@ test('ownServerAction opens only for known', () => {
   ]) {
     assert.deepEqual(ownServerAction(r), { action: 'fail' }, JSON.stringify(r));
   }
+});
+
+// Arka plan sonucu hâlâ geçerli mi (kullanıcı bu arada bağlantıyı değiştirmediyse)
+test('isResultCurrent: nesil ayni ve pencere acik -> gecerli', () => {
+  assert.equal(isResultCurrent({ startedGeneration: 3, currentGeneration: 3, alive: true }), true);
+});
+
+test('isResultCurrent: bu arada kullanici baglanti degistirdi (nesil artti) -> gecersiz', () => {
+  assert.equal(isResultCurrent({ startedGeneration: 3, currentGeneration: 4, alive: true }), false);
+});
+
+test('isResultCurrent: pencere kapandi -> gecersiz', () => {
+  assert.equal(isResultCurrent({ startedGeneration: 3, currentGeneration: 3, alive: false }), false);
+});
+
+test('isResultCurrent: baglanti sayfasi gerekiyorsa ve artik orada degilsek -> gecersiz', () => {
+  assert.equal(
+    isResultCurrent({ startedGeneration: 1, currentGeneration: 1, alive: true, needsConnectPage: true, onConnectPage: false }),
+    false,
+  );
+  assert.equal(
+    isResultCurrent({ startedGeneration: 1, currentGeneration: 1, alive: true, needsConnectPage: true, onConnectPage: true }),
+    true,
+  );
+});
+
+test('isResultCurrent: eksik/yanlis turde girdi guvenli yonde gecersiz', () => {
+  assert.equal(isResultCurrent({}), false);
+  assert.equal(isResultCurrent(undefined), false);
+  assert.equal(isResultCurrent({ startedGeneration: '1', currentGeneration: 1, alive: true }), false);
+  assert.equal(isResultCurrent({ startedGeneration: 1, currentGeneration: 1, alive: 1 }), false);
 });
