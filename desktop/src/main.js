@@ -13,7 +13,7 @@ import { readFirewallPolicy } from './firewall-policy.js';
 import { appBundlePath, uninstallBlockedReason } from './uninstall.js';
 import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
-import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData } from './cleanup.js';
+import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice } from './cleanup.js';
 import { networkServerKnown, HOST_CONFIRM, CHANGE_SERVER_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -122,13 +122,15 @@ async function uninstallEverything() {
   }
   // Sunucu verisi dosya sisteminden okunur (sunucu modu kapalıyken de veri durabilir); silmeden önce.
   const serverDataPath = path.join(configDir(), 'server-data');
+  // Yalnızca ENOENT "sunucu yok" demektir; başka her hata emin olamamak demektir ve korunur.
   let entries = null;
+  let errorCode;
   try {
     entries = fs.readdirSync(serverDataPath);
-  } catch {
-    entries = null;
+  } catch (err) {
+    errorCode = err?.code ?? 'UNKNOWN';
   }
-  const keepServerData = hasServerData(entries);
+  const keepServerData = hasServerData(entries, errorCode);
   const { response } = await dialog.showMessageBox({
     type: 'question',
     title: 'Ipchat',
@@ -420,6 +422,17 @@ function start() {
     if (app.isPackaged && !config.autostartInitialized) {
       app.setLoginItemSettings(loginItemSettings(true));
       saveConfig(configDir(), { ...config, autostartInitialized: true });
+    }
+    if (process.platform === 'win32' && app.isPackaged) {
+      // Önceki kaldırma hesapları geçici klasörde bıraktıysa yönetici bilsin; klasöre dokunulmaz.
+      let tmpExists = false;
+      try {
+        tmpExists = fs.existsSync(path.join(path.dirname(configDir()), 'ipchat-server-data-tmp'));
+      } catch {
+        tmpExists = false;
+      }
+      const leftover = leftoverServerDataNotice(configDir(), tmpExists);
+      if (leftover) dialog.showMessageBox({ type: 'warning', title: 'Ipchat', message: leftover.message, detail: leftover.detail });
     }
     if (process.platform === 'darwin' && app.isPackaged && shouldShowInstallNotice(loadConfig(configDir()))) {
       dialog.showMessageBox({ type: 'info', title: 'Ipchat', ...INSTALL_NOTICE });

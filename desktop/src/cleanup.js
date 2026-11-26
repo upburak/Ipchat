@@ -1,15 +1,18 @@
 // Temiz kaldırma: karar mantığı ve metinler. Electron'a bağımlı değildir;
 // main.js ve kurulum betiği bu dosyadan karar ve metin alır.
+import path from 'node:path';
 
+// Yalnızca Mac'te gösterilir (Windows metni installer.nsh içinde ayrı).
 export const INSTALL_NOTICE = {
   message: 'Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz.',
   detail:
-    'Program, ayarlar, otomatik başlatma ve güvenlik duvarı kuralları silinir.\n\n' +
+    'Program, ayarlar ve otomatik başlatma kaydı silinir.\n\n' +
+    'Kaldırmak için tepsi menüsünden "Ipchat\'i tamamen kaldır…" seçeneğini kullan; uygulamayı yalnızca Çöp Kutusu\'na atmak veriyi geride bırakır.\n\n' +
     'Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.',
 };
 
 const CLIENT_CONFIRM = {
-  message: 'Ipchat ve bu bilgisayardaki tüm verisi siliniyor.',
+  message: 'Ipchat ve bu bilgisayardaki tüm verisi silinecek.',
   detail: 'Bu işlem geri alınamaz.',
 };
 
@@ -18,6 +21,7 @@ function serverConfirm(serverDataPath) {
   return {
     message: 'Bu bilgisayar bir Ipchat sunucusu.',
     detail:
+      "Uygulama Çöp Kutusu'na taşınır, ayarlar ve otomatik başlatma silinir.\n\n" +
       'Kullanıcıların hesapları ve mesaj geçmişi korunacak, silinmeyecek. Şurada duruyor:\n' +
       `${serverDataPath}\n\n` +
       'Bunları da silmek istersen bu klasörü elle sil.',
@@ -51,7 +55,28 @@ export function shouldShowInstallNotice(config) {
   return !config?.installNoticeShown;
 }
 
-// NSIS'in IfFileExists "…\server-data\*.*" davranışı: boş klasör sunucu sayılmaz.
-export function hasServerData(entries) {
-  return Array.isArray(entries) && entries.length > 0;
+// Kural: yalnızca server-data'nın olmadığından eminsek istemci sayılır (ENOENT).
+// Okuma başka bir hatayla başarısız olduysa emin olamayız: sunucu say, koru (tasarım §9).
+// Dizin boşsa da sunucu sayılır: NSIS belgelerine göre IfFileExists "dizin\*.*" boş dizinde de
+// eşleşir, yani Windows böyle davranır (gerçek Windows'ta denenmedi).
+export function hasServerData(entries, errorCode) {
+  return errorCode !== 'ENOENT';
+}
+
+// Önceki kaldırma server-data'yı geçici klasörde bıraktıysa (yalnızca Windows kaldırıcısı üretir)
+// açılışta yöneticiyi uyarmak için. Uygulama bu klasöre asla dokunmaz, silmez.
+export function leftoverServerDataNotice(userDataDir, tmpExists) {
+  if (!tmpExists) return null;
+  const tmpPath = path.join(path.dirname(userDataDir), 'ipchat-server-data-tmp');
+  const target = path.join(userDataDir, 'server-data');
+  return {
+    tmpPath,
+    message: 'Önceki kaldırmadan kalan hesaplar ve mesajlar bulundu.',
+    detail:
+      'Kullanıcıların hesapları ve mesaj geçmişi silinmedi, şu klasörde duruyor:\n' +
+      `${tmpPath}\n\n` +
+      'Geri almak için Ipchat\'i kapat ve bu klasörü şu adla ve yere taşı (orada yeni, boş bir server-data varsa önce onu sil):\n' +
+      `${target}\n\n` +
+      'Ipchat bu klasörü kendiliğinden silmez; taşıyana kadar yedek olarak durur.',
+  };
 }

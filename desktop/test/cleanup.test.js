@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData } from '../src/cleanup.js';
+import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice } from '../src/cleanup.js';
 
 // Gerçek kabukta çalıştırılan temizlik: metin testleri yanlış betiği de geçirebilir.
 function makeFixture() {
@@ -23,7 +23,6 @@ test('kurulum metni iz birakmamayi ve sunucu istisnasini soyler', () => {
   const t = `${INSTALL_NOTICE.message} ${INSTALL_NOTICE.detail}`;
   assert.match(t, /iz bırakmaz/);
   assert.match(t, /otomatik başlatma/);
-  assert.match(t, /güvenlik duvarı/);
   assert.match(t, /hesapları ve mesaj geçmişi silinmez/);
 });
 
@@ -71,10 +70,54 @@ test('silme komutu yolu metne gommez, degisken olarak gecirir', () => {
   }
 });
 
-test('bos server-data sunucu sayilmaz, NSIS ile ayni davranis', () => {
+// Kural: yalnizca server-data'nin olmadigindan eminsek istemci; emin olamazsak sunucu say, koru.
+// (NSIS belgelerine gore IfFileExists "dizin\\*.*" bos dizinde de eslesir; gercek Windows'ta denenmedi.)
+test('server-data yoksa (ENOENT) istemci sayilir', () => {
+  assert.equal(hasServerData(null, 'ENOENT'), false);
+});
+
+test('bos server-data da sunucu sayilir, Windows ile ayni', () => {
+  assert.equal(hasServerData([]), true);
   assert.equal(hasServerData(['ipchat.db']), true);
-  assert.equal(hasServerData([]), false);
-  assert.equal(hasServerData(null), false);
+});
+
+test('okuma hatasinda emin olunamaz: ENOENT disindaki her hata sunucu sayilir', () => {
+  for (const code of ['EACCES', 'EIO', 'ENOTDIR', 'EMFILE', 'EPERM', undefined]) {
+    assert.equal(hasServerData(null, code), true, String(code));
+  }
+});
+
+test('onay metni sunucuda programin da silinecegini soyler', () => {
+  const c = uninstallConfirm(true, '/x/server-data');
+  assert.match(c.detail, /Çöp Kutusu'na taşınır, ayarlar ve otomatik başlatma silinir/);
+  assert.ok(c.detail.indexOf('Çöp Kutusu') < c.detail.indexOf('korunacak'));
+});
+
+test('istemci onayi gelecek zamanda yazilir', () => {
+  assert.match(uninstallConfirm(false, '/x').message, /silinecek/);
+});
+
+test('kurulum metni Mac icin: guvenlik duvari yok, Cop Kutusu uyarisi var', () => {
+  const t = INSTALL_NOTICE.detail;
+  assert.doesNotMatch(t, /güvenlik duvarı|kayıt defteri/);
+  assert.match(t, /Ipchat'i tamamen kaldır/);
+  assert.match(t, /Çöp Kutusu/);
+});
+
+test('onceki kaldirmadan kalan gecici klasor yoksa uyari yok', () => {
+  assert.equal(leftoverServerDataNotice('/a/Roaming/ipchat-desktop', false), null);
+});
+
+test('gecici klasor varsa uyari yolu ve geri alma adimini soyler', () => {
+  const ud = join('/a', 'Roaming', 'ipchat-desktop');
+  const n = leftoverServerDataNotice(ud, true);
+  const tmp = join(dirname(ud), 'ipchat-server-data-tmp');
+  assert.equal(n.tmpPath, tmp);
+  const t = `${n.message} ${n.detail}`;
+  assert.ok(t.includes(tmp));
+  assert.ok(t.includes(join(ud, 'server-data')));
+  assert.match(t, /hesaplar ve mesaj/);
+  assert.match(t, /silme/);
 });
 
 test('sunucu temizligi gercek kabukta yalniz server-data\'yi birakir', () => {

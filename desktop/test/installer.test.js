@@ -104,3 +104,15 @@ test('kaldirma metinleri istemci ve sunucu icin ayri', () => {
   assert.match(uninstall, /server-data/);
   assert.match(uninstall, /silinmedi/);
 });
+
+test('istemcide silmeden sonra kalinti denetlenir; kalinti varsa "silindi" denmez', () => {
+  const client = uninstall.slice(uninstall.indexOf('ipchat_client:'), uninstall.indexOf('ipchat_done:'));
+  const rmdir = client.indexOf('RMDir /r');
+  const check = client.indexOf('${FileExists} "$APPDATA\\ipchat-desktop\\*.*"');
+  const warn = client.indexOf('silinemedi');
+  const ok = client.indexOf('verisi silindi');
+  assert.ok(rmdir > -1 && check > rmdir, 'kalinti denetimi RMDir den sonra gelmeli');
+  assert.ok(warn > check && ok > warn, 'kalinti uyarisi denetimin icinde, "silindi" mesaji Else dalinda olmali');
+  assert.match(client.slice(check, ok), /\$\{Else\}/);
+  assert.match(client, /elle sil/);
+});

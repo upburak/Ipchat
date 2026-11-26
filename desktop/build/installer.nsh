@@ -58,8 +58,15 @@
       Goto ipchat_done
     ipchat_client:
       RMDir /r "$APPDATA\ipchat-desktop"
-      ${IfNot} ${Silent}
-        MessageBox MB_OK|MB_ICONINFORMATION "Ipchat ve bu bilgisayardaki tüm verisi silindi. Bu işlem geri alınamaz."
+      ; RMDir /r hata bayragi koymaz: kilitli dosya kalmis olabilir, o yuzden kalinti var mi diye bak
+      ${If} ${FileExists} "$APPDATA\ipchat-desktop\*.*"
+        ${IfNot} ${Silent}
+          MessageBox MB_OK|MB_ICONEXCLAMATION "Ipchat kaldırıldı. Bazı dosyalar kilitli olduğu için silinemedi; bilgisayarı yeniden başlatıp $APPDATA\ipchat-desktop klasörünü elle sil."
+        ${EndIf}
+      ${Else}
+        ${IfNot} ${Silent}
+          MessageBox MB_OK|MB_ICONINFORMATION "Ipchat ve bu bilgisayardaki tüm verisi silindi. Bu işlem geri alınamaz."
+        ${EndIf}
       ${EndIf}
     ipchat_done:
     SetShellVarContext all

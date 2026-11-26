@@ -87,16 +87,17 @@ Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak i�
 
 ## Kaldırma ve veri
 
-Kaldırırken **hiçbir soru sorulmaz**. Ne silineceği şudur:
+Kaldırırken **ne silineceği sorulmaz**. Ne silineceği şudur:
 
 - **Çalışanların (istemci) bilgisayarında her şey silinir:** program, ayarlar, otomatik başlatma, kayıt defteri girdileri, güvenlik duvarı kuralları ve `ipchat-desktop` veri klasörünün tamamı. Bu işlem geri alınamaz. (İstisnalar aşağıda: Windows'taki "Bilinen sınır" ve Mac'te uygulamayı yalnızca Çöp Kutusu'na atmak.)
-- **Sunucu olan bilgisayarda da aynı şeyler silinir, yalnızca hesaplar ve mesaj geçmişi silinmez.** Bunlar `server-data` klasöründe durur. İstersen bu klasörü elle silebilirsin. Kaldırma bittiğinde Ipchat bu klasörün nerede olduğunu sana söyler; yalnızca sessiz kaldırmada mesaj çıkmaz. Windows'ta çok nadir olarak klasör geri konamazsa hesaplar ve mesajlar `%APPDATA%\ipchat-server-data-tmp` klasöründe kalır; bu durumda onu orada ara.
+- **Sunucu olan bilgisayarda da aynı şeyler silinir, yalnızca hesaplar ve mesaj geçmişi silinmez.** Bunlar `server-data` klasöründe durur. İstersen bu klasörü elle silebilirsin. Windows'ta kaldırma bittiğinde Ipchat bu klasörün nerede olduğunu sana söyler (sessiz kaldırmada mesaj çıkmaz); Mac'te yol, onay penceresinde kaldırmadan önce görünür ve sonrasında bir şey çıkmaz. Windows'ta çok nadir olarak klasör geri konamazsa hesaplar ve mesajlar `%APPDATA%\ipchat-server-data-tmp` klasöründe kalır. Ipchat'i bir sonraki açışında bunu sana bir pencereyle söyler ve o klasörü **kendiliğinden silmez**. Geri almak için: Ipchat'i kapat; `%APPDATA%\ipchat-desktop` klasöründe yeni, boş bir `server-data` oluşmuşsa onu sil; sonra `ipchat-server-data-tmp` klasörünü `%APPDATA%\ipchat-desktop` içine taşı ve adını `server-data` yap. (Dosya Gezgini adres çubuğuna `%APPDATA%` yazarak o klasöre gidebilirsin.)
 - **Güncelleme sırasında hiçbir şeye dokunulmaz.** Yeni sürümü üstüne kurmak ayarları ve mesajları silmez.
 
 `server-data` klasörü: Windows `%APPDATA%\ipchat-desktop\server-data`, Mac `~/Library/Application Support/ipchat-desktop/server-data`.
 
 - **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kural kurulumun sonunda bir kez, kaldırma bittiğinde bir kez daha yazılır. Sessiz kaldırma da aynı şeyleri siler, yalnızca ekrana mesaj çıkarmaz.
   **Bilinen sınır:** standart bir kullanıcı kaldırmayı başka bir yönetici hesabının parolasıyla yükseltirse kaldırıcı o hesabın profiline bakar; kendi verisi kalabilir. O zaman `%APPDATA%\ipchat-desktop` klasörünü elle sil.
+  Aynı şey **birkaç kişinin kullandığı bilgisayarda** da olur: kaldırıcı yalnızca kaldırmayı yapan hesabın verisini ve otomatik başlatma kaydını temizler; diğer kullanıcıların her birinde kendi `%APPDATA%\ipchat-desktop` klasörü ve otomatik başlatma kaydı kalır. Onları o kullanıcılar kendi hesaplarından elle silmelidir.
 - **Mac:** Mac'te kurulum adımı yoktur, o yüzden bu kural uygulama **ilk açıldığında** bir kez yazılır. Kaldırmak için tepsi menüsünden **"Ipchat'i tamamen kaldır…"** seçilir. Çıkan onay penceresi aynı kuralı tekrar anlatır; seçili düğme **Vazgeç**'tir. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
 
 ---
