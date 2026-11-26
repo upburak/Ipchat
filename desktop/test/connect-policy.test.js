@@ -1,6 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { connectAction, confirmAction, ownServerAction, isResultCurrent, shouldReconnect } from '../src/connect-policy.js';
+import {
+  connectAction,
+  confirmAction,
+  ownServerAction,
+  isResultCurrent,
+  shouldReconnect,
+  isIdentityFailure,
+  hostFailureMessage,
+  shouldShowIdentityNotice,
+  IDENTITY_FAILURE_LINE,
+} from '../src/connect-policy.js';
+import { IDENTITY_EXIT_CODE } from '../src/identity.js';
 import { shortFingerprint } from '../src/identity.js';
 
 const ID_A = { publicKey: 'QUJD', fingerprint: 'a1b2c3d4e5f6' + '0'.repeat(52) };
@@ -154,4 +165,55 @@ test('shouldReconnect: eksik/yanlis turde girdi -> calistirma', () => {
   assert.equal(shouldReconnect(undefined), false);
   assert.equal(shouldReconnect({ pending: 1, alive: true, quitting: false }), false);
   assert.equal(shouldReconnect({ pending: true, alive: true }), false);
+});
+
+const identityError = () => Object.assign(new Error('Sunucu başlatılamadı'), { exitCode: IDENTITY_EXIT_CODE });
+
+test('isIdentityFailure is true only for the identity exit code', () => {
+  assert.equal(isIdentityFailure(identityError()), true);
+  assert.equal(isIdentityFailure(Object.assign(new Error('x'), { exitCode: 1 })), false);
+  assert.equal(isIdentityFailure(new Error('zaman asimi')), false);
+  assert.equal(isIdentityFailure(undefined), false);
+  assert.equal(isIdentityFailure({ exitCode: '78' }), false);
+});
+
+test('hostFailureMessage: identity failure points to the dialog, never mentions the port', () => {
+  const line = hostFailureMessage(identityError(), 3000);
+  assert.equal(line, IDENTITY_FAILURE_LINE);
+  assert.match(line, /kimlik dosyası okunamadı/);
+  assert.match(line, /açılan pencere/);
+  assert.doesNotMatch(line, /port/);
+});
+
+test('hostFailureMessage: other failures keep the port message', () => {
+  assert.match(hostFailureMessage(new Error('Sunucu başlatılamadı'), 3000), /3000 portu başka bir programda/);
+  assert.match(hostFailureMessage(Object.assign(new Error('x'), { exitCode: 1 }), 3000), /3000 portu/);
+});
+
+test('shouldShowIdentityNotice: never for other failures', () => {
+  for (const userInitiated of [true, false]) {
+    assert.equal(
+      shouldShowIdentityNotice({ error: new Error('x'), userInitiated, shownThisEpisode: false, open: false }),
+      false
+    );
+  }
+});
+
+test('shouldShowIdentityNotice: never while the notice is already open', () => {
+  assert.equal(shouldShowIdentityNotice({ error: identityError(), userInitiated: true, shownThisEpisode: false, open: true }), false);
+  assert.equal(shouldShowIdentityNotice({ error: identityError(), userInitiated: false, shownThisEpisode: false, open: true }), false);
+});
+
+test('shouldShowIdentityNotice: automatic attempts show it once per failure episode', () => {
+  assert.equal(shouldShowIdentityNotice({ error: identityError(), userInitiated: false, shownThisEpisode: false, open: false }), true);
+  assert.equal(shouldShowIdentityNotice({ error: identityError(), userInitiated: false, shownThisEpisode: true, open: false }), false);
+});
+
+test('shouldShowIdentityNotice: a user click always gets an explanation', () => {
+  assert.equal(shouldShowIdentityNotice({ error: identityError(), userInitiated: true, shownThisEpisode: true, open: false }), true);
+});
+
+test('shouldShowIdentityNotice: missing state is treated safely', () => {
+  assert.equal(shouldShowIdentityNotice(undefined), false);
+  assert.equal(shouldShowIdentityNotice({ error: identityError() }), true);
 });

@@ -15,6 +15,9 @@ export class IdentityError extends Error {
 export const IDENTITY_PREFIX = 'ipchat-kimlik-v1:';
 export const KEY_FILE = 'identity.key';
 export const PUB_FILE = 'identity.pub';
+// Kimlik okunamayınca sunucu süreci bu kodla çıkar (78 = EX_CONFIG). Masaüstü (desktop/src/identity.js)
+// aynı sayıyı tanımlar ve bunu "port meşgul" gibi diğer hatalardan ayırıp yöneticiye açıklama gösterir.
+export const IDENTITY_EXIT_CODE = 78;
 
 // Parmak izi: açık anahtarın SPKI DER baytlarının SHA-256'sı, küçük harfli hex.
 export function fingerprintOf(publicKeyB64) {

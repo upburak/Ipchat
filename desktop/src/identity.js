@@ -6,6 +6,10 @@ import crypto from 'node:crypto';
 // Sunucudaki (server/src/identity.js) önekle birebir aynı olmalı.
 export const IDENTITY_PREFIX = 'ipchat-kimlik-v1:';
 
+// Sunucu süreci kimlik dosyasını okuyamayınca bu kodla çıkar; server/src/identity.js ile aynı olmalı
+// (test denetler). Masaüstü sunucu kodunu çalışırken içe aktarmaz, sayıyı kendisi tutar.
+export const IDENTITY_EXIT_CODE = 78;
+
 // Anahtar ve imza için üst sınır: Ed25519 SPKI ~60, imza ~88 karakterdir.
 const MAX_FIELD_LENGTH = 200;
 const NONCE_RE = /^[0-9a-f]{64}$/;

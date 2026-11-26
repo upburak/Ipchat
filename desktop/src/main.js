@@ -5,8 +5,17 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveServer } from './resolve-server.js';
 import { verifyServer } from './verify-server.js';
-import { getPinned, withConnection, withoutServer, readLocalIdentity } from './identity-store.js';
-import { connectAction, confirmAction, ownServerAction, isResultCurrent, shouldReconnect } from './connect-policy.js';
+import { getPinned, withConnection, withoutServer, readLocalIdentity, identityFailureNotice } from './identity-store.js';
+import {
+  connectAction,
+  confirmAction,
+  ownServerAction,
+  isResultCurrent,
+  shouldReconnect,
+  isIdentityFailure,
+  hostFailureMessage,
+  shouldShowIdentityNotice,
+} from './connect-policy.js';
 import { loadConfig, saveConfig } from './config.js';
 import { normalizeServerUrl } from './normalize-url.js';
 import { windowOptions, webPreferences } from './window-options.js';
@@ -50,6 +59,11 @@ let reconnectPending = false;
 // İlk açılış onayı bekleniyor (tasarım §7.4). Doğruyken yalnızca pencere ve welcome.html vardır:
 // keşif/bağlanma, sunucu modu, otomatik başlatma kaydı, tepsi ve kalıntı uyarısı çalışmaz.
 let welcomePending = false;
+// Kendi sunucumuz kimlik dosyası okunamadığı için başlamadıysa yöneticiye açıklama gösterilir.
+// identityNoticeShown: bu hata döneminde otomatik denemeler zaten gösterdi mi (sunucu başarıyla
+// başlayınca sıfırlanır). identityNoticeOpen: pencere şu an açık mı (üst üste açılmasın).
+let identityNoticeShown = false;
+let identityNoticeOpen = false;
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ipchat.desktop');
 
@@ -207,8 +221,33 @@ async function hostServer() {
       updateTray();
     },
   });
+  identityNoticeShown = false; // sunucu başladı: kimlik hatası dönemi bitti
   updateTray();
   checkFirewall();
+}
+
+// Kimlik hatasıysa (sunucu 78 koduyla çıktı) açıklama penceresini gösterir; beklemez.
+// userInitiated: kullanıcının tıklaması (bağlantı sayfası düğmesi ya da tepsi). Gösterildiyse true.
+function notifyIdentityFailure(err, userInitiated) {
+  const show = shouldShowIdentityNotice({
+    error: err,
+    userInitiated,
+    shownThisEpisode: identityNoticeShown,
+    open: identityNoticeOpen,
+  });
+  if (!show) return false;
+  identityNoticeShown = true;
+  identityNoticeOpen = true;
+  const notice = identityFailureNotice(path.join(configDir(), 'server-data'));
+  // Pencere tepsiye gizliyken ona bagli pencere (sheet) macOS'ta hic gorunmeyebilir.
+  const parent = alive() && win.isVisible() ? win : undefined;
+  dialog
+    .showMessageBox(parent, { type: 'error', title: 'Ipchat', message: notice.message, detail: notice.detail })
+    .catch(() => {})
+    .finally(() => {
+      identityNoticeOpen = false;
+    });
+  return true;
 }
 
 // Bağlanılan sunucuyu (adres ve kimlik) kaydeder. identity: nesne = sabitle, null = sabitlemeyi sil,
@@ -271,11 +310,32 @@ async function requestServerMode() {
     if (response !== 0) return { cancelled: true };
     const failed = await enableServerMode();
     return failed ?? { ok: true };
-  } catch {
-    return { error: `Sunucu başlatılamadı (${HOST_PORT} portu başka bir programda kullanılıyor olabilir)` };
+  } catch (err) {
+    // Kimlik hatası: ayrıntı pencerede; sayfaya kısa satır, tepsi ikinci bir pencere açmaz (notified).
+    if (isIdentityFailure(err)) {
+      notifyIdentityFailure(err, true);
+      return { error: hostFailureMessage(err, HOST_PORT), notified: true };
+    }
+    return { error: hostFailureMessage(err, HOST_PORT) };
   } finally {
     confirmingHost = false;
   }
+}
+
+// Tepsiden "Bu bilgisayarı sunucu yap": hata sessizce atılmaz. Kimlik hatası penceresi
+// requestServerMode içinde zaten gösterildiyse (notified) ikinci pencere açılmaz.
+async function hostFromTray() {
+  let result;
+  try {
+    result = await requestServerMode();
+  } catch {
+    result = { error: 'Sunucu başlatılamadı' };
+  }
+  if (!result?.error || result.notified) return;
+  const parent = alive() && win.isVisible() ? win : undefined;
+  dialog
+    .showMessageBox(parent, { type: 'error', title: 'Ipchat', message: 'Sunucu modu açılamadı.', detail: result.error })
+    .catch(() => {});
 }
 
 async function disableServerMode() {
@@ -353,8 +413,12 @@ async function connectToServer() {
       try {
         await openOwnServer({}, started);
         return;
-      } catch {
-        if (stillCurrent(started)) showConnectPage('manual');
+      } catch (err) {
+        // Atılan (eski) denemenin hatası gösterilmez; kimlik hatası penceresi dönem başına bir kez.
+        if (stillCurrent(started)) {
+          showConnectPage('manual');
+          notifyIdentityFailure(err, false);
+        }
         return;
       }
     }
@@ -555,7 +619,7 @@ function startApp() {
     showWindow,
     changeServer,
     uninstall: uninstallEverything,
-    hostServer: () => requestServerMode().catch(() => {}),
+    hostServer: () => hostFromTray(),
     stopHosting: disableServerMode,
     quit: async () => {
       quitting = true;

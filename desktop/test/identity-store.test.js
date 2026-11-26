@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { getPinned, withConnection, withoutServer, readLocalIdentity } from '../src/identity-store.js';
+import { getPinned, withConnection, withoutServer, readLocalIdentity, identityFailureNotice } from '../src/identity-store.js';
 import { fingerprintOf } from '../src/identity.js';
 import { loadOrCreateIdentity } from '../../server/src/identity.js';
 
@@ -117,4 +117,25 @@ test('readLocalIdentity never throws on bad arguments', () => {
   assert.equal(readLocalIdentity(undefined), null);
   assert.equal(readLocalIdentity(null), null);
   assert.equal(readLocalIdentity(42), null);
+});
+
+test('identityFailureNotice names the folder and both files and warns not to delete server-data', () => {
+  const dir = path.join('C:', 'Users', 'okul', 'AppData', 'Roaming', 'ipchat-desktop', 'server-data');
+  const notice = identityFailureNotice(dir);
+  assert.equal(typeof notice.message, 'string');
+  assert.equal(typeof notice.detail, 'string');
+  assert.match(notice.message, /başlatılamadı/);
+  assert.ok(notice.detail.includes(dir), 'klasor yolu yazmali');
+  assert.match(notice.detail, /identity\.key/);
+  assert.match(notice.detail, /identity\.pub/);
+  assert.match(notice.detail, /server-data.*silme/i);
+  assert.match(notice.detail, /yedek/i);
+  // Yedek yoksa: anahtarları kenara almanın sonucu (herkes bir kez "sunucu değişti" ekranı görür) söylenmeli.
+  assert.match(notice.detail, /değişti/);
+});
+
+test('identityFailureNotice does not throw on a missing folder name', () => {
+  const notice = identityFailureNotice(undefined);
+  assert.equal(typeof notice.detail, 'string');
+  assert.match(notice.detail, /server-data/);
 });

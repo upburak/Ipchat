@@ -1,6 +1,6 @@
 // Bağlanma kararı (saf mantık): verifyServer sonucuna göre ne yapılacağını söyler.
 // Arayüz/ana süreç bu kararları olduğu gibi uygular; kendi başına karar vermez.
-import { shortFingerprint } from './identity.js';
+import { shortFingerprint, IDENTITY_EXIT_CODE } from './identity.js';
 
 const MSG_INVALID = 'Bu sunucunun kimliği doğrulanamadı';
 const MSG_UNREACHABLE = 'Bu adreste Ipchat sunucusu bulunamadı';
@@ -77,4 +77,28 @@ export function isResultCurrent(state) {
 export function shouldReconnect(state) {
   const { pending, alive, quitting } = state ?? {};
   return pending === true && alive === true && quitting === false;
+}
+
+// Kendi sunucumuz kimlik dosyası okunamadığı için mi başlamadı? (startServerProcess hatasındaki çıkış kodu)
+export function isIdentityFailure(err) {
+  return err?.exitCode === IDENTITY_EXIT_CODE;
+}
+
+// Bağlantı sayfasındaki kısa satır; ayrıntı ayrı pencerede (identityFailureNotice) gösterilir.
+export const IDENTITY_FAILURE_LINE = 'Sunucu kimlik dosyası okunamadı; ayrıntı için açılan pencereye bak';
+
+// "Bu bilgisayar sunucu olsun" başarısız olunca sayfada gösterilecek satır. Port mesajı yalnızca
+// kimlik hatası OLMAYAN durumlar içindir.
+export function hostFailureMessage(err, port) {
+  if (isIdentityFailure(err)) return IDENTITY_FAILURE_LINE;
+  return `Sunucu başlatılamadı (${port} portu başka bir programda kullanılıyor olabilir)`;
+}
+
+// Kimlik hatası penceresi gösterilsin mi? Kullanıcının tıklamasına (düğme/tepsi) her seferinde bir
+// açıklama verilir; otomatik denemeler (açılış, ertelenmiş yeniden bağlanma) bir hata dönemi boyunca
+// en fazla bir kez gösterir. Pencere zaten açıksa ikincisi açılmaz.
+export function shouldShowIdentityNotice(state) {
+  const { error, userInitiated = false, shownThisEpisode = false, open = false } = state ?? {};
+  if (!isIdentityFailure(error) || open === true) return false;
+  return userInitiated === true || shownThisEpisode !== true;
 }

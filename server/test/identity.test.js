@@ -4,7 +4,16 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadOrCreateIdentity, IdentityError, IDENTITY_PREFIX, KEY_FILE, PUB_FILE } from '../src/identity.js';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import {
+  loadOrCreateIdentity,
+  IdentityError,
+  IDENTITY_PREFIX,
+  IDENTITY_EXIT_CODE,
+  KEY_FILE,
+  PUB_FILE,
+} from '../src/identity.js';
 
 const tmpDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'ipchat-kimlik-'));
 
@@ -71,4 +80,43 @@ test('throws IdentityError when only the pub file exists', () => {
   assert.throws(() => loadOrCreateIdentity(dir), IdentityError);
   assert.equal(fs.existsSync(path.join(dir, KEY_FILE)), false);
   assert.equal(fs.readFileSync(path.join(dir, PUB_FILE), 'utf8'), 'AAAA\n');
+});
+
+test('identity exit code is the documented 78', () => {
+  assert.equal(IDENTITY_EXIT_CODE, 78);
+});
+
+// Sunucu süreci kimlik okunamayınca ayrı bir çıkış koduyla durur: masaüstü bunu "port meşgul"den ayırır.
+function runServer(dataDir) {
+  const entry = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'index.js');
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [entry], {
+      env: { ...process.env, PORT: '0', IPCHAT_DATA_DIR: dataDir, IPCHAT_DB_PATH: '' },
+      stdio: 'ignore',
+    });
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve('timeout');
+    }, 8000);
+    child.on('exit', (code) => {
+      clearTimeout(timer);
+      resolve(code);
+    });
+  });
+}
+
+test('server process exits with IDENTITY_EXIT_CODE when only the pub file exists', async () => {
+  const dir = tmpDir();
+  const source = tmpDir();
+  loadOrCreateIdentity(source);
+  fs.copyFileSync(path.join(source, PUB_FILE), path.join(dir, PUB_FILE));
+  assert.equal(await runServer(dir), IDENTITY_EXIT_CODE);
+  assert.equal(fs.existsSync(path.join(dir, KEY_FILE)), false, 'yeni anahtar uretilmemeli');
+});
+
+test('server process exits with IDENTITY_EXIT_CODE when the key file is corrupt', async () => {
+  const dir = tmpDir();
+  fs.writeFileSync(path.join(dir, KEY_FILE), 'bozuk');
+  assert.equal(await runServer(dir), IDENTITY_EXIT_CODE);
+  assert.equal(fs.readFileSync(path.join(dir, KEY_FILE), 'utf8'), 'bozuk');
 });

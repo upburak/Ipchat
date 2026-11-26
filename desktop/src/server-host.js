@@ -39,17 +39,21 @@ export function startServerProcess({ execPath, entry, port, dataDir, webDist, ti
 
     let exited = false;
     let settled = false;
-    const failStart = () => {
+    // exitCode: alt süreç sağlıklı olmadan kendisi çıktıysa çıkış kodu (ör. kimlik hatası 78).
+    // Zaman aşımı ya da başlatma hatasında yoktur.
+    const failStart = (exitCode) => {
       if (settled) return;
       settled = true;
       if (!exited) child.kill();
-      reject(new Error('Sunucu başlatılamadı'));
+      const err = new Error('Sunucu başlatılamadı');
+      if (Number.isInteger(exitCode)) err.exitCode = exitCode;
+      reject(err);
     };
 
-    child.on('error', failStart);
+    child.on('error', () => failStart());
     child.on('exit', (code) => {
       exited = true;
-      if (!settled) failStart();
+      if (!settled) failStart(code);
       else onExit?.(code);
     });
 

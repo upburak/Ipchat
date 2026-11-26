@@ -56,3 +56,25 @@ export function readLocalIdentity(serverDataDir) {
     return null;
   }
 }
+
+// Sunucu, kimlik dosyası (identity.key) bozuk ya da eksik olduğu için başlamadığında
+// yöneticiye gösterilecek açıklama (tasarım §7.1: sunucu durur ve yöneticiye söyler).
+export function identityFailureNotice(serverDataDir) {
+  const folder = typeof serverDataDir === 'string' && serverDataDir !== '' ? serverDataDir : 'server-data';
+  return {
+    message: 'Sunucu başlatılamadı: sunucunun kimlik dosyası bozuk ya da eksik.',
+    detail: [
+      `Kimlik dosyaları şu klasörde: ${folder}`,
+      '',
+      'Bu klasördeki identity.key dosyası okunamadı ya da yok (yarım bir yedek geri yüklenmiş olabilir). ' +
+        'Hesaplar ve mesajlar aynı klasörde durur; hiçbiri silinmedi.',
+      '',
+      'Ne yapmalı:',
+      '1. server-data klasörünü silme.',
+      '2. Bu klasörün tam bir yedeği varsa, identity.key ve identity.pub dosyalarını yedekten bu klasöre geri koy, sonra Ipchat\'i yeniden aç.',
+      '3. Yedek yoksa: identity.key ve identity.pub dosyalarını bu klasörden başka bir yere taşı (silme), sonra Ipchat\'i yeniden aç. ' +
+        'Sunucu yeni bir kimlik oluşturur; bu yüzden her kullanıcı bir kez "sunucu kimliği değişti" ekranını görür ve onaylaması gerekir. ' +
+        'Bunu yapmadan önce kullanıcılara haber ver.',
+    ].join('\n'),
+  };
+}

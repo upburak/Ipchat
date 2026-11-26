@@ -6,6 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServerProcess, lanUrls } from '../src/server-host.js';
+import { IDENTITY_EXIT_CODE } from '../src/identity.js';
+import { loadOrCreateIdentity } from '../../server/src/identity.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const entry = path.join(here, '..', '..', 'server', 'src', 'index.js');
@@ -43,6 +45,37 @@ test('rejects when the server never becomes healthy', async () => {
   await assert.rejects(
     startServerProcess({ execPath: process.execPath, entry: '/yok/index.js', port, dataDir: os.tmpdir(), webDist: os.tmpdir(), timeoutMs: 1500 }),
     /başlatılamadı/
+  );
+});
+
+test('rejects with the child exit code when the server exits before becoming healthy', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipchat-data-'));
+  const source = fs.mkdtempSync(path.join(os.tmpdir(), 'ipchat-src-'));
+  loadOrCreateIdentity(source);
+  // Yarım geri yükleme: identity.pub var, identity.key yok -> sunucu kimlik hatasıyla durur.
+  fs.copyFileSync(path.join(source, 'identity.pub'), path.join(dataDir, 'identity.pub'));
+  const port = await freePort();
+  await assert.rejects(
+    startServerProcess({ execPath: process.execPath, entry, port, dataDir, webDist: os.tmpdir(), timeoutMs: 8000 }),
+    (err) => {
+      assert.match(err.message, /başlatılamadı/);
+      assert.equal(err.exitCode, IDENTITY_EXIT_CODE);
+      return true;
+    }
+  );
+});
+
+test('a start that times out carries no exit code', async () => {
+  const port = await freePort();
+  const hang = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ipchat-hang-')), 'hang.js');
+  fs.writeFileSync(hang, 'setTimeout(() => {}, 60000);');
+  await assert.rejects(
+    startServerProcess({ execPath: process.execPath, entry: hang, port, dataDir: os.tmpdir(), webDist: os.tmpdir(), timeoutMs: 800 }),
+    (err) => {
+      assert.match(err.message, /başlatılamadı/);
+      assert.equal(err.exitCode, undefined);
+      return true;
+    }
   );
 });
 

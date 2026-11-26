@@ -11,7 +11,7 @@ import { authRouter } from './routes/auth.js';
 import { createAdminRouter } from './routes/admin.js';
 import { startDiscovery } from './discovery.js';
 import { dataDir } from './db.js';
-import { loadOrCreateIdentity } from './identity.js';
+import { loadOrCreateIdentity, IDENTITY_EXIT_CODE } from './identity.js';
 import { createIdentityRouter } from './routes/identity.js';
 import { messagesRouter } from './routes/messages.js';
 import { uploadRouter } from './routes/upload.js';
@@ -27,12 +27,13 @@ const uploadsDir =
     : path.join(__dirname, '..', 'uploads'));
 
 // Sunucu kimliği dinlemeden önce yüklenir; okunamazsa yeni anahtar üretilmez, sunucu başlamaz.
+// Ayrı çıkış kodu: masaüstü uygulaması bunu görüp yöneticiye ne yapacağını anlatır.
 let identity;
 try {
   identity = loadOrCreateIdentity(dataDir);
 } catch (err) {
   console.error('Hata: sunucu kimliği okunamadı, sunucu başlatılmıyor: ' + err.message);
-  process.exit(1);
+  process.exit(IDENTITY_EXIT_CODE);
 }
 
 const app = express();

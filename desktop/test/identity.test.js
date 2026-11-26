@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   IDENTITY_PREFIX,
+  IDENTITY_EXIT_CODE,
   makeNonce,
   fingerprintOf,
   shortFingerprint,
@@ -31,6 +32,11 @@ function realReply(nonce) {
 test("prefix matches the server's prefix", () => {
   assert.equal(IDENTITY_PREFIX, server.IDENTITY_PREFIX);
   assert.equal(IDENTITY_PREFIX, 'ipchat-kimlik-v1:');
+});
+
+test("identity exit code matches the server's exit code", () => {
+  assert.equal(IDENTITY_EXIT_CODE, server.IDENTITY_EXIT_CODE);
+  assert.equal(IDENTITY_EXIT_CODE, 78);
 });
 
 test('accepts a real signed reply from the server module', () => {
