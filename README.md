@@ -108,7 +108,7 @@ Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak i�
 
 ### Sunucu kimliği
 
-Ipchat'in sunucusu ilk açıldığında kendine bir **kimlik** (bir anahtar çifti) üretir ve `server-data` klasöründe saklar. Masaüstü uygulaması bağlandığı sunucuyu bu kimlikle **tanır ve hatırlar**; sohbet sayfasını açmadan önce sunucunun gerçekten o kimliğe sahip olduğunu denetler. Amaç, ağdaki başka bir bilgisayarın "Ipchat sunucusu" gibi davranıp kullanıcı adı ve şifreni toplamasını engellemek. Bir sunucu, gizli anahtarı bilmeden bu kimliği taklit edemez; kimlik, adrese (IP) bağlı değildir, yani sunucunun adresi değişse bile aynı sunucu olarak tanınır.
+Ipchat'in sunucusu ilk açıldığında kendine bir **kimlik** (bir anahtar çifti) üretir ve `server-data` klasöründe saklar. Masaüstü uygulaması bağlandığı sunucuyu bu kimlikle **tanır ve hatırlar**. Sohbet sayfasını açmadan önce sunucuya bir "kimlik sorusu" sorar ve yanıtın, o kimliğin gizli anahtarıyla imzalandığını denetler. Böylece kendini sunucu diye **tanıtan** ama gizli anahtarı bilmeyen bir bilgisayar (örneğin ağda yeni kurulmuş ikinci bir Ipchat sunucusu) yakalanır ve uyarı ekranı çıkar. Kimlik adrese (IP) bağlı değildir, yani sunucunun adresi değişse bile aynı sunucu olarak tanınır. **Bu denetim her kötü niyeti durdurmaz;** neyi durdurmadığı aşağıdaki kutuda ve "Sınırlar"da yazılı.
 
 - **İlk bağlantıda soru sorulmaz.** Daha önce hiçbir sunucu hatırlanmadıysa uygulama bağlandığı sunucunun kimliğini sessizce kaydeder.
 - Sunucu modunu açan bilgisayar kendi sunucusunun kimliğini kendi klasöründen okuyup denetler ve soru sormadan hatırlar.
@@ -123,7 +123,7 @@ Eski sürümde (0.6.0'dan önce) çalışan bir sunucu kimlik veremez. Daha önc
 
 **Yalnızca bir kimlik hatırlanır.** İki ağ arasında taşınan bir dizüstü (okul ile ev) ya da bir sunucudan öbürüne geçen bilgisayar her geçişte bu ekranı görür; bu beklenen davranıştır. Aynı şekilde tepsi menüsündeki **"Başka bir sunucuya bağlan…"** (eski adıyla "Sunucuyu değiştir") ve **sunucu modunu kapatmak hatırlanan kimliği de siler** (hatırlanan adresle birlikte), yani bundan sonra bağlandığın ilk sunucu soru sorulmadan hatırlanır.
 
-> **Ne yapar, ne yapmaz:** kimlik, bağlandığın sunucunun **aynı sunucu** olduğunu gösterir. Trafiği **şifrelemez** ve ağda cihazların arasına girebilen birini engellemez (bkz. Sınırlar).
+> **Ne yapar, ne yapmaz:** kimlik denetimi, kimlik sorusunu yanıtlayanın sunucunun gizli anahtarını bildiğini kanıtlar. Ama ağdaki bir bilgisayar bu soruyu **gerçek sunucuya iletip** yanıtı aynen geri verirse denetimden geçer ve ardından kullanıcıya **kendi giriş sayfasını** gösterip şifreyi toplayabilir. Bunun için cihazların arasına girmesi gerekmez; sunucu aramasına yanıt vermesi yeter. Özellikle hatırlanan adres yanıt vermediğinde (sunucunun adresi değişti ya da sunucu yeniden başlıyor) uygulama, ağda bu kimliği doğrulayan **ilk adaya** sorusuz bağlanır; hangi adayın önce geldiğini yanıtların sırası belirler. Kimlik denetimi trafiği **şifrelemez** de. Bu ikisini kapatmak sonraki bir iştir: sunucunun hangi adresten sorulduğunu da imzalaması (**kanal bağlama**) ve **şifreleme** (bkz. Sınırlar).
 
 ---
 
@@ -223,14 +223,15 @@ Kurulum dosyaları [Releases](https://github.com/upburak/Ipchat/releases) sayfas
 | **0.2.0** | 13 Kas 2026 | Windows kurulumu yönetici izniyle çalışıp güvenlik duvarı kurallarını kendisi ekler oldu; kurum ilkesiyle (GPO) yönetilen bilgisayarlar tespit edilip uyarı verilir. Yeni görünüm (avatarlar, yuvarlak baloncuklar). Listeler 3 saniyede bir yenilenir. Yöneticiye bekleyen hesap bildirimi ve rozet. | Windows'ta çalıştığı görüldü. |
 | **0.1.0** | 13 Kas 2026 | İlk masaüstü sürümü. Hesap onayı ve yönetici paneli; Electron kabuğu, tepsi ikonu, sabit pencere; sunucuyu ağda kendiliğinden bulma (UDP 41234) ve **sunucu modu** (uygulamanın kendisi sunucu olabilir). | Windows'ta çalıştığı görüldü. |
 
-**Sırada:** trafiğin **şifrelenmesi** (sunucu kimliğinin üzerine kurulacak), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
+**Sırada:** **kanal bağlama ve trafiğin şifrelenmesi** (sunucu kimliğinin üzerine kurulacak; sunucunun hangi adresten sorulduğunu da imzalaması, soruyu gerçek sunucuya ileten bir bilgisayarı yakalamak için), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
 
 ---
 
 ## Sınırlar
 
 - Yalnızca yerel ağ. HTTPS yok, sunucu internete açılmamalı.
-- Sunucu kimliği, bağlandığın sunucunun **aynı sunucu** olduğunu kanıtlar ve sahte bir sunucuyu engeller; **trafiği şifrelemez** ve ağda cihazların arasına girebilen birini (dinleme, araya girme) durdurmaz. Şifreleme ayrı ve sonraki bir iştir; dosya paylaşımı ondan önce açılmayacak.
+- Sunucu kimliği, kimlik sorusunu yanıtlayanın sunucunun gizli anahtarını bildiğini kanıtlar; yalnızca kendini sunucu diye **tanıtan** bir bilgisayarı (örneğin yeni kurulmuş ikinci bir sunucuyu) yakalar. **Soruyu gerçek sunucuya iletip kendi sayfasını gösteren bir bilgisayarı durdurmaz** (bkz. "Sunucu kimliği"), **trafiği şifrelemez** ve ağı dinleyen birini durdurmaz. Bunlar sonraki işin konusudur: **kanal bağlama** (sunucunun hangi adresten sorulduğunu da imzalaması) ve **şifreleme**. Dosya paylaşımı ondan önce açılmayacak.
+- İlk bağlantıda (hiçbir sunucu hatırlanmıyorken) kimlik sorusuz kaydedilir; o anda bağlanılan sunucu sahteyse onun kimliği hatırlanır.
 - Kimlik denetimi, uygulamanın **kendi başlattığı yüklemeleri** kapsar (açılış, sunucu seçimi, arka plandaki yeniden deneme, yükleme hatasından sonra yeniden bağlanma). Pencere içinde sayfayı yenilemek ya da bağlantı kopup kendiliğinden yeniden kurulması yeniden denetlenmez (bilinen sınır).
 - **Otomatik güncelleme yok.** Yeni sürümler elle kurulur (bilerek böyle bırakıldı). Bu sürüme (0.6.0) ilk güncellemede sunucu bilgisayarında önce "Devam et"e basılması gerekir, yoksa sunucu başlamaz; sonraki güncellemelerde gerekmez (bkz. "İlk açılış").
 - Sunucu olan bilgisayar açık ve oturumu açık olmalı.

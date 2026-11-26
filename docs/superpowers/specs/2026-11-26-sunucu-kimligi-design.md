@@ -1,7 +1,7 @@
 # Sunucu Kimliği (anahtar sabitleme)
 
 Tarih: 2026-11-26
-Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 için kodlandı, `main`'e alınmadı; yalnızca CLAUDE.md "0.6.0'da kodlandı" bölümünde yazıldığı kadar denendi (saf mantık otomatik testle, HTML sayfaları Linux'ta Playwright ile; Electron kabuğu ve gerçek bilgisayar denemesi yok)
+Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 için kodlandı, `main`'e alınmadı; yalnızca CLAUDE.md "0.6.0'da kodlandı" bölümünde yazıldığı kadar denendi (saf mantık otomatik testle, HTML sayfaları Linux'ta Playwright ile; Electron kabuğu ve gerçek bilgisayar denemesi yok). Son incelemeden sonra korumanın sınırı (canlı aktarma, R6 kararı) §11'de yazıldı.
 İlgili: `2026-11-13-ipchat-dosya-paylasimi-design.md` (bu iş onun önkoşuludur), `2026-11-26-temiz-kaldirma-design.md`
 
 ## 1. Amaç ve neden
@@ -15,7 +15,7 @@ Bu belge **sunucunun kendisini kanıtlamasını** ve uygulamanın tanıdığı s
 ## 2. Hedefler
 
 - Uygulama, bağlandığı sunucunun **daha önce bağlandığı sunucu olduğunu** her bağlanışta doğrular.
-- Ağda başka biri aynı adla ya da aynı adreste sahte bir Ipchat sunucusu açarsa uygulama **bağlanmadan önce** durur ve kullanıcıyı uyarır. Sahte sunucu kimliği **kopyalayarak** taklit edemez.
+- Ağda başka biri aynı adla ya da aynı adreste sahte bir Ipchat sunucusu açarsa uygulama **bağlanmadan önce** durur ve kullanıcıyı uyarır. Sahte sunucu kimliği **kopyalayarak** taklit edemez. *(Son incelemeden sonra not: kimlik sorusunu gerçek sunucuya **ileten** bir aktarıcı bu işle yakalanmaz; bkz. §11.)*
 - Normal kullanımda kullanıcıya **hiçbir ek iş çıkmaz**: ilk bağlanışta sorusuz hatırlanır, sonra fark edilmez.
 - Sunucunun IP adresi değişse (DHCP) kimlik aynı kalır, kimse uyarı görmez.
 - Sunucu yeniden kurulursa ya da sunucu bilgisayarı değişirse (`server-data` korunduysa) kimlik **aynı kalır**; kimse uyarı görmez.
@@ -80,7 +80,7 @@ Doğrulama **masaüstü uygulamasının ana sürecinde**, sohbet sayfası sunucu
 
 çalışır. Doğrulama tek bir saf modülden (`verifyServer`) geçer; dosya paylaşımı ajanı da ileride aynı modülü kullanır.
 
-*(Bilinen sınır: kontrol ile sayfanın yüklenmesi arasında geçen süre ve araya girebilen biri için "canlı aktarma" saldırısı bu işle kapanmaz; bu, 3'teki şifreleme işinin konusudur. Bu belge **sahte sunucu kurmayı** engeller, **araya girmeyi** değil. Kullanıcıya bunun ayrımı ilk açılış ekranındaki metinle zaten söylenir.)*
+*(Bilinen sınır: "canlı aktarma" bu işle kapanmaz. Ağdaki herhangi bir bilgisayar keşfe yanıt verip kimlik sorusunu gerçek sunucuya iletirse doğrulamadan geçer ve sonra kendi sayfalarını gösterebilir; bunun için cihazların arasına girmesi gerekmez. Bu belge yalnızca kendini sunucu diye **tanıtan** ama gizli anahtarı bilmeyen bir bilgisayarı yakalar. Ayrıntı ve sonraki adım: §11. Kullanıcıya trafiğin açık taşındığı ilk açılış ekranındaki metinle zaten söylenir.)*
 
 ### 7.4 Kimlik değiştiğinde (kullanıcının seçimi: bir kez sor, onaylayınca devam)
 
@@ -119,7 +119,7 @@ Sunucu modunu açan bilgisayar kendi sunucusuna (`127.0.0.1`) bağlanır. Bu bil
 
 ### 7.8 Keşif yanıtı
 
-UDP keşif yanıtına (`{app, port, name}`) **parmak izi eklenir**, yalnızca adayları ayırt etmek içindir. Bu yanıt imzasızdır ve **güvenilmez**; asıl karar her zaman 7.2'deki imzalı doğrulamayla verilir. Saldırgan keşif yanıtında doğru parmak izini yazabilir, imza atamaz.
+UDP keşif yanıtına (`{app, port, name}`) **parmak izi eklenir**, yalnızca adayları ayırt etmek içindir. Bu yanıt imzasızdır ve **güvenilmez**; asıl karar her zaman 7.2'deki imzalı doğrulamayla verilir. Saldırgan keşif yanıtında doğru parmak izini yazabilir; imzayı kendisi atamaz, ama soruyu gerçek sunucuya iletip onun imzasını geri verebilir (§11).
 
 ### 7.9 İnceleme sonrası netleştirmeler (benim kararlarım)
 
@@ -147,3 +147,14 @@ Kimlik ucunun yolu ve yanıt biçimi (öneri: mevcut `/api/health` yanıtına do
 ## 10. Sonraki iş (not)
 
 Şifreleme (kimliği doğrulanmış sunucuyla şifreli konuşma), dosya paylaşımı gerçek dosya taşımadan önce ayrı bir tasarımla yapılır. Bu belgenin anahtarı ona zemin olur; ondan önce dosya paylaşımı açılmamalıdır.
+
+## 11. Sonuç / bilinen sınır (son incelemeden sonra)
+
+Uygulanan doğrulama şunu kanıtlar: kimlik sorusunu (`/api/identity?nonce=`) yanıtlayan, sunucunun gizli anahtarını biliyor. Bu, kendini sunucu diye **tanıtan** bir bilgisayarı (ör. yeni kurulmuş ikinci bir sunucu) yakalar. Şunları **yakalamaz**:
+
+- **Canlı aktarma:** ağdaki bir bilgisayar keşfe kendi adresiyle yanıt verir, kimlik sorusunu gerçek sunucuya iletip yanıtı aynen döndürür, sonra kendi giriş sayfasını sunar. Cihazların arasına girmesi (ARP sahteciliği vb.) gerekmez. Hatırlanan adres yanıt vermediğinde (DHCP değişimi, sunucunun yeniden başlaması) `resolveServer` keşifte `known` dönen **ilk adayı** sorusuz seçer; sırayı yanıtların gelişi belirler.
+- **Dinleme:** trafik şifrelenmez.
+
+**Karar (R6, son inceleme):** `resolveServer` davranışı değiştirilmedi ve "birden fazla tanıdık aday varsa kullanıcıya sor" kuralı eklenmedi. İki ağ kartlı gerçek bir sunucu aynı parmak izini iki adresten verir ve aktarıcıdan ayırt edilemez; kural gerçek koruma getirmeden yanlış alarm üretirdi.
+
+**Sonraki adım: kanal bağlama (Host imzası) ve şifreleme.** Sunucu imzaladığı metne kendisine hangi adresten sorulduğunu (`Host`) da katar, istemci bunu bağlandığı adresle karşılaştırır; böylece soruyu ileten aktarıcı yakalanır. Ardından trafik şifrelenir (§10). İlk açılış ekranının metni (`welcome.html`) bu yüzden değiştirilmedi: trafiğin açık taşındığını ve araya girilebileceğini zaten söylüyor.
