@@ -59,7 +59,7 @@
     ipchat_client:
       RMDir /r "$APPDATA\ipchat-desktop"
       ${IfNot} ${Silent}
-        MessageBox MB_OK|MB_ICONINFORMATION "Ipchat ve bu bilgisayardaki tüm verisi siliniyor. Bu işlem geri alınamaz."
+        MessageBox MB_OK|MB_ICONINFORMATION "Ipchat ve bu bilgisayardaki tüm verisi silindi. Bu işlem geri alınamaz."
       ${EndIf}
     ipchat_done:
     SetShellVarContext all

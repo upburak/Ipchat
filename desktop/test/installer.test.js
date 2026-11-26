@@ -50,7 +50,39 @@ test('kurulum sonunda iz birakmama metni gosterilir, sessiz kurulumda gosterilme
 });
 
 test('istemcide tum veri klasoru silinir', () => {
-  assert.match(uninstall, /RMDir \/r "\$APPDATA\\ipchat-desktop"/);
+  const client = uninstall.slice(uninstall.indexOf('ipchat_client:'), uninstall.indexOf('ipchat_done:'));
+  assert.match(client, /RMDir \/r "\$APPDATA\\ipchat-desktop"/);
+  assert.match(client, /verisi silindi\. Bu işlem geri alınamaz/);
+});
+
+test('veri bloku guncellemede atlanir: son isUpdated korumasi Rename ve son RMDir den once gelir', () => {
+  const guard = uninstall.lastIndexOf('${IfNot} ${isUpdated}');
+  assert.ok(guard > uninstall.indexOf('delete rule name="Ipchat"'), 'veri blogu kendi korumasina sahip olmali');
+  assert.ok(guard < uninstall.indexOf('Rename "$APPDATA'));
+  assert.ok(guard < uninstall.lastIndexOf('RMDir /r'));
+});
+
+test('sessiz kaldirmada da silinir: veri blogunda Silent yalnizca mesaji korur', () => {
+  assert.doesNotMatch(uninstall, /AndIfNot\} \$\{Silent\}/);
+  const data = uninstall.slice(uninstall.indexOf('SetShellVarContext current'));
+  for (const m of data.matchAll(/RMDir \/r|Rename "/g)) {
+    const before = data.slice(0, m.index);
+    const opens = (before.match(/\$\{IfNot\} \$\{Silent\}/g) || []).length;
+    const closes = (before.match(/\$\{EndIf\}/g) || []).length;
+    // Silent korumasinin icinde (acik EndIf eksigi) silme yapilmamali
+    assert.ok(opens <= closes, 'silme Silent korumasinin icinde olmamali');
+  }
+});
+
+test('geri koyma basarisizsa veri kurtarilabilir kalir, bayrak her Rename den once temizlenir', () => {
+  // geri koyan Rename'in hemen oncesinde ClearErrors olmali (ilk IfErrors bayragini birakmis olabilir)
+  assert.match(uninstall, /ClearErrors\s*\n\s*Rename "\$APPDATA\\ipchat-server-data-tmp"/);
+  // ilk Rename'den once de bayrak temizlenmis olmali
+  const first = uninstall.indexOf('Rename "$APPDATA');
+  assert.ok(uninstall.lastIndexOf('ClearErrors', first) > uninstall.indexOf('SetShellVarContext current'));
+  assert.match(uninstall, /IfErrors ipchat_restore_failed/);
+  assert.match(uninstall, /\n\s*ipchat_restore_failed:/);
+  assert.match(uninstall, /ipchat-server-data-tmp klasöründe duruyor/);
 });
 
 test('sunucuda server-data tasinip geri konur, silme yalnizca tasima basarili olunca yapilir', () => {
