@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, writeFileSync,
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice } from '../src/cleanup.js';
+import { INSTALL_NOTICE, uninstallConfirm, purgeArgs, shouldShowInstallNotice, hasServerData, leftoverServerDataNotice, removalRule } from '../src/cleanup.js';
 
 // Gerçek kabukta çalıştırılan temizlik: metin testleri yanlış betiği de geçirebilir.
 function makeFixture() {
@@ -145,4 +145,30 @@ test('ilk acilis bildirimi yalnizca bir kez gosterilir', () => {
   assert.equal(shouldShowInstallNotice({}), true);
   assert.equal(shouldShowInstallNotice({ installNoticeShown: false }), true);
   assert.equal(shouldShowInstallNotice({ installNoticeShown: true }), false);
+});
+
+test('removalRule for darwin mentions the tray menu and the Trash but not the firewall', () => {
+  const text = removalRule('darwin');
+  assert.match(text, /tepsi/);
+  assert.match(text, /Çöp Kutusu/);
+  assert.doesNotMatch(text, /güvenlik duvarı/);
+});
+
+test('removalRule for win32 mentions the firewall rules but not the tray menu or Trash', () => {
+  const text = removalRule('win32');
+  assert.match(text, /güvenlik duvarı kuralları/);
+  assert.doesNotMatch(text, /Çöp Kutusu/);
+  assert.doesNotMatch(text, /tepsi/);
+});
+
+test('removalRule says the server data is kept on every platform', () => {
+  for (const platform of ['darwin', 'win32']) {
+    const text = removalRule(platform);
+    assert.match(text, /hesapları ve mesaj geçmişi silinmez; korunur/, platform);
+  }
+});
+
+test('removalRule falls back to the Windows text for unknown platforms', () => {
+  assert.equal(removalRule('linux'), removalRule('win32'));
+  assert.equal(removalRule(undefined), removalRule('win32'));
 });

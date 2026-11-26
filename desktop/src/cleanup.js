@@ -11,6 +11,25 @@ export const INSTALL_NOTICE = {
     'Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.',
 };
 
+// İlk açılış ekranındaki kaldırma kuralı; metin platforma göre değişir (tasarım §7.1, §7.4.1).
+// Sunucu cümlesi ikisinde de aynıdır. Windows dışındaki bilinmeyen değerler Windows metnini alır.
+const SERVER_KEPT_SENTENCE =
+  'Bu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur.';
+
+export function removalRule(platform) {
+  if (platform === 'darwin') {
+    return (
+      'Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz: program, ayarlar ve otomatik başlatma kaydı silinir. ' +
+      'Kaldırmak için tepsi menüsünden "Ipchat\'i tamamen kaldır…" seçeneğini kullan; uygulamayı yalnızca Çöp Kutusu\'na atmak veriyi geride bırakır. ' +
+      SERVER_KEPT_SENTENCE
+    );
+  }
+  return (
+    'Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz: program, ayarlar, otomatik başlatma ve güvenlik duvarı kuralları silinir. ' +
+    SERVER_KEPT_SENTENCE
+  );
+}
+
 const CLIENT_CONFIRM = {
   message: 'Ipchat ve bu bilgisayardaki tüm verisi silinecek.',
   detail: 'Bu işlem geri alınamaz.',
