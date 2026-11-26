@@ -1,7 +1,7 @@
 # İlk Açılış Onayı (kısa tasarım)
 
 Tarih: 2026-11-26
-Durum: metin ve davranış kullanıcıyla konuşuldu (2026-11-26); yazılı belge onay bekliyor
+Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 sürümünde birlikte çıkacak
 İlgili: `2026-11-26-temiz-kaldirma-design.md` (0.5.0), `2026-11-26-sunucu-kimligi-design.md`
 
 ## 1. Amaç ve neden

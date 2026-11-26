@@ -1,7 +1,7 @@
 # Sunucu Kimliği (anahtar sabitleme)
 
 Tarih: 2026-11-26
-Durum: yaklaşım ve davranış kullanıcıyla konuşuldu (2026-11-26); yazılı belge onay bekliyor
+Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 sürümünde birlikte çıkacak
 İlgili: `2026-11-13-ipchat-dosya-paylasimi-design.md` (bu iş onun önkoşuludur), `2026-11-26-temiz-kaldirma-design.md`
 
 ## 1. Amaç ve neden
