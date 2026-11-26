@@ -44,6 +44,22 @@ Kurulum istemeyenler sunucunun adresine gidebilir (örn. `http://192.168.1.10:30
 
 ## Kullanım
 
+### İlk açılış
+
+Ipchat'i ilk açtığında sohbet yerine bir **bilgilendirme ekranı** çıkar ("Ipchat'i kullanmaya başlamadan önce"). Ekran kısaca şunu söyler:
+
+- Ipchat yalnızca okulun kendi yerel ağında çalışır; mesajlar ve dosyalar internete ya da bir buluta gitmez, yalnızca sunucu olarak seçilen bilgisayarda durur.
+- Veri aynı ağ içinde **şifrelenmeden (açık) taşınır**; ağa girebilen ve araya girmeyi bilen biri okuyabilir. Kimlik doğrulama basittir (kullanıcı adı, şifre, cihaza bağlı PIN).
+- Mesajlar ve hesaplar sunucu bilgisayarında durur; o bilgisayarı korumak ve yedeğini almak okulun sorumluluğundadır. Sunucu internete açılmamalıdır.
+- Bu yüzden **hassas bilgiyi** (öğrenci kişisel verileri, sağlık ve kimlik bilgileri, sınav soruları, maaş ve banka bilgileri) Ipchat'ten göndermemelisin.
+- Altta Ipchat'in kaldırıldığında ne sileceği yazar (yukarıdaki "Kaldırma ve veri" bölümüyle aynı kural).
+
+**İlerlemek için iki ayrı kutuyu işaretlemen gerekir:** "Yukarıdaki sınırları okudum, anladım" ve "Kaldırma kuralını okudum, anladım". İkisi de işaretlenmeden **Devam et** düğmesi pasif kalır. **Çık** düğmesi yalnızca uygulamayı kapatır; hiçbir şey kaydedilmez, bir sonraki açılışta ekran yine çıkar. Onay verilmeden Ipchat sunucu aramaz, hiçbir sunucuya bağlanmaz, kayıtlı sunucu modunu başlatmaz, tepsi ikonu koymaz ve yeni bir otomatik başlatma kaydı eklemez.
+
+Ekran **bir kez** çıkar ve güncellemelerde yeniden çıkmaz; ancak metnin içeriği değişirse herkes yeniden onaylar. Onay ayar dosyasında tutulduğu için **her Windows kullanıcısı (profili) için ayrı** çıkar: aynı bilgisayarı iki kişi kendi hesabıyla kullanıyorsa ikisi de bir kez görür. Mac'te 0.5.0'daki kaldırma bildirimini görmüş olanlar da bu ekranı bir kez görür; eski bildirim kalktı, yerine bu ekran geldi.
+
+> **Güncelleme günü, sunucu bilgisayarı için önemli:** Bu sürüme güncellenen bir **sunucu bilgisayarında** önce ekran çıkar ve **onaylanana kadar sunucu başlamaz; kimse bağlanamaz.** Güncellemeden sonra **önce sunucu bilgisayarında Ipchat'i aç ve "Devam et"e bas**, sonra diğerlerine haber ver. (Uygulama oturum açılınca kendiliğinden açılır ama ekran onay beklerken sessizce bekler.)
+
 ### Sunucu olmak
 
 Uygulamayı aç; ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Onay sorulur, sonra sunucu arka planda çalışmaya başlar — pencere veya terminal açılmaz. Tepsi menüsünde adres görünür, tıklayınca kopyalanır. Ayar hatırlanır; uygulama her açıldığında sunucu da başlar.
@@ -83,6 +99,25 @@ npm run reset-admin -- <kullanici-adi> <yeni-sifre>
 
 Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir). Kişi listesi ve bekleyen hesaplar 3 saniyede bir yenilenir.
 
+### Sunucu kimliği
+
+Ipchat'in sunucusu ilk açıldığında kendine bir **kimlik** (bir anahtar çifti) üretir ve `server-data` klasöründe saklar. Masaüstü uygulaması bağlandığı sunucuyu bu kimlikle **tanır ve hatırlar**; sohbet sayfasını açmadan önce sunucunun gerçekten o kimliğe sahip olduğunu denetler. Amaç, ağdaki başka bir bilgisayarın "Ipchat sunucusu" gibi davranıp kullanıcı adı ve şifreni toplamasını engellemek. Bir sunucu bu kimliği taklit edemez; kimlik, adrese (IP) bağlı değildir, yani sunucunun adresi değişse bile aynı sunucu olarak tanınır.
+
+- **İlk bağlantıda soru sorulmaz.** Daha önce hiçbir sunucu hatırlanmadıysa uygulama bağlandığı sunucunun kimliğini sessizce kaydeder.
+- Sunucu modunu açan bilgisayar kendi sunucusunun kimliğini kendi klasöründen okuyup denetler ve soru sormadan hatırlar.
+- Bir kez hatırlanan kimlik, sonraki bağlanışlarda her seferinde denetlenir. Eşleşiyorsa hiçbir şey görmezsin.
+
+**"Bu sunucu daha önce bağlandığın sunucu değil" ekranı.** Bağlandığın sunucunun kimliği hatırlananla **farklıysa** (ve ağda hatırlanan kimliği taşıyan başka bir sunucu bulunamadıysa) uygulama bağlanmadan önce bu ekranı gösterir, sunucunun adını, adresini ve kısa bir kimlik kodunu (`A1B2-C3D4-E5F6` gibi) yazar. İki düğme vardır:
+
+- **Vazgeç** (önerilen, varsayılan): bağlanmaz, adres/sunucu seçme ekranına döner. Bu ekranı beklemiyorsan bunu seç; ağdaki başka bir bilgisayar sunucu gibi davranıyor olabilir.
+- **Bağlan ve yeni sunucuyu hatırla:** yalnızca sunucu bilgisayarının **değiştirildiğini** ya da Ipchat'in **yeniden kurulup verilerin silindiğini** biliyorsan seç. Eski kimlik silinir, yenisi hatırlanır; ekran bir daha çıkmaz.
+
+Eski sürümde (0.6.0'dan önce) çalışan bir sunucu kimlik veremez. Daha önce kimlik hatırlanmadıysa ona bağlanmaya devam edilir; kimliği hatırlanmış bir istemci kimliksiz bir sunucuya gelirse aynı ekran ("Bu sunucu kimlik bilgisi vermiyor (eski sürüm olabilir)") çıkar. Bu yüzden kimlik açısından güncelleme sırası önemli değildir (hiçbir sırada uyarı beklenmez); ekran yalnızca sunucu eski sürüme geri alınırsa çıkar. (Bu, yukarıdaki "İlk açılış" onayından ayrı bir konudur: o, güncellenen her sunucu bilgisayarında bir kez gerekir.)
+
+**Yalnızca bir kimlik hatırlanır.** İki ağ arasında taşınan bir dizüstü (okul ile ev) ya da bir sunucudan öbürüne geçen bilgisayar her geçişte bu ekranı görür; bu beklenen davranıştır. Aynı şekilde tepsi menüsündeki **"Başka bir sunucuya bağlan…"** (eski adıyla "Sunucuyu değiştir") ve **sunucu modunu kapatmak hatırlanan kimliği de siler** (hatırlanan adresle birlikte), yani bundan sonra bağlandığın ilk sunucu soru sorulmadan hatırlanır.
+
+> **Ne yapar, ne yapmaz:** kimlik, bağlandığın sunucunun **aynı sunucu** olduğunu gösterir. Trafiği **şifrelemez** ve ağda cihazların arasına girebilen birini engellemez (bkz. Sınırlar).
+
 ---
 
 ## Kaldırma ve veri
@@ -99,12 +134,16 @@ Kaldırırken **ne silineceği sorulmaz**. Ne silineceği şudur:
 
 Hesapları ve mesaj geçmişini yedeklemek için **`server-data` klasörünün tamamını** kopyala (USB'ye, başka bir klasöre). Geri almak için aynı klasörü yerine koy.
 
+**Sunucuyu yeni bir bilgisayara taşırken** `server-data` klasörünün tamamını taşı: **sunucunun kimliği de onunla gelir** ve kullanıcılar hiçbir uyarı görmez. Klasör taşınmazsa yeni sunucu yeni bir kimlik üretir ve **her kullanıcı "Bu sunucu daha önce bağlandığın sunucu değil" ekranını bir kez görür** (bkz. "Sunucu kimliği"). Aynısı `server-data` silinirse de olur.
+
+> **Yedeği koru:** kimliğin gizli anahtarı `server-data` içindeki **`identity.key`** dosyasındadır, yani yedeğin içinde de bulunur. Yedeği eline geçiren biri sunucuyu taklit edebilir; yedek diski/USB'yi güvende tut.
+
 > **Dikkat:** içindeki `ipchat.db` dosyası tek başına kopyalanmaz. Uygulama açıkken bu dosya boş (4 KB) görünebilir; son kayıtlar yanındaki `ipchat.db-wal` dosyasında durur. Yalnızca `ipchat.db`'yi kopyalarsan yedek eksik olur. **Klasörün tamamını kopyala**, en güvenlisi de uygulama kapalıyken kopyalamaktır.
 
 - **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kural kurulumun sonunda bir kez, kaldırma bittiğinde bir kez daha yazılır. Sessiz kaldırma da aynı şeyleri siler, yalnızca ekrana mesaj çıkarmaz.
   **Bilinen sınır:** standart bir kullanıcı kaldırmayı başka bir yönetici hesabının parolasıyla yükseltirse kaldırıcı o hesabın profiline bakar; kendi verisi kalabilir. O zaman `%APPDATA%\ipchat-desktop` klasörünü elle sil.
   Aynı şey **birkaç kişinin kullandığı bilgisayarda** da olur: kaldırıcı yalnızca kaldırmayı yapan hesabın verisini ve otomatik başlatma kaydını temizler; diğer kullanıcıların her birinde kendi `%APPDATA%\ipchat-desktop` klasörü ve otomatik başlatma kaydı kalır. Onları o kullanıcılar kendi hesaplarından elle silmelidir.
-- **Mac:** Mac'te kurulum adımı yoktur, o yüzden bu kural uygulama **ilk açıldığında** bir kez yazılır. Kaldırmak için tepsi menüsünden **"Ipchat'i tamamen kaldır…"** seçilir. Çıkan onay penceresi aynı kuralı tekrar anlatır; seçili düğme **Vazgeç**'tir. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
+- **Mac:** Mac'te kurulum adımı yoktur, o yüzden bu kural uygulama **ilk açıldığında**, yukarıdaki "İlk açılış" ekranında yazılır. Kaldırmak için tepsi menüsünden **"Ipchat'i tamamen kaldır…"** seçilir. Çıkan onay penceresi aynı kuralı tekrar anlatır; seçili düğme **Vazgeç**'tir. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
 
 ---
 
@@ -154,7 +193,7 @@ npm test -w desktop
 Derleme ve dosyalar GitHub Actions ile üretilir, bilgisayara bağlı değildir:
 
 1. `desktop/package.json` içindeki `version` alanını artır.
-2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.5.1` gibi bir ad yaz ve yayınla.
+2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.6.1` gibi bir ad yaz ve yayınla.
 3. İş akışı derler, `.exe` ve Mac zip'ini o Release'e ekler (~3 dakika).
 
 ---
@@ -173,13 +212,16 @@ Kurulum dosyaları [Releases](https://github.com/upburak/Ipchat/releases) sayfas
 | **0.2.0** | 13 Kas 2026 | Windows kurulumu yönetici izniyle çalışıp güvenlik duvarı kurallarını kendisi ekler oldu; kurum ilkesiyle (GPO) yönetilen bilgisayarlar tespit edilip uyarı verilir. Yeni görünüm (avatarlar, yuvarlak baloncuklar). Listeler 3 saniyede bir yenilenir. Yöneticiye bekleyen hesap bildirimi ve rozet. | Windows'ta çalıştığı görüldü. |
 | **0.1.0** | 13 Kas 2026 | İlk masaüstü sürümü. Hesap onayı ve yönetici paneli; Electron kabuğu, tepsi ikonu, sabit pencere; sunucuyu ağda kendiliğinden bulma (UDP 41234) ve **sunucu modu** (uygulamanın kendisi sunucu olabilir). | Windows'ta çalıştığı görüldü. |
 
-**Sırada:** sunucu kimliğinin sabitlenmesi (uygulama bağlandığı sunucuyu tanısın), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
+**Sırada:** trafiğin **şifrelenmesi** (sunucu kimliğinin üzerine kurulacak), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
 
 ---
 
 ## Sınırlar
 
 - Yalnızca yerel ağ. HTTPS yok, sunucu internete açılmamalı.
+- Sunucu kimliği, bağlandığın sunucunun **aynı sunucu** olduğunu kanıtlar ve sahte bir sunucuyu engeller; **trafiği şifrelemez** ve ağda cihazların arasına girebilen birini (dinleme, araya girme) durdurmaz. Şifreleme ayrı ve sonraki bir iştir; dosya paylaşımı ondan önce açılmayacak.
+- Kimlik denetimi, uygulamanın **kendi başlattığı yüklemeleri** kapsar (açılış, sunucu seçimi, arka plandaki yeniden deneme, yükleme hatasından sonra yeniden bağlanma). Pencere içinde sayfayı yenilemek ya da bağlantı kopup kendiliğinden yeniden kurulması yeniden denetlenmez (bilinen sınır).
+- **Otomatik güncelleme yok.** Yeni sürümler elle kurulur (bilerek böyle bırakıldı). Güncelleme sonrası sunucu bilgisayarında önce "Devam et"e basılması gerekir (bkz. "İlk açılış").
 - Sunucu olan bilgisayar açık ve oturumu açık olmalı.
 - Mac uygulaması Apple tarafından onaylı (notarized) değil; her indirmede karantina adımı gerekir.
 - Mesaj geçmişi yalnızca sunucu bilgisayarındadır ve kendiliğinden yedeklenmez — yedeği elle alman gerekir (yukarıdaki "Yedek almak").

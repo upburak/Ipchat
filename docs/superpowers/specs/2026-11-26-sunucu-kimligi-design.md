@@ -1,7 +1,7 @@
 # Sunucu Kimliği (anahtar sabitleme)
 
 Tarih: 2026-11-26
-Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 sürümünde birlikte çıkacak
+Durum: onaylandı (kullanıcı, 2026-11-26); 0.6.0 için kodlandı, `main`'e alınmadı; yalnızca CLAUDE.md "0.6.0'da kodlandı" bölümünde yazıldığı kadar denendi (saf mantık otomatik testle, HTML sayfaları Linux'ta Playwright ile; Electron kabuğu ve gerçek bilgisayar denemesi yok)
 İlgili: `2026-11-13-ipchat-dosya-paylasimi-design.md` (bu iş onun önkoşuludur), `2026-11-26-temiz-kaldirma-design.md`
 
 ## 1. Amaç ve neden
