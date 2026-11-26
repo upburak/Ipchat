@@ -87,11 +87,17 @@ Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak i�
 
 ## Kaldırma ve veri
 
-Mesajlar ve hesaplar **sunucu olan bilgisayarda** tutulur: Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop`.
+Kaldırırken **hiçbir soru sorulmaz**. Ne silineceği şudur:
 
-- **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kaldırıcı sunucuyu durdurur, güvenlik duvarı kurallarını ve otomatik başlatmayı siler, sohbet geçmişinin de silinip silinmeyeceğini bir kez sorar (varsayılan: sil). Güncellemede ve sessiz kaldırmada veri silinmez.
+- **Çalışanların (istemci) bilgisayarında her şey silinir:** program, ayarlar, otomatik başlatma, kayıt defteri girdileri, güvenlik duvarı kuralları ve `ipchat-desktop` veri klasörünün tamamı. Geride iz kalmaz. Bu işlem geri alınamaz.
+- **Sunucu olan bilgisayarda da aynı şeyler silinir, yalnızca hesaplar ve mesaj geçmişi silinmez.** Bunlar `server-data` klasöründe durur. İstersen bu klasörü elle silebilirsin. Kaldırma bittiğinde Ipchat bu klasörün nerede olduğunu sana söyler.
+- **Güncelleme sırasında hiçbir şeye dokunulmaz.** Yeni sürümü üstüne kurmak ayarları ve mesajları silmez.
+
+`server-data` klasörü: Windows `%APPDATA%\ipchat-desktop\server-data`, Mac `~/Library/Application Support/ipchat-desktop/server-data`.
+
+- **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kural kurulumun sonunda bir kez, kaldırma bittiğinde bir kez daha yazılır. Sessiz kaldırma da aynı şeyleri siler, yalnızca ekrana mesaj çıkarmaz.
   **Bilinen sınır:** standart bir kullanıcı kaldırmayı başka bir yönetici hesabının parolasıyla yükseltirse kaldırıcı o hesabın profiline bakar; kendi verisi kalabilir. O zaman `%APPDATA%\ipchat-desktop` klasörünü elle sil.
-- **Mac:** tepsi menüsünden **"Ipchat'i tamamen kaldır…"**. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
+- **Mac:** Mac'te kurulum adımı yoktur, o yüzden bu kural uygulama **ilk açıldığında** bir kez yazılır. Kaldırmak için tepsi menüsünden **"Ipchat'i tamamen kaldır…"** seçilir. Çıkan onay penceresi aynı kuralı tekrar anlatır; seçili düğme **Vazgeç**'tir. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
 
 ---
 
