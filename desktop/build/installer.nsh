@@ -3,6 +3,11 @@
   nsExec::Exec 'netsh advfirewall firewall delete rule name="Ipchat"'
   nsExec::Exec 'netsh advfirewall firewall add rule name="Ipchat" dir=in action=allow protocol=TCP localport=3000 profile=any'
   nsExec::Exec 'netsh advfirewall firewall add rule name="Ipchat" dir=in action=allow protocol=UDP localport=41234 profile=any'
+
+  ; Iz birakmama kurali bilgisi (sessiz kurulumda gosterilmez)
+  ${IfNot} ${Silent}
+    MessageBox MB_OK|MB_ICONINFORMATION "Ipchat kaldırıldığında bu bilgisayarda iz bırakmaz: program, ayarlar, otomatik başlatma ve güvenlik duvarı kuralları silinir.$\r$\n$\r$\nBu bilgisayar sunucu olarak kullanılırsa, kullanıcıların hesapları ve mesaj geçmişi silinmez; korunur."
+  ${EndIf}
 !macroend
 
 !macro customUnInstall
@@ -21,16 +26,42 @@
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "electron.app.ipchat-desktop"
   ${EndIf}
 
-  ; Mesaj verisi: guncellemede ve sessiz kaldirmada dokunma, aksi halde bir kez sor (varsayilan Evet)
+  ; Veri: iz birakma kurali. Guncellemede hicbir seye dokunulmaz; sessiz kaldirmada silme yine yapilir
+  ; (yalnizca mesajlar gosterilmez). Tek korunan sey sunucu bilgisayarin server-data klasorudur.
   ${IfNot} ${isUpdated}
-  ${AndIfNot} ${Silent}
     SetShellVarContext current
-    StrCpy $0 "Sohbet geçmişi ve ayarlar da silinsin mi?$\r$\n$\r$\nBu işlem geri alınamaz."
-    IfFileExists "$APPDATA\ipchat-desktop\server-data\*.*" 0 +2
-      StrCpy $0 "$0$\r$\n$\r$\nBu bilgisayar sunucu olarak kullanıldı: tüm kullanıcıların hesapları ve mesajları da silinecek."
-    MessageBox MB_YESNO|MB_DEFBUTTON1|MB_ICONQUESTION "$0" IDNO ipchat_keep_data
+    ClearErrors
+    IfFileExists "$APPDATA\ipchat-desktop\server-data\*.*" 0 ipchat_client
+      ; Sunucu: veriyi gecici yere tasi, geri kalani sil, geri koy
+      Rename "$APPDATA\ipchat-desktop\server-data" "$APPDATA\ipchat-server-data-tmp"
+      IfErrors ipchat_keep_all
       RMDir /r "$APPDATA\ipchat-desktop"
-    ipchat_keep_data:
+      CreateDirectory "$APPDATA\ipchat-desktop"
+      ClearErrors
+      Rename "$APPDATA\ipchat-server-data-tmp" "$APPDATA\ipchat-desktop\server-data"
+      IfErrors ipchat_restore_failed
+      ${IfNot} ${Silent}
+        MessageBox MB_OK|MB_ICONINFORMATION "Bu bilgisayar Ipchat sunucusuydu.$\r$\n$\r$\nKullanıcıların hesapları ve mesaj geçmişi silinmedi, şurada duruyor:$\r$\n%APPDATA%\ipchat-desktop\server-data$\r$\n$\r$\nBunları da silmek istersen bu klasörü elle sil."
+      ${EndIf}
+      Goto ipchat_done
+    ipchat_restore_failed:
+      ; Geri koyma basarisiz: veri gecici klasorde duruyor, silinmedi
+      ${IfNot} ${Silent}
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Ipchat kaldırıldı. Hesaplar ve mesaj geçmişi silinmedi; %APPDATA%\ipchat-server-data-tmp klasöründe duruyor."
+      ${EndIf}
+      Goto ipchat_done
+    ipchat_keep_all:
+      ; Tasima basarisiz: hicbir sey silme, veri kalsin
+      ${IfNot} ${Silent}
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Ipchat kaldırıldı. Hesaplar ve mesaj geçmişi silinmedi; %APPDATA%\ipchat-desktop klasörü olduğu gibi duruyor."
+      ${EndIf}
+      Goto ipchat_done
+    ipchat_client:
+      RMDir /r "$APPDATA\ipchat-desktop"
+      ${IfNot} ${Silent}
+        MessageBox MB_OK|MB_ICONINFORMATION "Ipchat ve bu bilgisayardaki tüm verisi siliniyor. Bu işlem geri alınamaz."
+      ${EndIf}
+    ipchat_done:
     SetShellVarContext all
   ${EndIf}
 !macroend

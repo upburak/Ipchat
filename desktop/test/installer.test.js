@@ -17,13 +17,6 @@ test('installer script removes firewall rules, kills the app and clears autostar
   assert.match(nsh, /ipchat-desktop/);
 });
 
-test('installer script asks before deleting data, defaults to yes and skips updates and silent runs', () => {
-  assert.match(nsh, /MB_YESNO\|MB_DEFBUTTON1/);
-  assert.match(nsh, /RMDir \/r "\$APPDATA\\ipchat-desktop"/);
-  assert.match(nsh, /\$\{isUpdated\}/);
-  assert.match(nsh, /\$\{Silent\}/);
-});
-
 test('package.json nsis is per machine, one click, includes the script and keeps data by default', () => {
   assert.equal(pkg.build.nsis.perMachine, true);
   assert.equal(pkg.build.nsis.oneClick, true);
@@ -46,7 +39,36 @@ test('uninstall removes every autostart value name Electron may have used', () =
   }
 });
 
-test('data question warns that a server machine loses every account and message', () => {
-  assert.match(nsh, /server-data/);
-  assert.match(nsh, /tüm kullanıcıların hesapları ve mesajları/);
+test('kaldirma veri icin soru sormaz', () => {
+  assert.doesNotMatch(uninstall, /MB_YESNO/);
+});
+
+test('kurulum sonunda iz birakmama metni gosterilir, sessiz kurulumda gosterilmez', () => {
+  const install = nsh.slice(nsh.indexOf('!macro customInstall'), nsh.indexOf('!macro customUnInstall'));
+  assert.match(install, /iz bırakmaz/);
+  assert.match(install, /\$\{IfNot\} \$\{Silent\}/);
+});
+
+test('istemcide tum veri klasoru silinir', () => {
+  assert.match(uninstall, /RMDir \/r "\$APPDATA\\ipchat-desktop"/);
+});
+
+test('sunucuda server-data tasinip geri konur, silme yalnizca tasima basarili olunca yapilir', () => {
+  assert.match(uninstall, /Rename "\$APPDATA\\ipchat-desktop\\server-data"/);
+  assert.match(uninstall, /IfErrors/);
+  const rename = uninstall.indexOf('Rename "$APPDATA\\ipchat-desktop\\server-data"');
+  const iferr = uninstall.indexOf('IfErrors', rename);
+  const rmdir = uninstall.indexOf('RMDir /r', rename);
+  assert.ok(rename > -1 && iferr > -1 && rmdir > -1);
+  assert.ok(iferr < rmdir, 'IfErrors, RMDir den once gelmeli');
+});
+
+test('uygulama silme islemlerinden once kapatilir', () => {
+  assert.ok(uninstall.indexOf('taskkill') < uninstall.indexOf('RMDir /r'));
+});
+
+test('kaldirma metinleri istemci ve sunucu icin ayri', () => {
+  assert.match(uninstall, /Bu işlem geri alınamaz/);
+  assert.match(uninstall, /server-data/);
+  assert.match(uninstall, /silinmedi/);
 });
