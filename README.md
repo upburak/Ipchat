@@ -1,117 +1,154 @@
 # Ipchat
 
-Yerel ağ (LAN/WiFi) üzerinde çalışan, eski MSN Messenger tarzı bir mesajlaşma uygulaması. Merkezi bir Node.js sunucusu + React web istemcisinden oluşur.
+Okul/ofis yerel ağında (LAN/WiFi) çalışan, eski MSN Messenger tarzı bir mesajlaşma uygulaması. İnternet gerekmez, veri dışarı çıkmaz.
 
-## Hızlı kurulum (Windows — önerilen)
+Bir bilgisayar **sunucu** olur, diğerleri ona bağlanır. Sunucu olan bilgisayarı ağda kendiliğinden bulur.
 
-`Ipchat` klasörünü (veya `Ipchat-kurulum.zip`'i açıp) bilgisayara kopyala, **`kurulum.bat`**'a çift tıkla. Script sana sorar:
+> **Yalnızca yerel ağ için tasarlandı.** HTTPS yok, kimlik doğrulama basittir. Sunucuyu internete açmayın.
 
-### [1] Sunucu kurulumu (ağda 1 bilgisayara)
-- Node.js kurulu değilse **güncel LTS sürümünü indirip sessizce kurar** (yönetici izni ister)
-- Bağımlılıkları kurar ve web arayüzünü derler
-- Güvenlik duvarında 3000 portunu açar
-- İstersen bilgisayar açılışında otomatik başlatmayı ayarlar
-- Sunucuyu başlatır ve **diğer bilgisayarların bağlanacağı adresi ekranda gösterir**
+---
 
-Sunucuyu daha sonra elle başlatmak için: `baslat.bat`
+## Kurulum
 
-### [2] İstemci kurulumu (mesajlaşacak bilgisayarlara)
-- Node.js ve yönetici izni **gerekmez**
-- Sunucu adresini sorar, bağlantıyı test eder
-- Masaüstüne **Ipchat kısayolu** koyar: uygulama Chrome/Edge'in uygulama modunda, adres çubuksuz, **Messenger benzeri küçük sabit boyutlu bir pencerede** açılır
+### Masaüstü uygulaması (önerilen)
 
-İstemci kurulumu yapmak istemeyenler tarayıcıdan da bağlanabilir (örn. `http://192.168.1.10:3000`) — sayfa sunucudan servis edildiği için **IP sorulmaz, otomatik bağlanır**.
+Tek program hem **istemci** hem **sunucu** olabilir. Node.js kurmak veya terminal açmak gerekmez.
 
-## Masaüstü uygulaması (Windows ve Mac) — önerilen yol
+Dosyalar [Releases](https://github.com/upburak/Ipchat/releases) sayfasındadır.
 
-Tek program hem **istemci** hem de **sunucu** olabilir; Node.js kurmak veya terminal açmak gerekmez.
+**Windows**
 
-**Kurulum**
-- **Windows:** `Ipchat Setup x.y.z.exe` dosyasını çalıştır ("Bilinmeyen yayıncı" uyarısında *Yine de çalıştır*). Kurulum **bir kez yönetici izni** ister, programı bilgisayardaki tüm kullanıcılar için kurar ve güvenlik duvarına yalnızca iki kural ekler: TCP 3000 (sohbet) ve UDP 41234 (sunucu keşfi). Kaldırmak için: Ayarlar → Uygulamalar → Ipchat → Kaldır; kaldırıcı çalışan sunucuyu durdurur, güvenlik duvarı kurallarını ve otomatik başlatmayı siler ve **sohbet geçmişinin de silinip silinmeyeceğini bir kez sorar** (varsayılan: sil; sessiz kaldırmada ve güncellemede veri silinmez). Bu bilgisayar sunucu olarak kullanıldıysa soru, tüm kullanıcıların hesaplarının ve mesajlarının da silineceğini söyler. **Bilinen sınır:** Standart bir kullanıcı kaldırmayı *başka bir yönetici hesabının parolasıyla* yükseltirse kaldırıcı o yönetici hesabının profiline bakar; kullanıcının otomatik başlatma kaydı ve verisi kalabilir. Bu durumda `%APPDATA%\ipchat-desktop` klasörünü elle sil.
-- **Mac:** zip'i aç, `Ipchat.app`'i Uygulamalar'a at. İlk açılışta imzasız olduğu için engellenirse: uygulamaya sağ tıkla → *Aç*; "hasarlı" derse Terminal'de `xattr -cr /Applications/Ipchat.app` çalıştır. Tam temizlik için tepsi (menü çubuğu) menüsündeki **"Ipchat'i tamamen kaldır…"** kullanılır: sunucuyu durdurur, otomatik başlatmayı kaldırır, isteğe bağlı olarak sohbet geçmişini siler ve uygulamayı Çöp Kutusu'na taşır. (Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.)
-- Mesaj verisi şurada tutulur (Windows kaldırıcısı ve Mac "tamamen kaldır" menüsü silmeyi sorar): Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop` (tamamen silmek için bu klasörü de sil).
+1. `Ipchat.Setup.x.y.z.exe` dosyasını çalıştır. "Bilinmeyen yayıncı" uyarısında *Yine de çalıştır*.
+2. Kurulum **bir kez yönetici izni** ister; programı tüm kullanıcılar için kurar ve güvenlik duvarına iki kural ekler: TCP 3000 (sohbet) ve UDP 41234 (sunucu keşfi).
 
-**Sunucu olarak kullanım:** Uygulamayı aç, ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Sunucu arka planda çalışır (pencere/terminal yok). Sistem tepsisinde (Mac'te menü çubuğunda) yeşil noktalı ikon ve **adres** görünür; ikona sağ tıklayıp adresi kopyalayabilirsin. Bu ayar hatırlanır, uygulama her açıldığında sunucu da başlar. Kapatmak için tepsi menüsünden "Sunucu modunu kapat". İlk açılan hesap yöneticidir.
+**Mac (Apple Silicon)**
 
-**Mac imzası:** Uygulama "geçici imza" (ad-hoc) ile imzalanır. Bu imza olmadan macOS uygulamaya kalıcı bir kimlik veremez ve Yerel Ağ iznini sessizce reddederdi (0.2.1'e kadarki sürümlerde bağlantı `No route to host` ile hiç denenmeden düşüyordu). Hâlâ Apple tarafından onaylı değildir, bu yüzden ilk açılışta sağ tık → Aç gerekir.
+1. Zip'i aç, `Ipchat.app`'i **Uygulamalar**'a taşı.
+2. İlk açılışta "hatalı/zedelenmiş, Çöp Sepeti'ne taşı" uyarısı çıkarsa uygulama bozuk değildir — macOS internetten inen imzasız uygulamalara karantina koyar. Terminal'de şu tek satır bunu kaldırır:
 
-**Mac yerel ağ izni:** macOS, uygulamanın ağdaki başka bilgisayarlara bağlanmasına izin vermeni ister. Ipchat'i ilk kez bir sunucuya bağlamayı denediğinde çıkan **"Ipchat yerel ağdaki cihazları bulmak ve bağlanmak istiyor"** penceresinde **İzin ver**'e bas. Pencere çıkmadıysa ya da yanlışlıkla reddettiysen: Sistem Ayarları → Gizlilik ve Güvenlik → **Yerel Ağ** → Ipchat'i aç. İzin verilmezse bağlantı denemeleri `No route to host` ile sessizce başarısız olur.
+   ```bash
+   xattr -cr /Applications/Ipchat.app
+   ```
 
-**İstemci olarak kullanım:** Uygulama sunucuyu ağda kendisi bulur (UDP `41234`), bulunanı listede gösterir; bulamazsa adres elle yazılır. Sunucu bilgisayarında UDP `41234` ve TCP `3000` gelen bağlantıya açık olmalı (güvenlik duvarı izni istenirse *izin ver*).
+3. İlk bağlantıda çıkan **"Ipchat yerel ağdaki cihazları bulmak ve bağlanmak istiyor"** penceresinde **İzin ver**'e bas. İzin verilmezse bağlantı sessizce başarısız olur (Sistem Ayarları → Gizlilik ve Güvenlik → Yerel Ağ'dan sonradan açılabilir).
 
-**Bildirimler:** Yönetici olan kullanıcı, **oturum açıkken** biri kayıt olursa uygulamanın **bildirimini** alır (pencere kapalı/tepside olsa da; oturum açılmadan, örneğin bilgisayar yeni açıldığında, bildirim gelmez, giriş yapınca bekleyenler rozetle görünür). "Hesaplar" düğmesinde ve tepsi ikonunda bekleyen hesap sayısı rozeti görünür (Windows'ta ikon kırmızı noktalı olur ve üzerine gelince sayı yazar; Mac'te menü çubuğunda ve Dock'ta sayı). Kişi listesi ve bekleyen hesaplar **3 saniyede bir** kendiliğinden yenilenir.
+### Tarayıcıdan
 
-**Kurum bilgisayarları:** Bilgisayarın güvenlik duvarı grup ilkesiyle (GPO) yönetiliyorsa yerel kurallar uygulanmaz ve başka cihazlar sunucuya bağlanamayabilir. Uygulama bunu fark edip bir uyarı gösterir ve tepside belirtir. Böyle bilgisayarlar **istemci** olarak sorunsuz çalışır; sunucuyu güvenlik duvarını yönetebildiğin bir bilgisayara kur.
+Kurulum istemeyenler sunucunun adresine gidebilir (örn. `http://192.168.1.10:3000`). Sayfa sunucudan servis edildiği için adres sorulmaz. Tarayıcıda masaüstüne özel şeyler çalışmaz: işletim sistemi bildirimi, tepsi ikonu ve sunucu keşfi yoktur.
 
-**Genel:** Pencere sabit boyutlu (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir).
+### Eski yöntem (yalnızca sunucu, Windows)
 
-**Derleme (geliştirici):** `.exe` ve Mac zip dosyaları GitHub'da otomatik üretilir: repoda **Actions → "Masaustu uygulamasi (Windows ve Mac)" → Run workflow**, bitince **Ipchat-Windows-Kurulum** ve **Ipchat-Mac** dosyaları indirilir. Geliştirme: `npm start -w desktop`; testler: `npm test -w desktop`.
+`kurulum.bat` ile Node.js'i kendisi kurup sunucuyu arka planda çalıştırabilir. Durdurmak `durdur.bat`, elle başlatmak `baslat-gizli.vbs`, kaldırmak `kaldir.bat`. Masaüstü uygulaması varken bu yola gerek yoktur.
 
-## Eski kurulum yöntemi (kurulum.bat, yalnızca sunucu)
+---
 
-Masaüstü uygulaması yerine `kurulum.bat` ile de sunucu kurulabilir (Node.js'i kendisi kurar). Sunucu **pencere açmadan arka planda** çalışır:
-- Durdurmak: `durdur.bat` — Elle başlatmak: `baslat-gizli.vbs`
-- **Tamamen kaldırmak: `kaldir.bat`** (sunucuyu durdurur, otomatik başlatmayı, güvenlik duvarı kuralını ve masaüstü kısayolunu siler; klasörü ve Node.js'i silmez, onları elle silersin).
+## Kullanım
 
-## Hesap onayı ve yönetici
+### Sunucu olmak
 
-- Sunucuda **ilk açılan hesap otomatik yönetici** olur ve doğrudan giriş yapar.
-- Sonraki herkes kayıt olabilir ama hesapları **"onay bekliyor"** durumuna düşer; yönetici onaylayana kadar giriş yapamazlar.
-- Yönetici, sohbet ekranında **Hesaplar** düğmesinden bekleyen hesapları onaylar/reddeder, hesapları kapatır/açar ve başka kullanıcıları yönetici yapabilir. Kapatılan kullanıcının açık oturumu hemen düşer.
-- Tek yönetici şifresini kaybederse, sunucu bilgisayarında şu komut şifreyi sıfırlar ve hesabı yönetici yapar:
+Uygulamayı aç; ağda sunucu bulamazsa çıkan ekranda **"Bu bilgisayar sunucu olsun"**a tıkla. Onay sorulur, sonra sunucu arka planda çalışmaya başlar — pencere veya terminal açılmaz. Tepsi menüsünde adres görünür, tıklayınca kopyalanır. Ayar hatırlanır; uygulama her açıldığında sunucu da başlar.
+
+**Ağda zaten bir sunucu varsa bu seçenek görünmez**, yerinde "Ağda zaten bir sunucu var" yazar. İkinci bir sunucu kullanıcıları ikiye böler ve birbirlerini göremezler.
+
+Kapatmak: tepsi menüsünden "Sunucu modunu kapat".
+
+### Hesaplar
+
+- Sunucuda **ilk açılan hesap yöneticidir** ve doğrudan girer.
+- Sonraki herkes kayıt olur ama hesabı **"onay bekliyor"** durumunda kalır; yönetici onaylayana kadar giremez.
+- Giriş: ilk seferde kullanıcı adı + şifre, sonra o cihaz için 4 haneli PIN.
+
+Yönetici **Hesaplar** ekranından bekleyenleri onaylar/reddeder, hesap kapatır/açar, başkasını yönetici yapabilir. Geri alınamayan işlemler (reddet, kapat, yöneticiliği al) onay sorar. Her satırda hesabın durumu (Onaylı / Onay bekliyor / Reddedildi / Kapatıldı) ve ayrıca o an **Çevrimiçi/Çevrimdışı** olduğu görünür — bunlar farklı şeylerdir. Kapatılan kullanıcının açık oturumu hemen düşer.
+
+Tek yönetici şifresini kaybederse, sunucu bilgisayarında:
 
 ```bash
 npm run reset-admin -- <kullanici-adi> <yeni-sifre>
 ```
 
-- Testler: `npm test -w server`
+### Mesajlaşma
 
-## Elle kurulum (macOS / Linux / geliştirici)
+- Soldaki listeden bir kişiyle veya **+ Yeni** ile kurduğun grupla sohbet et. Liste kalabalıklaşınca üstteki kutudan ara.
+- Her mesajda saat, grup sohbetlerinde gönderenin adı, gün değişince "Bugün / Dün / 12 Kasım" ayracı görünür.
+- Ataç ikonuyla ya da sürükle-bırak ile dosya ve resim gönderilir.
+
+### Okunmamış mesajlar ve bildirimler
+
+- Okunmamış mesajı olan kişinin satırında **kırmızı nokta** ve kalın ad belirir. Sayı sunucuda tutulur, yani **uygulama kapalıyken gelen mesajlar da** açılışta görünür.
+- Mesaj geldiğinde, o sohbet açık ve pencere önde değilse işletim sistemi bildirimi gelir: başlıkta **gönderenin adı**, gövdede sadece "Yeni mesaj". **Mesaj içeriği bildirimde gösterilmez** (başkası ekrana bakabilir). Bildirime tıklayınca pencere öne gelir ve o sohbet açılır.
+- Pencere başlığı toplam okunmamışı gösterir: `(3) Ipchat`. Tepsi ikonu ve Mac'te Dock rozeti bekleyen hesap + okunmamış mesaj toplamını gösterir.
+- Sohbeti açınca, ya da pencereye geri dönünce nokta kaybolur.
+
+### Genel
+
+Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir). Kişi listesi ve bekleyen hesaplar 3 saniyede bir yenilenir.
+
+---
+
+## Kaldırma ve veri
+
+Mesajlar ve hesaplar **sunucu olan bilgisayarda** tutulur: Windows `%APPDATA%\ipchat-desktop`, Mac `~/Library/Application Support/ipchat-desktop`.
+
+- **Windows:** Ayarlar → Uygulamalar → Ipchat → Kaldır. Kaldırıcı sunucuyu durdurur, güvenlik duvarı kurallarını ve otomatik başlatmayı siler, sohbet geçmişinin de silinip silinmeyeceğini bir kez sorar (varsayılan: sil). Güncellemede ve sessiz kaldırmada veri silinmez.
+  **Bilinen sınır:** standart bir kullanıcı kaldırmayı başka bir yönetici hesabının parolasıyla yükseltirse kaldırıcı o hesabın profiline bakar; kendi verisi kalabilir. O zaman `%APPDATA%\ipchat-desktop` klasörünü elle sil.
+- **Mac:** tepsi menüsünden **"Ipchat'i tamamen kaldır…"**. Uygulamayı yalnızca Çöp Kutusu'na atarsan sunucu süreci ve veri geride kalır.
+
+---
+
+## Sorun giderme
+
+**Cihazlar birbirini görmüyor.** Çoğu zaman ağ sorunudur, uygulama değil. Mesh/tekrarlayıcılı modemlerde "istemci yalıtımı" açık olabilir ya da cihazlar farklı düğümlere bağlıdır. Hızlı test: iki cihazı bir telefonun hotspot'una bağlayıp dene — orada çalışıyorsa sorun ağdadır.
+
+**Kurum bilgisayarları (GPO).** Güvenlik duvarı grup ilkesiyle yönetiliyorsa yerel kurallar uygulanmaz ve başkaları sunucuya bağlanamayabilir. Uygulama bunu fark edip uyarır. Böyle bilgisayarlar **istemci** olarak sorunsuz çalışır; sunucuyu güvenlik duvarını yönetebildiğin bir bilgisayara kur.
+
+**Mac'te "hatalı/zedelenmiş" uyarısı.** Karantinadır, yukarıdaki `xattr -cr` komutu çözer. Uygulama ücretli Apple sertifikasıyla imzalı olmadığı için her yeni sürümde tekrar gerekir.
+
+**Sunucu adresini bulma.** Windows `ipconfig` → "IPv4 Address"; Mac `ipconfig getifaddr en0`.
+
+---
+
+## Geliştirme
+
+Node.js **22.5+** gerekir (`node:sqlite` için).
 
 ```bash
-# Node.js kurulu değilse (macOS, Homebrew ile):
-brew install node
-
-npm install
+npm install                 # tüm workspace'ler
+npm run dev                 # sunucu (3000) + web arayüzü (5173)
+npm run build               # web arayüzünü derler (web/dist)
+npm start                   # tek port: 3000 hem API/socket hem arayüz
+npm start -w desktop        # masaüstü uygulaması (önce sunucu gerekir)
 ```
 
-## Geliştirme modunda çalıştırma
+Testler (`node:test`, ek kütüphane yok):
 
 ```bash
-npm run dev
+npm test -w server
+npm test -w web
+npm test -w desktop
 ```
 
-Bu komut hem sunucuyu (`http://localhost:3000`) hem web istemcisini (`http://localhost:5173`) aynı anda başlatır.
+### Yapı
 
-## Production build (tek port, LAN kullanımı için)
+| Klasör | İçerik |
+|---|---|
+| `server/` | Express + Socket.IO + `node:sqlite`. Hesaplar, mesajlar, gruplar, okunmamış takibi, yönetici uçları, UDP keşif yanıtı (41234). |
+| `web/` | React + Vite + zustand arayüzü. Sunucudan servis edilir; masaüstü uygulaması da aynı arayüzü gösterir. |
+| `desktop/` | Electron kabuğu. İstemci + sunucu modu, tepsi ikonu, bildirim köprüsü, sunucu keşfi. |
+| `docs/superpowers/` | Tasarım belgeleri (`specs/`) ve uygulama planları (`plans/`). |
 
-```bash
-npm run build   # web/dist üretir
-npm start       # sunucu 3000 portunda hem API/socket hem de web/dist'i servis eder
-```
+### Yayın
 
-Build sonrası LAN'daki diğer cihazlar sadece `http://<sunucu-ip>:3000` adresine gitmesi yeterlidir.
+Derleme ve dosyalar GitHub Actions ile üretilir, bilgisayara bağlı değildir:
 
-## Sunucunun LAN IP'sini bulma
+1. `desktop/package.json` içindeki `version` alanını artır.
+2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.4.1` gibi bir ad yaz ve yayınla.
+3. İş akışı derler, `.exe` ve Mac zip'ini o Release'e ekler (~3 dakika).
 
-- **macOS:** `ipconfig getifaddr en0` (WiFi arayüz adı farklıysa `en1`, `en2` deneyin) veya Sistem Ayarları > Ağ.
-- **Windows:** `ipconfig` çalıştırıp "IPv4 Address" satırına bakın.
+---
 
-## Güvenlik duvarı
+## Sınırlar
 
-Sunucuyu çalıştıran makinede, seçtiğiniz portun (varsayılan `3000`) gelen bağlantılara (inbound) izin verdiğinden emin olun:
-
-- **macOS:** Sistem Ayarları > Ağ > Güvenlik Duvarı, gerekirse Node.js'e izin verin.
-- **Windows:** Windows Defender Güvenlik Duvarı > Gelen Kuralları, port 3000 için bir kural ekleyin.
-
-## Kullanım
-
-1. Tarayıcıdan sunucu adresine git (örn. `http://192.168.1.10:3000`) — bağlantı otomatik kurulur. (Sadece geliştirme modunda, 5173 portundaki Vite arayüzünde sunucu IP'si elle sorulur.)
-2. İlk kullanımda kullanıcı adı + şifre ile kayıt ol.
-3. Bu cihaz için 4 haneli hızlı giriş PIN'i belirle. Sonraki girişlerde sadece PIN yeterli.
-4. Soldaki kişi listesinden biriyle veya "+ Yeni" ile oluşturduğun bir grupla sohbet et.
-5. Ataç ikonuyla veya sürükle-bırak ile dosya/resim gönder.
-
-## Mimari notu
-
-Bu MVP; merkezi sunucu + web istemcisini kapsar. Web tarayıcısı ham UDP broadcast yapamadığı için sunucu adresi manuel girilir. Gerçek "ağı tara, sunucuyu otomatik bul" özelliği ve sistem tepsisi entegrasyonu, ileride eklenecek Electron tabanlı Windows masaüstü uygulamasına (Node `dgram` ile) bırakılmıştır.
+- Yalnızca yerel ağ. HTTPS yok, sunucu internete açılmamalı.
+- Sunucu olan bilgisayar açık ve oturumu açık olmalı.
+- Mac uygulaması Apple tarafından onaylı (notarized) değil; her indirmede karantina adımı gerekir.
+- Mesaj geçmişi yalnızca sunucudadır; yedeklenmez.

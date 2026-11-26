@@ -70,7 +70,9 @@ Tamam ve çalışıyor: hesap onayı ve yönetici paneli (M1), Electron kabuğu 
 
 Hesap ekranı: bekleyenler önde ve sayılı, "Onayla" dolgulu / "Reddet" sönük, **Reddet/Kapat/Yöneticiliği al için onay penceresi** (varsayılan Vazgeç), `Aktif` → **`Onaylı`** (kullanıcı bunu "şu an bağlı" sanıyordu) ve ayrı **Çevrimiçi/Çevrimdışı** göstergesi, renkli durum etiketleri, arama, satır başına hata, fare listedeyken yenilemenin durması, çift tıklamada sahte hata vermeyen koruma. Sohbet: her mesajda saat, grupta gönderen adı, gün ayracı. Kişi listesinde arama. Girişte kalıcı etiketler, PIN'de tek gönder yolu. Okunabilirlik: `--muted` ve `--danger` koyulaştı, düğmeler ≥32px.
 
-**Tarayıcıda ölçülerek doğrulandı** (Playwright, bu depoda): saatlerin UTC→yerel çevrimi (07:20 UTC → 10:20), hesap satırlarının eşit yüksekliği ve uzun adın kesilmemesi, eşleşmeyen aramada "Eşleşen hesap yok.", çift tıklamada hata çıkmaması. **Electron kabuğu (tepsi menüsü, onay penceresi, durum satırı) yine çalıştırılamadı**; gerçek Windows/Mac testi bekliyor.
+**Tarayıcıda ölçülerek doğrulandı** (Playwright, bu depoda): saatlerin UTC→yerel çevrimi (07:20 UTC → 10:20), hesap satırlarının eşit yüksekliği ve uzun adın kesilmemesi, eşleşmeyen aramada "Eşleşen hesap yok.", çift tıklamada hata çıkmaması.
+
+`test-0.4.0` yayınlandı (14 Kasım). **Kullanıcı okuldaki Windows bilgisayarlarda denedi, sorun bildirmedi (26 Kasım).** Bunun üzerine dal `main`'e alındı ve README baştan yazıldı. **Mac'te 0.4.0 hiç denenmedi** (okulda Mac yok): tepsi menüsünün yeni sırası, "Bağlı: …" durum satırı ve özellikle **pencere gizliyken onay penceresinin görünmesi** Mac'te doğrulanmayı bekliyor — 0.3.0'da tam burada macOS'a özgü bir tuzak çıkmıştı.
 
 Bilinen eksik: `.message.own .message-time` beyaz metni mor baloncukta 4.47:1 — standardın 0.03 altında. Kapatmak uygulamanın imza rengini değiştirmeyi gerektirirdi, bilinçli olarak yapılmadı.
 
