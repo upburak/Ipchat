@@ -30,6 +30,17 @@ test('answers IPCHAT_DISCOVER with app, port and name', async () => {
   }
 });
 
+test('includes the fingerprint in the reply when given', async () => {
+  const fingerprint = 'ab'.repeat(32);
+  const d = await startDiscovery(3000, { udpPort: 0, name: 'test-pc', fingerprint });
+  try {
+    const reply = await ask(d.port, 'IPCHAT_DISCOVER');
+    assert.deepEqual(JSON.parse(reply), { app: 'ipchat', port: 3000, name: 'test-pc', fingerprint });
+  } finally {
+    d.close();
+  }
+});
+
 test('ignores unrelated packets', async () => {
   const d = await startDiscovery(3000, { udpPort: 0, name: 'test-pc' });
   try {

@@ -10,6 +10,9 @@ import { Server } from 'socket.io';
 import { authRouter } from './routes/auth.js';
 import { createAdminRouter } from './routes/admin.js';
 import { startDiscovery } from './discovery.js';
+import { dataDir } from './db.js';
+import { loadOrCreateIdentity } from './identity.js';
+import { createIdentityRouter } from './routes/identity.js';
 import { messagesRouter } from './routes/messages.js';
 import { uploadRouter } from './routes/upload.js';
 import { unreadRouter } from './routes/unread.js';
@@ -22,6 +25,15 @@ const uploadsDir =
   (process.env.IPCHAT_DATA_DIR
     ? path.join(process.env.IPCHAT_DATA_DIR, 'uploads')
     : path.join(__dirname, '..', 'uploads'));
+
+// Sunucu kimliği dinlemeden önce yüklenir; okunamazsa yeni anahtar üretilmez, sunucu başlamaz.
+let identity;
+try {
+  identity = loadOrCreateIdentity(dataDir);
+} catch (err) {
+  console.error('Hata: sunucu kimliği okunamadı, sunucu başlatılmıyor: ' + err.message);
+  process.exit(1);
+}
 
 const app = express();
 app.use(cors());
@@ -43,6 +55,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 attachSockets(io);
 
+app.use('/api', createIdentityRouter(identity));
 app.use('/api', authRouter);
 app.use('/api', createAdminRouter(io));
 app.use('/api', messagesRouter);
@@ -82,7 +95,7 @@ function lanAddresses() {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  startDiscovery(Number(PORT));
+  startDiscovery(Number(PORT), { fingerprint: identity.fingerprint });
   console.log('');
   console.log('======================================================');
   console.log('  Ipchat sunucusu calisiyor!');

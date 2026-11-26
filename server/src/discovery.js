@@ -14,10 +14,13 @@ export function answerQuery(socket, reply, msg, rinfo) {
   }
 }
 
-export function startDiscovery(httpPort, { udpPort = DISCOVERY_PORT, name = os.hostname() } = {}) {
+export function startDiscovery(httpPort, { udpPort = DISCOVERY_PORT, name = os.hostname(), fingerprint } = {}) {
   return new Promise((resolve) => {
     const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-    const reply = Buffer.from(JSON.stringify({ app: 'ipchat', port: httpPort, name }));
+    // Parmak izi yalnızca verildiyse eklenir; verilmezse yanıt eski biçimiyle aynı kalır.
+    const payload = { app: 'ipchat', port: httpPort, name };
+    if (fingerprint) payload.fingerprint = fingerprint;
+    const reply = Buffer.from(JSON.stringify(payload));
     let listening = false;
 
     socket.on('message', (msg, rinfo) => answerQuery(socket, reply, msg, rinfo));
