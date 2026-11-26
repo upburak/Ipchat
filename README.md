@@ -89,8 +89,8 @@ Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak i�
 
 Kaldırırken **hiçbir soru sorulmaz**. Ne silineceği şudur:
 
-- **Çalışanların (istemci) bilgisayarında her şey silinir:** program, ayarlar, otomatik başlatma, kayıt defteri girdileri, güvenlik duvarı kuralları ve `ipchat-desktop` veri klasörünün tamamı. Bu işlem geri alınamaz. (Tek bilinen istisna aşağıdaki "Bilinen sınır"dır.)
-- **Sunucu olan bilgisayarda da aynı şeyler silinir, yalnızca hesaplar ve mesaj geçmişi silinmez.** Bunlar `server-data` klasöründe durur. İstersen bu klasörü elle silebilirsin. Kaldırma bittiğinde Ipchat bu klasörün nerede olduğunu sana söyler; yalnızca sessiz kaldırmada mesaj çıkmaz. Çok nadir olarak klasör geri konamazsa hesaplar ve mesajlar `%APPDATA%\ipchat-server-data-tmp` klasöründe kalır; bu durumda onu orada ara.
+- **Çalışanların (istemci) bilgisayarında her şey silinir:** program, ayarlar, otomatik başlatma, kayıt defteri girdileri, güvenlik duvarı kuralları ve `ipchat-desktop` veri klasörünün tamamı. Bu işlem geri alınamaz. (İstisnalar aşağıda: Windows'taki "Bilinen sınır" ve Mac'te uygulamayı yalnızca Çöp Kutusu'na atmak.)
+- **Sunucu olan bilgisayarda da aynı şeyler silinir, yalnızca hesaplar ve mesaj geçmişi silinmez.** Bunlar `server-data` klasöründe durur. İstersen bu klasörü elle silebilirsin. Kaldırma bittiğinde Ipchat bu klasörün nerede olduğunu sana söyler; yalnızca sessiz kaldırmada mesaj çıkmaz. Windows'ta çok nadir olarak klasör geri konamazsa hesaplar ve mesajlar `%APPDATA%\ipchat-server-data-tmp` klasöründe kalır; bu durumda onu orada ara.
 - **Güncelleme sırasında hiçbir şeye dokunulmaz.** Yeni sürümü üstüne kurmak ayarları ve mesajları silmez.
 
 `server-data` klasörü: Windows `%APPDATA%\ipchat-desktop\server-data`, Mac `~/Library/Application Support/ipchat-desktop/server-data`.
