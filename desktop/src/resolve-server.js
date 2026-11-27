@@ -90,8 +90,10 @@ export async function resolveServer({ configDir, discover = discoverServers, ver
   const idxs = candidates.map((_, i) => i).filter((i) => results[i].state === 'new' || results[i].state === 'unsupported');
   if (idxs.length === 1 && autoPickSingle !== false) {
     const i = idxs[0];
-    if (results[i].state === 'new') return { status: 'ok', url: candidates[i].url, identity: results[i].identity };
-    return { status: 'ok', url: candidates[i].url };
+    const url = candidates[i].url;
+    // name + autoPicked: arayüz "sunucu bulundu" bilgi ekranını yalnızca bu durumda gösterir.
+    if (results[i].state === 'new') return { status: 'ok', url, identity: results[i].identity, name: nameOf(url), autoPicked: true };
+    return { status: 'ok', url, name: nameOf(url), autoPicked: true };
   }
   if (idxs.length >= 1) return { status: 'choose', servers: idxs.map((i) => candidates[i]) };
 

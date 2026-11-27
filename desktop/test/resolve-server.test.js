@@ -54,7 +54,7 @@ test('a single newly discovered server (no pin) connects without a chooser, and 
   const configDir = tmp();
   saveConfig(configDir, { lastServer: 'http://10.9.9.9:3000' });
   const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1, name: 'b', autoPicked: true });
   assert.equal(loadConfig(configDir).lastServer, 'http://10.9.9.9:3000');
   assert.equal(loadConfig(configDir).serverIdentity, undefined);
 });
@@ -62,7 +62,7 @@ test('a single newly discovered server (no pin) connects without a chooser, and 
 test('a single new server on first launch (no remembered address, no pin) -> ok with identity, nothing written', async () => {
   const configDir = tmp();
   const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1, name: 'b', autoPicked: true });
   assert.equal(fs.readdirSync(configDir).length, 0);
 });
 
@@ -70,7 +70,7 @@ test('a single unsupported (old, identity-less) server -> ok without an identity
   const configDir = tmp();
   const d = deps({ servers: [B], table: { [B.url]: { state: 'unsupported' } } });
   const r = await resolveServer({ configDir, ...d });
-  assert.deepEqual(r, { status: 'ok', url: B.url });
+  assert.deepEqual(r, { status: 'ok', url: B.url, name: 'b', autoPicked: true });
   assert.equal('identity' in r, false);
   assert.equal(fs.readdirSync(configDir).length, 0);
 });
@@ -79,8 +79,62 @@ test('remembered address unreachable (e.g. DHCP change) and one new server disco
   const configDir = tmp();
   saveConfig(configDir, { lastServer: A.url });
   const d = deps({ servers: [B], table: { [A.url]: { state: 'unreachable' }, [B.url]: { state: 'new', identity: ID1 } } });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1, name: 'b', autoPicked: true });
   assert.equal(loadConfig(configDir).lastServer, A.url);
+});
+
+test('single new candidate is flagged autoPicked and carries its name', async () => {
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
+  const r = await resolveServer({ configDir: tmp(), ...d });
+  assert.equal(r.status, 'ok');
+  assert.equal(r.autoPicked, true);
+  assert.equal(r.name, 'b');
+  assert.deepEqual(r.identity, ID1);
+});
+
+test('single unsupported candidate is flagged autoPicked without an identity key', async () => {
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'unsupported' } } });
+  const r = await resolveServer({ configDir: tmp(), ...d });
+  assert.equal(r.status, 'ok');
+  assert.equal(r.autoPicked, true);
+  assert.equal(r.name, 'b');
+  assert.equal('identity' in r, false);
+});
+
+test('name falls back to the hostname when discovery gave none', async () => {
+  const noName = { url: 'http://10.0.0.7:3000' };
+  const d = deps({ servers: [noName], table: { [noName.url]: { state: 'new', identity: ID1 } } });
+  const r = await resolveServer({ configDir: tmp(), ...d });
+  assert.equal(r.autoPicked, true);
+  assert.equal(r.name, '10.0.0.7');
+});
+
+test('remembered address ok results carry neither name nor autoPicked', async () => {
+  for (const [state, extra] of [['known', { identity: ID1 }], ['new', { identity: ID1 }], ['unsupported', {}]]) {
+    const configDir = tmp();
+    saveConfig(configDir, { lastServer: A.url, serverIdentity: ID1 });
+    const d = deps({ servers: [A], table: { [A.url]: { state, ...extra } } });
+    const r = await resolveServer({ configDir, ...d });
+    assert.equal(r.status, 'ok', state);
+    assert.equal('name' in r, false, state);
+    assert.equal('autoPicked' in r, false, state);
+  }
+});
+
+test('a discovered known server is not flagged autoPicked', async () => {
+  const configDir = tmp();
+  saveConfig(configDir, { lastServer: 'http://10.9.9.9:3000', serverIdentity: ID1 });
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'known', identity: ID1 } } });
+  const r = await resolveServer({ configDir, ...d });
+  assert.deepEqual(r, { status: 'ok', url: B.url, identity: ID1 });
+  assert.equal('name' in r, false);
+  assert.equal('autoPicked' in r, false);
+});
+
+test('autoPickSingle:false still gives choose (unchanged)', async () => {
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
+  const r = await resolveServer({ configDir: tmp(), autoPickSingle: false, ...d });
+  assert.deepEqual(r, { status: 'choose', servers: [B] });
 });
 
 test('a single unreachable or invalid candidate and nothing else -> manual', async () => {
@@ -95,7 +149,7 @@ test('one new server plus one invalid candidate -> ok for the new one (the dropp
     servers: [A, B],
     table: { [A.url]: { state: 'invalid' }, [B.url]: { state: 'new', identity: ID1 } },
   });
-  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'ok', url: B.url, identity: ID1, name: 'b', autoPicked: true });
 });
 
 test('drops discovered servers that are unreachable or invalid', async () => {
@@ -142,7 +196,7 @@ test('two candidates -> choose whatever autoPickSingle is', async () => {
 
 test('autoPickSingle:true is the same as omitting it (single new -> ok)', async () => {
   const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
-  assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle: true, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle: true, ...d }), { status: 'ok', url: B.url, identity: ID1, name: 'b', autoPicked: true });
 });
 
 test('autoPickSingle:false does not change the remembered-address branches', async () => {
