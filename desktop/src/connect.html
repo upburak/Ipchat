@@ -33,8 +33,8 @@
   button { border: 0; background: var(--accent); color: var(--on-accent); cursor: pointer; }
   button.server { background: var(--accent-soft); color: var(--accent); text-align: left; }
   button:disabled { opacity: .55; cursor: default; }
-  /* Bilgi satırı olarak okunur kalsın: solukluk yerine soluk renk. */
-  button.server:disabled { opacity: 1; color: var(--muted); }
+  /* Bilgi satırı olarak okunur kalsın: solukluk yerine soluk renk; dolgu yok, tıklanabilir satırlardan ayrılsın. */
+  button.server:disabled { opacity: 1; color: var(--muted); background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .error { color: var(--danger); font-size: 13px; min-height: 18px; }
   h2 { margin: 0 0 10px; font-size: 17px; color: var(--text); }
