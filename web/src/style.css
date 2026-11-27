@@ -1,14 +1,58 @@
-:root {
-  --surface: #ffffff;
-  --bg: #f3f4f8;
-  --border: #e6e8ef;
-  --text: #1d2433;
-  --muted: #656c7a;
-  --accent: #6366f1;
-  --accent-dark: #4f46e5;
-  --accent-soft: #eef0ff;
-  --online: #22c55e;
-  --danger: #b91c1c;
+/* Renkler yalnizca bu blokta durur; bilesen kurallari yalnizca var(--...) kullanir.
+   Yeni tema = yeni :root[data-theme="..."] blogu (ayni belirtec adlariyla). */
+:root[data-theme='koyu'] {
+  color-scheme: dark;
+
+  /* Zemin (L0), yuzey (L1), yukseltilmis yuzey (L2), kenarlik */
+  --bg: #0a1018;
+  --surface: #101a25;
+  --surface-raised: #16222f;
+  --border: #1b2a3a;
+  --edge-light: rgba(255, 255, 255, 0.05);
+  --scrim: rgba(3, 7, 12, 0.65);
+
+  /* Yazi */
+  --text: #e6eef5;
+  --muted: #93a4b5;
+  --placeholder: #7a8ca0;
+
+  /* Tek vurgu rengi: dugme, etkin oge, baglanti, odak */
+  --accent: #33c9dc;
+  --accent-hover: #5bd8e8;
+  --accent-soft: #0f3440;
+  --accent-wash: rgba(51, 201, 220, 0.1);
+  --on-accent: #06222a;
+
+  /* Alanlar ve etkilesim */
+  --input-bg: #0d1620;
+  --hover: #121f2c;
+
+  /* Kendi balonum */
+  --own-bubble: #0f3a47;
+  --own-text: #e6eef5;
+  --own-time: #a9c7d1;
+  --own-border: rgba(51, 201, 220, 0.28);
+
+  /* Durumlar */
+  --danger: #f87171;
+  --danger-bg: #2b1518;
+  --danger-bg-hover: #38191d;
+  --danger-border: #5a2a2e;
+  --online: #34d399;
+  --offline: #3a4a5b;
+  --unread: #f87171;
+  --badge-bg: #f87171;
+  --badge-fg: #2a0b0b;
+  --chip-ok-bg: #0f2e25;
+  --chip-ok-fg: #6ee7b7;
+  --chip-wait-bg: #33280e;
+  --chip-wait-fg: #fbbf24;
+  --chip-off-bg: #1b2633;
+  --chip-off-fg: #9db0c3;
+
+  /* Avatar harfi (arka planlar avatar.js PALETTE'inde) */
+  --avatar-fg: #e6eef5;
+
   --radius: 12px;
 }
 
@@ -39,6 +83,26 @@ input {
   font-family: inherit;
 }
 
+input,
+textarea {
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
+}
+
+input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .link {
   background: none;
   border: none;
@@ -65,7 +129,8 @@ input {
   background: var(--surface);
   padding: 32px;
   border-radius: var(--radius);
-  box-shadow: 0 4px 24px rgba(29, 36, 51, 0.08);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 var(--edge-light);
   width: 340px;
   text-align: center;
 }
@@ -106,14 +171,17 @@ input {
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 1rem;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
 }
 
 .card input:focus,
 .modal input:focus,
-.composer input:focus {
-  outline: 2px solid var(--accent-soft);
+.composer input:focus,
+.contact-search input:focus,
+.admin-search input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
   border-color: var(--accent);
 }
 
@@ -123,13 +191,14 @@ input {
   border: none;
   border-radius: 10px;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-size: 1rem;
   font-weight: 600;
 }
 
-.card button[type='submit']:hover {
-  background: var(--accent-dark);
+.card button[type='submit']:hover,
+.modal button[type='submit']:hover {
+  background: var(--accent-hover);
 }
 
 .error {
@@ -173,7 +242,7 @@ input {
   height: 56px;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface-raised);
   color: var(--text);
   font-size: 1.1rem;
 }
@@ -192,8 +261,9 @@ input {
   width: 780px;
   height: 560px;
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 40px rgba(29, 36, 51, 0.16);
+  box-shadow: inset 0 1px 0 var(--edge-light);
   overflow: hidden;
 }
 
@@ -202,6 +272,7 @@ input {
   .chat-app {
     width: 100vw;
     height: 100vh;
+    border: none;
     border-radius: 0;
     box-shadow: none;
   }
@@ -238,6 +309,8 @@ input {
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text);
 }
 
 .contact-empty {
@@ -282,6 +355,13 @@ input {
   color: var(--text);
 }
 
+/* Satirlar arasi ince ayrac (liste cercevesi kenar cubugunun kenarligidir) */
+.contact-item + .contact-item {
+  border-top: 1px solid var(--border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .contact-name {
   flex: 1;
   min-width: 0;
@@ -300,11 +380,11 @@ input {
   height: 8px;
   margin-left: auto;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--unread);
 }
 
 .contact-item:hover {
-  background: var(--bg);
+  background: var(--hover);
 }
 
 .contact-item.active {
@@ -320,7 +400,7 @@ input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--avatar-fg);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -346,7 +426,7 @@ input {
 }
 
 .status-dot.offline {
-  background: #cbd0dc;
+  background: var(--offline);
 }
 
 .main {
@@ -396,15 +476,16 @@ input {
   align-self: flex-start;
   background: var(--surface);
   padding: 8px 12px;
+  border: 1px solid var(--border);
   border-radius: 12px 12px 12px 2px;
   max-width: 62%;
-  box-shadow: 0 1px 2px rgba(29, 36, 51, 0.08);
 }
 
 .message.own {
   align-self: flex-end;
-  background: var(--accent);
-  color: white;
+  background: var(--own-bubble);
+  color: var(--own-text);
+  border-color: var(--own-border);
   border-radius: 12px 12px 2px 12px;
 }
 
@@ -436,7 +517,7 @@ input {
   margin-bottom: 2px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-dark);
+  color: var(--accent);
   overflow-wrap: anywhere;
 }
 
@@ -449,13 +530,13 @@ input {
 }
 
 .message.own .message-time {
-  color: #fff;
+  color: var(--own-time);
 }
 
 .drop-hint {
   position: absolute;
   inset: 0;
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--accent-wash);
   border: 2px dashed var(--accent);
   display: flex;
   align-items: center;
@@ -477,7 +558,7 @@ input {
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: var(--bg);
+  background: var(--input-bg);
 }
 
 .composer button {
@@ -485,8 +566,12 @@ input {
   border: none;
   border-radius: 20px;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-weight: 600;
+}
+
+.composer button:hover {
+  background: var(--accent-hover);
 }
 
 .attach-btn {
@@ -499,18 +584,20 @@ input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(29, 36, 51, 0.4);
+  background: var(--scrim);
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .modal {
-  background: var(--surface);
+  background: var(--surface-raised);
   padding: 24px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   width: 340px;
-  box-shadow: 0 10px 40px rgba(29, 36, 51, 0.2);
+  box-shadow: inset 0 1px 0 var(--edge-light);
 }
 
 .modal form {
@@ -525,6 +612,10 @@ input {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
 }
 
 .member-item {
@@ -560,13 +651,13 @@ input {
 }
 
 .btn-danger {
-  background: #fdecec;
+  background: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid #f7c4c4;
+  border: 1px solid var(--danger-border);
 }
 
 .btn-danger:hover {
-  background: #fbd9d9;
+  background: var(--danger-bg-hover);
 }
 
 .btn-secondary {
@@ -577,18 +668,18 @@ input {
 
 .btn-primary {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   border: 1px solid var(--accent);
 }
 
 .btn-primary:hover {
-  background: var(--accent-dark);
+  background: var(--accent-hover);
 }
 
 .btn-primary:focus-visible,
 .btn-danger:focus-visible,
 .btn-secondary:focus-visible {
-  outline: 2px solid var(--accent-dark);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -619,8 +710,9 @@ input {
   padding: 10px 12px;
   margin-bottom: 6px;
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(29, 36, 51, 0.06);
+  box-shadow: inset 0 1px 0 var(--edge-light);
 }
 
 .admin-item {
@@ -685,6 +777,8 @@ input {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.95rem;
+  background: var(--input-bg);
+  color: var(--text);
 }
 
 .chip {
@@ -696,18 +790,18 @@ input {
 }
 
 .chip-ok {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--chip-ok-bg);
+  color: var(--chip-ok-fg);
 }
 
 .chip-wait {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--chip-wait-bg);
+  color: var(--chip-wait-fg);
 }
 
 .chip-off {
-  background: #eceef3;
-  color: #5b6478;
+  background: var(--chip-off-bg);
+  color: var(--chip-off-fg);
 }
 
 .badge {
@@ -716,8 +810,8 @@ input {
   margin-left: 4px;
   padding: 0 6px;
   border-radius: 9px;
-  background: var(--danger);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
   font-size: 11px;
   line-height: 18px;
   text-align: center;
