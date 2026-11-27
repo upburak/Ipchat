@@ -25,6 +25,7 @@
 
   /* Alanlar ve etkilesim */
   --input-bg: #0d1620;
+  --input-border: #586f87;
   --hover: #121f2c;
 
   /* Kendi balonum */
@@ -168,7 +169,7 @@ input[type='checkbox'] {
 .card input,
 .modal input:not([type='checkbox']) {
   padding: 11px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 1rem;
   background: var(--input-bg);
@@ -306,7 +307,7 @@ input[type='checkbox'] {
 .contact-search input {
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.9rem;
   background: var(--input-bg);
@@ -556,7 +557,7 @@ input[type='checkbox'] {
 .composer input {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 20px;
   background: var(--input-bg);
 }
@@ -774,7 +775,7 @@ input[type='checkbox'] {
   flex: 1;
   min-width: 0;
   padding: 6px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   font-size: 0.95rem;
   background: var(--input-bg);
