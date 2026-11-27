@@ -1,24 +1,46 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="koyu">
 <head>
 <meta charset="utf-8" />
 <title>Ipchat</title>
 <style>
-  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f3f4f8; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px 0; box-sizing: border-box; }
-  .card { background: #fff; border-radius: 12px; padding: 28px; width: 360px; box-shadow: 0 4px 24px rgba(29,36,51,.08); }
+  /* Renkler yalnızca bu blokta durur (web/src/style.css ile aynı ad ve değer; test eşitliği denetler). */
+  :root[data-theme='koyu'] {
+  color-scheme: dark;
+  --bg: #0a1018;
+  --surface: #101a25;
+  --border: #1b2a3a;
+  --text: #e6eef5;
+  --muted: #93a4b5;
+  --placeholder: #7a8ca0;
+  --accent: #33c9dc;
+  --accent-soft: #0f3440;
+  --on-accent: #06222a;
+  --input-bg: #0d1620;
+  --input-border: #586f87;
+  --danger: #f87171;
+  --chip-wait-bg: #33280e;
+  --chip-wait-fg: #fbbf24;
+  }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px 0; box-sizing: border-box; }
+  .card { background: var(--surface); border-radius: 12px; padding: 28px; width: 360px; box-shadow: 0 0 0 1px var(--border); }
   h1 { margin: 0 0 8px; font-size: 22px; }
-  p { color: #8b93a7; margin: 0 0 16px; font-size: 14px; }
+  p { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
   input, button { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
-  input { border: 1px solid #e6e8ef; }
-  button { border: 0; background: #6366f1; color: #fff; cursor: pointer; }
-  button.server { background: #eef0ff; color: #4f46e5; text-align: left; }
+  input { background: var(--input-bg); color: var(--text); border: 1px solid var(--input-border); }
+  input::placeholder { color: var(--placeholder); opacity: 1; }
+  input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { border: 0; background: var(--accent); color: var(--on-accent); cursor: pointer; }
+  button.server { background: var(--accent-soft); color: var(--accent); text-align: left; }
   button:disabled { opacity: .55; cursor: default; }
-  button:focus-visible { outline: 2px solid #1d2433; outline-offset: 2px; }
-  .error { color: #ef4444; font-size: 13px; min-height: 18px; }
-  h2 { margin: 0 0 10px; font-size: 17px; color: #1d2433; }
-  #changed p { color: #4b5263; }
-  #changed .detail { color: #1d2433; overflow-wrap: anywhere; }
-  .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #fff4e5; color: #9a4a00; font-size: 12px; }
+  /* Bilgi satırı olarak okunur kalsın: solukluk yerine soluk renk. */
+  button.server:disabled { opacity: 1; color: var(--muted); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .error { color: var(--danger); font-size: 13px; min-height: 18px; }
+  h2 { margin: 0 0 10px; font-size: 17px; color: var(--text); }
+  #changed p { color: var(--muted); }
+  #changed .detail { color: var(--text); overflow-wrap: anywhere; }
+  .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--chip-wait-bg); color: var(--chip-wait-fg); font-size: 12px; }
 </style>
 </head>
 <body>

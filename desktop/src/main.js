@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Notification, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, Notification, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
@@ -695,6 +695,8 @@ function start() {
   });
 
   app.whenReady().then(() => {
+    // Pencere çerçevesi ve sistem iletişim kutuları koyu olsun (Windows başlık çubuğunda etkisi sistem sürümüne bağlı).
+    nativeTheme.themeSource = 'dark';
     if (needsWelcome(loadConfig(configDir()), app.isPackaged)) {
       // Kapı (tasarım §7.4): yalnızca pencere ve onay ekranı. Gerisi welcome:accept'te startApp ile.
       welcomePending = true;

@@ -21,3 +21,15 @@ test('webPreferences disables background throttling and keeps isolation', () => 
   assert.equal(p.nodeIntegration, false);
   assert.equal(p.sandbox, true);
 });
+
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+test('windowOptions() carries the dark background colour equal to web --bg', () => {
+  const css = readFileSync(fileURLToPath(new URL('../../web/src/style.css', import.meta.url)), 'utf8');
+  const bg = /:root\[data-theme=['"]koyu['"]\]\s*\{[^}]*?--bg:\s*(#[0-9a-f]{6})\s*;/i.exec(css);
+  assert.ok(bg, 'web --bg bulunamadi');
+  const o = windowOptions();
+  assert.equal(typeof o.backgroundColor, 'string');
+  assert.equal(o.backgroundColor.toLowerCase(), bg[1].toLowerCase());
+});

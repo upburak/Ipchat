@@ -8,6 +8,8 @@ export function windowOptions() {
     autoHideMenuBar: true,
     title: 'Ipchat',
     show: false,
+    // Web --bg ile aynı (test eşitliği denetler): pencere ilk karede beyaz parlamasın.
+    backgroundColor: '#0a1018',
   };
 }
 
