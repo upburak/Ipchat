@@ -50,22 +50,75 @@ test('uses remembered server when it is known (and does not run discovery)', asy
   assert.deepEqual(d.calls.pinnedSeen[0], { publicKey: ID1.publicKey, fingerprint: ID1.fingerprint });
 });
 
-test('a single newly discovered server needs confirmation (choose), and is not saved yet', async () => {
+test('a single newly discovered server (no pin) connects without a chooser, and resolveServer itself saves nothing', async () => {
   const configDir = tmp();
   saveConfig(configDir, { lastServer: 'http://10.9.9.9:3000' });
   const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
-  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'choose', servers: [B] });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
   assert.equal(loadConfig(configDir).lastServer, 'http://10.9.9.9:3000');
   assert.equal(loadConfig(configDir).serverIdentity, undefined);
 });
 
+test('a single new server on first launch (no remembered address, no pin) -> ok with identity, nothing written', async () => {
+  const configDir = tmp();
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.equal(fs.readdirSync(configDir).length, 0);
+});
+
+test('a single unsupported (old, identity-less) server -> ok without an identity key', async () => {
+  const configDir = tmp();
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'unsupported' } } });
+  const r = await resolveServer({ configDir, ...d });
+  assert.deepEqual(r, { status: 'ok', url: B.url });
+  assert.equal('identity' in r, false);
+  assert.equal(fs.readdirSync(configDir).length, 0);
+});
+
+test('remembered address unreachable (e.g. DHCP change) and one new server discovered -> ok on the new address', async () => {
+  const configDir = tmp();
+  saveConfig(configDir, { lastServer: A.url });
+  const d = deps({ servers: [B], table: { [A.url]: { state: 'unreachable' }, [B.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+  assert.equal(loadConfig(configDir).lastServer, A.url);
+});
+
+test('a single unreachable or invalid candidate and nothing else -> manual', async () => {
+  for (const state of ['unreachable', 'invalid']) {
+    const d = deps({ servers: [A], table: { [A.url]: { state } } });
+    assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'manual' }, state);
+  }
+});
+
+test('one new server plus one invalid candidate -> ok for the new one (the dropped candidate does not force a chooser)', async () => {
+  const d = deps({
+    servers: [A, B],
+    table: { [A.url]: { state: 'invalid' }, [B.url]: { state: 'new', identity: ID1 } },
+  });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'ok', url: B.url, identity: ID1 });
+});
+
 test('drops discovered servers that are unreachable or invalid', async () => {
   const C = { url: 'http://10.0.0.3:3000', name: 'c' };
+  const D = { url: 'http://10.0.0.4:3000', name: 'd' };
   const d = deps({
-    servers: [A, B, C],
-    table: { [A.url]: { state: 'unreachable' }, [B.url]: { state: 'new', identity: ID1 }, [C.url]: { state: 'invalid' } },
+    servers: [A, B, C, D],
+    table: {
+      [A.url]: { state: 'unreachable' },
+      [B.url]: { state: 'new', identity: ID1 },
+      [C.url]: { state: 'invalid' },
+      [D.url]: { state: 'unsupported' },
+    },
   });
-  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [B] });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [B, D] });
+});
+
+test('two new candidates -> choose (unchanged)', async () => {
+  const d = deps({
+    servers: [A, B],
+    table: { [A.url]: { state: 'new', identity: ID1 }, [B.url]: { state: 'new', identity: ID2 } },
+  });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [A, B] });
 });
 
 test('returns choose for several unknown servers', async () => {

@@ -82,9 +82,16 @@ export async function resolveServer({ configDir, discover = discoverServers, ver
     return { status: 'manual' };
   }
 
-  // 5) Sabitleme yok: yeni/desteklenmeyen adaylar kullanıcıya sorulur (tek olsa da).
-  const servers = candidates.filter((_, i) => results[i].state === 'new' || results[i].state === 'unsupported');
-  if (servers.length > 0) return { status: 'choose', servers };
+  // 5) Sabitleme yok: yeni/desteklenmeyen adaylar.
+  //    Tam bir aday varsa liste gösterilmez: ona bağlanılır (kimliği varsa main.js sabitler: ilk gördüğüne güven).
+  //    İki ya da daha çok aday varsa kullanıcıya sorulur.
+  const idxs = candidates.map((_, i) => i).filter((i) => results[i].state === 'new' || results[i].state === 'unsupported');
+  if (idxs.length === 1) {
+    const i = idxs[0];
+    if (results[i].state === 'new') return { status: 'ok', url: candidates[i].url, identity: results[i].identity };
+    return { status: 'ok', url: candidates[i].url };
+  }
+  if (idxs.length > 1) return { status: 'choose', servers: idxs.map((i) => candidates[i]) };
 
   // 6) Hiçbiri.
   return { status: 'manual' };

@@ -110,7 +110,7 @@ Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak i�
 
 Ipchat'in sunucusu ilk açıldığında kendine bir **kimlik** (bir anahtar çifti) üretir ve `server-data` klasöründe saklar. Masaüstü uygulaması bağlandığı sunucuyu bu kimlikle **tanır ve hatırlar**. Sohbet sayfasını açmadan önce sunucuya bir "kimlik sorusu" sorar ve yanıtın, o kimliğin gizli anahtarıyla imzalandığını denetler. Böylece kendini sunucu diye **tanıtan** ama gizli anahtarı bilmeyen bir bilgisayar (örneğin ağda yeni kurulmuş ikinci bir Ipchat sunucusu) yakalanır ve uyarı ekranı çıkar. Kimlik adrese (IP) bağlı değildir, yani sunucunun adresi değişse bile aynı sunucu olarak tanınır. **Bu denetim her kötü niyeti durdurmaz;** neyi durdurmadığı aşağıdaki kutuda ve "Sınırlar"da yazılı.
 
-- **İlk bağlantıda soru sorulmaz.** Daha önce hiçbir sunucu hatırlanmadıysa uygulama bağlandığı sunucunun kimliğini sessizce kaydeder.
+- **İlk bağlantıda soru sorulmaz.** Daha önce hiçbir sunucu hatırlanmadıysa uygulama bağlandığı sunucunun kimliğini sessizce kaydeder. Ağda **tam bir** sunucu bulunursa seçim listesi de gösterilmez: uygulama ona kendiliğinden bağlanır ve hatırlar. Liste yalnızca **iki ya da daha çok** sunucu bulunursa çıkar ve hangisine bağlanacağını sen seçersin.
 - Sunucu modunu açan bilgisayar kendi sunucusunun kimliğini kendi klasöründen okuyup denetler ve soru sormadan hatırlar.
 - Bir kez hatırlanan kimlik, sonraki bağlanışlarda her seferinde denetlenir. Eşleşiyorsa hiçbir şey görmezsin.
 
@@ -231,7 +231,7 @@ Kurulum dosyaları [Releases](https://github.com/upburak/Ipchat/releases) sayfas
 
 - Yalnızca yerel ağ. HTTPS yok, sunucu internete açılmamalı.
 - Sunucu kimliği, kimlik sorusunu yanıtlayanın sunucunun gizli anahtarını bildiğini kanıtlar; yalnızca kendini sunucu diye **tanıtan** bir bilgisayarı (örneğin yeni kurulmuş ikinci bir sunucuyu) yakalar. **Soruyu gerçek sunucuya iletip kendi sayfasını gösteren bir bilgisayarı durdurmaz** (bkz. "Sunucu kimliği"), **trafiği şifrelemez** ve ağı dinleyen birini durdurmaz. Bunlar sonraki işin konusudur: **kanal bağlama** (sunucunun hangi adresten sorulduğunu da imzalaması) ve **şifreleme**. Dosya paylaşımı ondan önce açılmayacak.
-- İlk bağlantıda (hiçbir sunucu hatırlanmıyorken) kimlik sorusuz kaydedilir; o anda bağlanılan sunucu sahteyse onun kimliği hatırlanır.
+- İlk bağlantıda (hiçbir sunucu hatırlanmıyorken) kimlik sorusuz kaydedilir; o anda bağlanılan sunucu sahteyse onun kimliği hatırlanır. Ağda tek sunucu bulunursa liste de gösterilmez ve ona otomatik bağlanılır; yani o sırada ağda yalnızca kötü niyetli bir bilgisayar yanıt veriyorsa ona bağlanılır.
 - Kimlik denetimi, uygulamanın **kendi başlattığı yüklemeleri** kapsar (açılış, sunucu seçimi, arka plandaki yeniden deneme, yükleme hatasından sonra yeniden bağlanma). Pencere içinde sayfayı yenilemek ya da bağlantı kopup kendiliğinden yeniden kurulması yeniden denetlenmez (bilinen sınır).
 - **Otomatik güncelleme yok.** Yeni sürümler elle kurulur (bilerek böyle bırakıldı). Bu sürüme (0.6.0) ilk güncellemede sunucu bilgisayarında önce "Devam et"e basılması gerekir, yoksa sunucu başlamaz; sonraki güncellemelerde gerekmez (bkz. "İlk açılış").
 - Sunucu olan bilgisayar açık ve oturumu açık olmalı.
