@@ -40,6 +40,14 @@
   h2 { margin: 0 0 10px; font-size: 17px; color: var(--text); }
   #changed p { color: var(--muted); }
   #changed .detail { color: var(--text); overflow-wrap: anywhere; }
+  #found p { color: var(--muted); }
+  #found .detail { color: var(--text); overflow-wrap: anywhere; }
+  .found-actions { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .found-actions button { width: auto; margin: 0; }
+  #found-connect { padding: 10px 24px; }
+  /* Bağlantı görünümlü ikincil eylem: dolgu yok (parlak yüzey yalnızca birincil düğme). */
+  button.link { background: transparent; color: var(--accent); text-decoration: underline; padding: 10px 4px; }
+  #found-countdown { margin: 8px 0 0; min-height: 18px; }
   .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--chip-wait-bg); color: var(--chip-wait-fg); font-size: 12px; }
 </style>
 </head>
@@ -56,6 +64,16 @@
       <input id="addr" placeholder="Sunucu adresi" autofocus />
       <button type="submit">Bağlan</button>
     </form>
+  </div>
+  <div id="found" hidden>
+    <h2>Ağda bir sunucu buldum.</h2>
+    <p class="detail"><em id="found-name"></em> · <em id="found-url"></em></p>
+    <p>Bu bilgisayar bu sunucuya bağlanacak ve bir dahaki sefere kendiliğinden bağlanacak.</p>
+    <div class="found-actions">
+      <button id="found-connect" type="button">Bağlan</button>
+      <button id="found-other" class="link" type="button">Başka bir adres yaz</button>
+    </div>
+    <p id="found-countdown" aria-live="polite"></p>
   </div>
   <div id="changed" hidden>
     <h2 id="changed-title"></h2>
@@ -89,7 +107,7 @@
   }
   // Kimliği değişen sunucu için onay ekranı. Ad ve adres ağdan gelir: yalnızca textContent.
   const changedEl = document.getElementById('changed');
-  const otherViews = ['choose', 'manual', 'host', 'host-note'].map((id) => document.getElementById(id));
+  const otherViews = ['choose', 'manual', 'found', 'host', 'host-note'].map((id) => document.getElementById(id));
   let changedInfo = null;
   let hiddenBefore = [];
   // Ağda bir sunucu var: ikinci sunucu kurulmasın (tepsi de aynı kuralı uygular, server-guard.js).
@@ -137,7 +155,9 @@
     changedInfo = null;
     otherViews.forEach((el, i) => { el.hidden = hiddenBefore[i]; });
     errorEl.textContent = '';
-    document.getElementById('addr').focus();
+    // Bilgi ekranından gelindiyse odak onun "Bağlan" düğmesine döner (geri sayım yeniden başlamaz).
+    const foundView = document.getElementById('found');
+    document.getElementById(foundView.hidden ? 'addr' : 'found-connect').focus();
   }
   document.getElementById('changed-cancel').addEventListener('click', () => {
     if (busy) return;
@@ -186,6 +206,94 @@
       info = null;
     }
     showChanged(info);
+  }
+  // "Sunucu bulundu" bilgi ekranı (tasarım 2026-11-27 §6.1). Bağlanmayı kendisi yapmaz: connect()
+  // ile submitServer (kimlik doğrulama, sabitleme, açma) yolunu kullanır. Ad ve adres ağdan gelir:
+  // yalnızca textContent.
+  const FOUND_SECONDS = 5;
+  const foundEl = document.getElementById('found');
+  const foundConnectBtn = document.getElementById('found-connect');
+  const foundOtherBtn = document.getElementById('found-other');
+  const countdownEl = document.getElementById('found-countdown');
+  let foundUrl = null;
+  let foundTimer = null;
+  let foundInFlight = false; // kilit: geri sayım ile düğme aynı anda ikinci çağrı yapamaz
+  let foundDismissed = false;
+  function stopCountdown() {
+    if (foundTimer !== null) clearInterval(foundTimer);
+    foundTimer = null;
+    countdownEl.textContent = '';
+  }
+  async function foundConnect() {
+    if (foundUrl === null || foundInFlight || foundDismissed || busy) return;
+    foundInFlight = true;
+    stopCountdown(); // bir kez durur; hata olsa da yeniden başlamaz
+    foundConnectBtn.disabled = true;
+    foundOtherBtn.disabled = true;
+    try {
+      await connect(foundUrl); // { error } hata satırına, { confirm } değişti ekranına (connect içinde)
+    } finally {
+      foundConnectBtn.disabled = false;
+      foundOtherBtn.disabled = false;
+      foundInFlight = false;
+      // Düğme pasifken odak kayboldu; hata sonrası klavyeyle yeniden denenebilsin (değişti ekranı kendi odağını verir).
+      if (!foundEl.hidden && document.activeElement === document.body) foundConnectBtn.focus();
+    }
+  }
+  function showFound(info) {
+    if (!info || typeof info.url !== 'string' || info.url === '') return false;
+    foundUrl = info.url;
+    let label = typeof info.name === 'string' && info.name ? info.name : '';
+    if (!label) {
+      try { label = new URL(info.url).hostname; } catch (err) { label = info.url; }
+    }
+    document.getElementById('found-name').textContent = label;
+    document.getElementById('found-url').textContent = info.url;
+    if (isNetworkUrl(info.url)) {
+      markServerExists('Ağda zaten bir Ipchat sunucusu var. İkinci bir sunucu kurarsan kullanıcılar birbirini göremez.');
+    }
+    ['choose', 'manual', 'host', 'host-note'].forEach((id) => { document.getElementById(id).hidden = true; });
+    foundEl.hidden = false;
+    let remaining = FOUND_SECONDS;
+    const say = () => { countdownEl.textContent = remaining + ' saniye içinde kendiliğinden bağlanır.'; };
+    say();
+    foundTimer = setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) say();
+      else foundConnect();
+    }, 1000);
+    foundConnectBtn.focus();
+    return true;
+  }
+  foundConnectBtn.addEventListener('click', () => { foundConnect(); });
+  foundOtherBtn.addEventListener('click', () => {
+    if (foundUrl === null || foundInFlight || foundDismissed || busy) return;
+    foundDismissed = true;
+    stopCountdown();
+    try {
+      // Ana süreç bu adresi oturum boyunca bilgi ekranı için unutur (10 sn'lik deneme yeniden önermez).
+      const pending = window.ipchat.dismissFound(foundUrl);
+      if (pending && typeof pending.catch === 'function') pending.catch(() => {});
+    } catch (err) {
+      /* köprü yoksa da elle adres görünümü açılır */
+    }
+    foundEl.hidden = true;
+    document.getElementById('manual-text').textContent = 'Bağlanmak istediğin sunucu bilgisayarın adresini yaz (örn. 192.168.1.10).';
+    document.getElementById('manual').hidden = false;
+    const hostButton = document.getElementById('host');
+    hostButton.hidden = false;
+    document.getElementById('host-note').hidden = !hostButton.disabled;
+    errorEl.textContent = '';
+    document.getElementById('addr').focus();
+  });
+  if (params.get('mode') === 'found') {
+    let info = null;
+    try {
+      info = JSON.parse(params.get('found') || 'null');
+    } catch (err) {
+      info = null;
+    }
+    showFound(info); // bozuk ya da eksikse elle adres görünümü (varsayılan) kalır
   }
   document.getElementById('host').addEventListener('click', async () => {
     if (busy) return;

@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('ipchat', {
   submitServer: (text) => ipcRenderer.invoke('server:submit', text),
   confirmServer: (url, fingerprint) => ipcRenderer.invoke('server:confirm', url, fingerprint),
   hostServer: () => ipcRenderer.invoke('server:host'),
+  // "Sunucu bulundu" ekranında "Başka bir adres yaz" (yalnızca connect.html; ana süreç göndericiyi denetler).
+  dismissFound: (url) => ipcRenderer.invoke('server:found-dismiss', url),
   // İlk açılış onayı (yalnızca welcome.html kullanabilir; ana süreç göndericiyi denetler).
   getWelcomeText: () => ipcRenderer.invoke('welcome:text'),
   acceptWelcome: () => ipcRenderer.invoke('welcome:accept'),

@@ -27,6 +27,7 @@ import { loginItemSettings, loginItemQuery } from './autostart.js';
 import { startServerProcess, lanUrls } from './server-host.js';
 import { uninstallConfirm, purgeArgs, hasServerData, leftoverServerDataNotice, removalRule } from './cleanup.js';
 import { needsWelcome, welcomeRecord } from './welcome.js';
+import { decideFound } from './found-policy.js';
 import { networkServerKnown, HOST_CONFIRM, CHANGE_SERVER_CONFIRM } from './server-guard.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +62,14 @@ let reconnectPending = false;
 // atılmasın, tek girişli liste görsün. Kullanıcı bağlanınca (submit/confirm/sunucu modu) true olur;
 // uygulama yeniden başlayınca da true'dur (modül durumu).
 let autoPickSingle = true;
+// "Sunucu bulundu" bilgi ekranı (tasarım 2026-11-27 §6.1; karar: found-policy.js decideFound).
+// foundShownUrl: bilgi ekranı şu an bu adres için gösteriliyor (10 sn'lik deneme aynı ekranı yeniden
+// kurup geri sayımı sıfırlamasın). showConnectPage başka bir modla çağrılınca ve openServer'da silinir.
+// foundDismissedUrl: kullanıcı bu adres için "Başka bir adres yaz" dedi; oturum boyunca bu adres bilgi
+// ekranıyla yeniden önerilmez. autoPickSingle'ın ayarlandığı yerlerde (kullanıcının başarılı bağlanışı:
+// submit/confirm/kendi sunucusu; tepsideki "Başka bir sunucuya bağlan…" onayı) silinir.
+let foundShownUrl = null;
+let foundDismissedUrl = null;
 // İlk açılış onayı bekleniyor (tasarım §7.4). Doğruyken yalnızca pencere ve welcome.html vardır:
 // keşif/bağlanma, sunucu modu, otomatik başlatma kaydı, tepsi ve kalıntı uyarısı çalışmaz.
 let welcomePending = false;
@@ -301,6 +310,7 @@ async function openOwnServer(extra = {}, startedGeneration) {
   }
   connectGeneration += 1; // bağlantı değişti: süren arka plan denemeleri sonuçlarını atsın
   autoPickSingle = true;
+  foundDismissedUrl = null;
   rememberConnection(LOCAL_URL, action.identity, extra);
   retried = false;
   if (alive()) openServer(LOCAL_URL);
@@ -383,7 +393,8 @@ function serverLabelFor(url) {
   }
 }
 
-// extra: kimliği değişen sunucu ({ url, name, fingerprint, legacy }), 'changed' ekranı için.
+// extra: kimliği değişen sunucu ({ url, name, fingerprint, legacy }), 'changed' ekranı için;
+// 'found' ekranı için bulunan sunucu ({ url, name }).
 function showConnectPage(mode, servers = [], extra) {
   setBadge(0);
   setUnreadCount(0);
@@ -392,7 +403,8 @@ function showConnectPage(mode, servers = [], extra) {
   tray?.update({ connected: false, serverLabel: '' });
   const query = { mode };
   if (servers.length) query.servers = JSON.stringify(servers);
-  if (extra) query.changed = JSON.stringify(extra);
+  if (extra) query[mode === 'found' ? 'found' : 'changed'] = JSON.stringify(extra);
+  foundShownUrl = mode === 'found' ? extra?.url ?? null : null;
   serverUrl = null;
   onConnectPage = true;
   win.loadFile(path.join(here, 'connect.html'), { query }).catch(() => {});
@@ -403,6 +415,7 @@ function openServer(url) {
   setUnreadCount(0);
   serverUrl = url;
   onConnectPage = false;
+  foundShownUrl = null;
   tray?.update({ connected: true, serverLabel: serverLabelFor(url) });
   win.loadURL(url).catch(() => {});
 }
@@ -443,8 +456,18 @@ async function connectToServer() {
     // Bu arada kullanıcı başka sunucuya bağlandıysa (ya da onayladıysa) sonuç atılır.
     if (!stillCurrent(started)) return;
     if (result.status === 'ok') {
-      rememberConnection(result.url, result.identity);
-      openServer(result.url);
+      const found = decideFound(result, { dismissedUrl: foundDismissedUrl, shownUrl: foundShownUrl });
+      if (found === 'show') {
+        // Bilgi ekranı: kaydetme ve açma yok; sayfa bağlanmayı doğrulanmış yoldan (server:submit) yapar.
+        showConnectPage('found', [], { url: result.url, name: result.name });
+      } else if (found === 'skip') {
+        // Aynı adresin bilgi ekranı zaten açıksa (geri sayım sürüyor) yeniden kurulmaz; kullanıcı bu
+        // adresi geri çevirdiyse elle adres sayfası.
+        if (!(onConnectPage && result.url === foundShownUrl)) showConnectPage('manual');
+      } else {
+        rememberConnection(result.url, result.identity);
+        openServer(result.url);
+      }
     } else if (result.status === 'changed') {
       const { url, name, fingerprint, legacy } = result;
       showConnectPage('changed', [], { url, name, fingerprint, legacy });
@@ -471,9 +494,16 @@ async function retryInBackground() {
     // Yalnızca 'ok' işlenir; 'changed' arka planda ekran açmaz (kullanıcı zaten bağlantı sayfasında).
     // Bu arada kullanıcı bağlandıysa ya da sayfadan çıkıldıysa sonuç atılır.
     if (result.status === 'ok' && stillCurrent(started, true)) {
-      rememberConnection(result.url, result.identity);
-      retried = false;
-      openServer(result.url);
+      const found = decideFound(result, { dismissedUrl: foundDismissedUrl, shownUrl: foundShownUrl });
+      if (found === 'show') {
+        // Elle adres/liste sayfasındaki kullanıcı bir anda geçirilmez: önce bilgi ekranı (geri sayımlı).
+        showConnectPage('found', [], { url: result.url, name: result.name });
+      } else if (found === 'open') {
+        rememberConnection(result.url, result.identity);
+        retried = false;
+        openServer(result.url);
+      }
+      // 'skip': aynı bilgi ekranı zaten açık ya da kullanıcı bu adresi geri çevirdi; sayfa olduğu gibi.
     }
   } catch {
     /* sessizce gec, sayfa oldugu gibi kalir */
@@ -492,6 +522,7 @@ async function changeServer() {
     const { response } = await dialog.showMessageBox(parent, CHANGE_SERVER_CONFIRM);
     if (response !== 0) return;
     autoPickSingle = false; // disableServerMode içindeki connectToServer'dan ÖNCE
+    foundDismissedUrl = null;
     await disableServerMode();
   } finally {
     confirmingChange = false;
@@ -575,6 +606,7 @@ ipcMain.handle('server:submit', async (event, text) => {
   if (action.action !== 'open') return { error: action.message };
   connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
   autoPickSingle = true;
+  foundDismissedUrl = null;
   rememberConnection(url, action.identity);
   retried = false;
   openServer(url);
@@ -596,10 +628,19 @@ ipcMain.handle('server:confirm', async (event, text, shown) => {
   if (action.action !== 'open') return { error: action.message };
   connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
   autoPickSingle = true;
+  foundDismissedUrl = null;
   // Legacy onayında identity null: eski hatırlanan kimlik silinir.
   rememberConnection(url, action.identity);
   retried = false;
   openServer(url);
+  return { ok: true };
+});
+
+// Bilgi ekranında "Başka bir adres yaz": bu adres oturum boyunca bilgi ekranıyla yeniden önerilmez.
+ipcMain.handle('server:found-dismiss', (event, url) => {
+  if (!isTrustedSender(event.senderFrame?.url, connectFileUrl)) return { error: 'İzin verilmedi' };
+  if (typeof url !== 'string' || url === '' || url.length > 2048) return { error: 'Geçersiz istek' };
+  foundDismissedUrl = url;
   return { ok: true };
 });
 
