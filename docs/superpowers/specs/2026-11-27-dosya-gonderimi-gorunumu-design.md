@@ -1,7 +1,7 @@
 # Dosya Gönderimi Görünümü (kısa tasarım)
 
 Tarih: 2026-11-27
-Durum: onay bekliyor
+Durum: onaylandı (kullanıcı, 2026-11-27), üç ek ile (§7.6); 0.6.2 sürümünde çıkacak
 İlgili: `2026-11-27-koyu-tema-design.md`
 
 ## 1. Amaç ve neden
@@ -59,6 +59,13 @@ Tür, **uzantıdan** (yoksa MIME'dan) belirlenir; tek bir saf fonksiyon (`fileKi
 ### 7.5 Hata durumları
 
 25 MB üstü dosya **seçilir seçilmez** (yüklemeden önce) "Dosya çok büyük (en çok 25 MB)" denir; sunucu reddederse (413) aynı iletiyi gösterir; ağ kopması "Bağlantı koptu, tekrar dene"; iptal sessizce kartı kaldırır. Hata hiçbir durumda sessizce yutulmaz (bugünkü açık).
+
+### 7.6 Onay sırasında eklenenler (kullanıcı seçti, 2026-11-27)
+
+1. **İndirilen dosyanın adı.** Sunucu dosyaları rastgele adla saklar (`<32 hex>.<uzantı>`); `/uploads/` yanıtı bugün `Content-Disposition: attachment` verir ama dosya adı vermez, bu yüzden tarayıcılar çoğunlukla rastgele adı kaydeder. Kart bağlantısı `…/uploads/<dosya>?name=<özgün ad>` olur; sunucu `?name=` değerini **temizleyip** (yol ayırıcılar, denetim karakterleri, tırnak, CR/LF atılır; en çok 200 karakter) `Content-Disposition: attachment; filename="<ASCII yedek>"; filename*=UTF-8''<yüzde kodlu ad>` olarak yanıta koyar; `name` yoksa bugünkü gibi yalnızca `attachment`. Başlık enjeksiyonu mümkün olmamalıdır (testle).
+2. **Program dosyası uyarısı.** `fileKind` ayrıca `program` türünü döndürür (son uzantı: `exe, msi, bat, cmd, com, scr, ps1, vbs, vbe, js, jse, wsf, jar, lnk, reg`; `rapor.pdf.exe` gibi çift uzantıda **son** uzantı sayılır). Bu türün kartında ayrı bir ikon ve küçük not görünür: *"Program dosyası: tanıdığın biri göndermediyse açma."* Hiçbir şey engellenmez.
+3. **Çoklu dosya uyarısı.** Birden çok dosya bırakılır/seçilirse **ilki** gönderilir ve kullanıcıya "Aynı anda bir dosya gönderilebilir; ilk dosya gönderildi." denir (birkaç saniye sonra kalkar); hiçbir dosya sessizce yok sayılmaz.
+4. **Yüklenen dosyaların temizliği** bu işe **girmez**; ileriki iş: her dosya sunucu bilgisayarında sınırsız kalır (25 MB'a kadar), disk aylar içinde dolabilir. CLAUDE.md "Sıradaki işler"e ve README `Sınırlar`'a yazılır.
 
 ## 8. Builder'a bırakılanlar
 
