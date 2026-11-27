@@ -1,7 +1,7 @@
 # Koyu Tema (kısa tasarım)
 
 Tarih: 2026-11-27
-Durum: onay bekliyor
+Durum: onaylandı (kullanıcı, 2026-11-27); uygulama planı: docs/superpowers/plans/2026-11-27-koyu-tema.md
 İlgili: `2026-11-14-arayuz-ergonomisi-design.md` (0.4.0'da "renk paleti/karanlık mod" kapsam dışıydı; şimdi kullanıcı istedi)
 
 ## 1. Amaç ve neden
