@@ -204,7 +204,7 @@ npm test -w desktop
 Derleme ve dosyalar GitHub Actions ile üretilir, bilgisayara bağlı değildir:
 
 1. `desktop/package.json` içindeki `version` alanını artır.
-2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.6.1` gibi bir ad yaz ve yayınla.
+2. GitHub'da **Releases → Draft a new release**, etiket olarak `test-0.6.2` gibi bir ad yaz ve yayınla.
 3. İş akışı derler, `.exe` ve Mac zip'ini o Release'e ekler (~3 dakika).
 
 ---
