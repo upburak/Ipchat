@@ -106,6 +106,8 @@ npm run reset-admin -- <kullanici-adi> <yeni-sifre>
 
 Pencere sabit boyutludur (800x620). Kapatınca tepsiye iner; tamamen çıkmak için tepsi menüsünden "Çık". Aynı anda tek örnek çalışır. Kurulu uygulama bilgisayar açılışında başlar (tepsiden kapatılabilir). Kişi listesi ve bekleyen hesaplar 3 saniyede bir yenilenir.
 
+**Koyu tema.** Arayüz koyu temadadır (koyu lacivert zemin, tek vurgu rengi camgöbeği, yumuşak açık yazı); amaç, uzun süre bakınca gözü yormamak. Şimdilik **yalnızca koyu tema var**; açık temaya geçmek için bir **tema menüsü** planlı ama henüz yoktur. Bağlantı ve ilk açılış ekranları da aynı temadadır; pencere açılırken beyaz parlamasın diye koyu başlayacak şekilde ayarlandı. **Denenmedi:** bu ayarın gerçek pencerede işe yaradığı ve Windows'ta pencerenin en üstündeki şeridin (başlık çubuğu) koyulaşıp koyulaşmadığı henüz hiçbir gerçek bilgisayarda görülmedi; şerit açık renkli kalabilir.
+
 ### Sunucu kimliği
 
 Ipchat'in sunucusu ilk açıldığında kendine bir **kimlik** (bir anahtar çifti) üretir ve `server-data` klasöründe saklar. Masaüstü uygulaması bağlandığı sunucuyu bu kimlikle **tanır ve hatırlar**. Sohbet sayfasını açmadan önce sunucuya bir "kimlik sorusu" sorar ve yanıtın, o kimliğin gizli anahtarıyla imzalandığını denetler. Böylece kendini sunucu diye **tanıtan** ama gizli anahtarı bilmeyen bir bilgisayar (örneğin ağda yeni kurulmuş ikinci bir Ipchat sunucusu) yakalanır ve uyarı ekranı çıkar. Kimlik adrese (IP) bağlı değildir, yani sunucunun adresi değişse bile aynı sunucu olarak tanınır. **Bu denetim her kötü niyeti durdurmaz;** neyi durdurmadığı aşağıdaki kutuda ve "Sınırlar"da yazılı.
@@ -223,7 +225,7 @@ Kurulum dosyaları [Releases](https://github.com/upburak/Ipchat/releases) sayfas
 | **0.2.0** | 13 Kas 2026 | Windows kurulumu yönetici izniyle çalışıp güvenlik duvarı kurallarını kendisi ekler oldu; kurum ilkesiyle (GPO) yönetilen bilgisayarlar tespit edilip uyarı verilir. Yeni görünüm (avatarlar, yuvarlak baloncuklar). Listeler 3 saniyede bir yenilenir. Yöneticiye bekleyen hesap bildirimi ve rozet. | Windows'ta çalıştığı görüldü. |
 | **0.1.0** | 13 Kas 2026 | İlk masaüstü sürümü. Hesap onayı ve yönetici paneli; Electron kabuğu, tepsi ikonu, sabit pencere; sunucuyu ağda kendiliğinden bulma (UDP 41234) ve **sunucu modu** (uygulamanın kendisi sunucu olabilir). | Windows'ta çalıştığı görüldü. |
 
-**Sırada:** **kanal bağlama ve trafiğin şifrelenmesi** (sunucu kimliğinin üzerine kurulacak; sunucunun hangi adresten sorulduğunu da imzalaması, soruyu gerçek sunucuya ileten bir bilgisayarı yakalamak için), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
+**Sırada:** **tema menüsü** (koyu ve açık tema arasında seçim, seçimin bilgisayarda saklanması), **kanal bağlama ve trafiğin şifrelenmesi** (sunucu kimliğinin üzerine kurulacak; sunucunun hangi adresten sorulduğunu da imzalaması, soruyu gerçek sunucuya ileten bir bilgisayarı yakalamak için), ardından bilgisayarlar arası **dosya paylaşımı**. Tasarım belgeleri `docs/superpowers/specs/` içindedir.
 
 ---
 

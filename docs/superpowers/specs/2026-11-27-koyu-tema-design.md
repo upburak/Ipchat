@@ -1,7 +1,7 @@
 # Koyu Tema (kısa tasarım)
 
 Tarih: 2026-11-27
-Durum: onaylandı (kullanıcı, 2026-11-27); uygulama planı: docs/superpowers/plans/2026-11-27-koyu-tema.md
+Durum: uygulandı (0.6.1; onay: kullanıcı, 2026-11-27); plan: docs/superpowers/plans/2026-11-27-koyu-tema.md. Yalnızca CLAUDE.md'deki "0.6.1'de kodlandı" bölümünde yazan otomatik testler ve Linux'ta Playwright ölçüleriyle denendi; gerçek Electron, Windows başlık çubuğu, Mac ve gerçek monitörde göz rahatlığı denenmedi.
 İlgili: `2026-11-14-arayuz-ergonomisi-design.md` (0.4.0'da "renk paleti/karanlık mod" kapsam dışıydı; şimdi kullanıcı istedi)
 
 ## 1. Amaç ve neden
