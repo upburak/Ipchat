@@ -113,6 +113,58 @@ test('drops discovered servers that are unreachable or invalid', async () => {
   assert.deepEqual(await resolveServer({ configDir: tmp(), ...d }), { status: 'choose', servers: [B, D] });
 });
 
+test('autoPickSingle:false and one new candidate -> choose with that server (tray "connect to another server")', async () => {
+  const configDir = tmp();
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir, autoPickSingle: false, ...d }), { status: 'choose', servers: [B] });
+  assert.equal(fs.readdirSync(configDir).length, 0);
+});
+
+test('autoPickSingle:false and one unsupported candidate -> choose with that server', async () => {
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'unsupported' } } });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle: false, ...d }), { status: 'choose', servers: [B] });
+});
+
+test('autoPickSingle:false and one new plus one invalid candidate -> choose with only the new one', async () => {
+  const d = deps({ servers: [A, B], table: { [A.url]: { state: 'invalid' }, [B.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle: false, ...d }), { status: 'choose', servers: [B] });
+});
+
+test('two candidates -> choose whatever autoPickSingle is', async () => {
+  for (const autoPickSingle of [true, false, undefined]) {
+    const d = deps({
+      servers: [A, B],
+      table: { [A.url]: { state: 'new', identity: ID1 }, [B.url]: { state: 'unsupported' } },
+    });
+    assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle, ...d }), { status: 'choose', servers: [A, B] });
+  }
+});
+
+test('autoPickSingle:true is the same as omitting it (single new -> ok)', async () => {
+  const d = deps({ servers: [B], table: { [B.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir: tmp(), autoPickSingle: true, ...d }), { status: 'ok', url: B.url, identity: ID1 });
+});
+
+test('autoPickSingle:false does not change the remembered-address branches', async () => {
+  const configDir = tmp();
+  saveConfig(configDir, { lastServer: A.url });
+  const d1 = deps({ table: { [A.url]: { state: 'new', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir, autoPickSingle: false, ...d1 }), { status: 'ok', url: A.url, identity: ID1 });
+  const d2 = deps({ table: { [A.url]: { state: 'unsupported' } } });
+  assert.deepEqual(await resolveServer({ configDir, autoPickSingle: false, ...d2 }), { status: 'ok', url: A.url });
+});
+
+test('autoPickSingle:false does not change pin-present behaviour (known -> ok, single changed -> changed)', async () => {
+  const configDir = tmp();
+  saveConfig(configDir, { lastServer: 'http://10.9.9.9:3000', serverIdentity: ID1 });
+  const dk = deps({ servers: [B], table: { [B.url]: { state: 'known', identity: ID1 } } });
+  assert.deepEqual(await resolveServer({ configDir, autoPickSingle: false, ...dk }), { status: 'ok', url: B.url, identity: ID1 });
+  const dc = deps({ servers: [B], table: { [B.url]: { state: 'changed', identity: ID2 } } });
+  const r = await resolveServer({ configDir, autoPickSingle: false, ...dc });
+  assert.equal(r.status, 'changed');
+  assert.equal(r.url, B.url);
+});
+
 test('two new candidates -> choose (unchanged)', async () => {
   const d = deps({
     servers: [A, B],

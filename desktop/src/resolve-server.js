@@ -33,7 +33,9 @@ async function safeDiscover(discover) {
 
 // Sunucuyu seçer. Ayar dosyasına HİÇBİR ŞEY yazmaz (adresi ve kimliği main.js kaydeder).
 // Sıra: kayıtlı adres -> (en çok bir kez) keşif -> sabitlenmiş kimliği taşıyan sunucu -> uyarı/seçim.
-export async function resolveServer({ configDir, discover = discoverServers, verify = verifyServer }) {
+// autoPickSingle (varsayılan true): false ise sabitleme yokken tek aday da liste olarak sunulur
+// (tepsiden "Başka bir sunucuya bağlan…": kullanıcı az önce ayrıldığı sunucuya geri atılmasın).
+export async function resolveServer({ configDir, discover = discoverServers, verify = verifyServer, autoPickSingle = true }) {
   const config = loadConfig(configDir);
   const remembered = config.lastServer;
   const pinned = getPinned(config);
@@ -83,15 +85,15 @@ export async function resolveServer({ configDir, discover = discoverServers, ver
   }
 
   // 5) Sabitleme yok: yeni/desteklenmeyen adaylar.
-  //    Tam bir aday varsa liste gösterilmez: ona bağlanılır (kimliği varsa main.js sabitler: ilk gördüğüne güven).
+  //    Tam bir aday varsa (ve autoPickSingle) liste gösterilmez: ona bağlanılır (kimliği varsa main.js sabitler: ilk gördüğüne güven).
   //    İki ya da daha çok aday varsa kullanıcıya sorulur.
   const idxs = candidates.map((_, i) => i).filter((i) => results[i].state === 'new' || results[i].state === 'unsupported');
-  if (idxs.length === 1) {
+  if (idxs.length === 1 && autoPickSingle !== false) {
     const i = idxs[0];
     if (results[i].state === 'new') return { status: 'ok', url: candidates[i].url, identity: results[i].identity };
     return { status: 'ok', url: candidates[i].url };
   }
-  if (idxs.length > 1) return { status: 'choose', servers: idxs.map((i) => candidates[i]) };
+  if (idxs.length >= 1) return { status: 'choose', servers: idxs.map((i) => candidates[i]) };
 
   // 6) Hiçbiri.
   return { status: 'manual' };

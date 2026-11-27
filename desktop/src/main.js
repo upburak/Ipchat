@@ -56,6 +56,11 @@ const stillCurrent = (startedGeneration, needsConnectPage = false) =>
   isResultCurrent({ startedGeneration, currentGeneration: connectGeneration, alive: Boolean(alive()), needsConnectPage, onConnectPage });
 // Bir bağlanma sürerken gelen connectToServer isteği kaybolmasın: süren iş bitince bir kez çalışır.
 let reconnectPending = false;
+// Sabitleme yokken ağda tek sunucu bulunursa ona sorusuz bağlanılır (resolveServer autoPickSingle).
+// Tepsiden "Başka bir sunucuya bağlan…" bunu false yapar: kullanıcı az önce ayrıldığı sunucuya geri
+// atılmasın, tek girişli liste görsün. Kullanıcı bağlanınca (submit/confirm/sunucu modu) true olur;
+// uygulama yeniden başlayınca da true'dur (modül durumu).
+let autoPickSingle = true;
 // İlk açılış onayı bekleniyor (tasarım §7.4). Doğruyken yalnızca pencere ve welcome.html vardır:
 // keşif/bağlanma, sunucu modu, otomatik başlatma kaydı, tepsi ve kalıntı uyarısı çalışmaz.
 let welcomePending = false;
@@ -295,6 +300,7 @@ async function openOwnServer(extra = {}, startedGeneration) {
     return false;
   }
   connectGeneration += 1; // bağlantı değişti: süren arka plan denemeleri sonuçlarını atsın
+  autoPickSingle = true;
   rememberConnection(LOCAL_URL, action.identity, extra);
   retried = false;
   if (alive()) openServer(LOCAL_URL);
@@ -416,6 +422,7 @@ async function connectToServer() {
   }
   connecting = true;
   const started = connectGeneration; // beklemeden önce
+  const autoPick = autoPickSingle; // beklemeden önce
   try {
     if (loadConfig(configDir()).serverMode) {
       try {
@@ -430,7 +437,7 @@ async function connectToServer() {
         return;
       }
     }
-    const result = await resolveServer({ configDir: configDir() });
+    const result = await resolveServer({ configDir: configDir(), autoPickSingle: autoPick });
     serverKnown = networkServerKnown(result);
     updateTray();
     // Bu arada kullanıcı başka sunucuya bağlandıysa (ya da onayladıysa) sonuç atılır.
@@ -456,8 +463,9 @@ async function retryInBackground() {
   if (!onConnectPage || connecting || !alive()) return;
   connecting = true;
   const started = connectGeneration; // beklemeden önce
+  const autoPick = autoPickSingle; // beklemeden önce
   try {
-    const result = await resolveServer({ configDir: configDir() });
+    const result = await resolveServer({ configDir: configDir(), autoPickSingle: autoPick });
     serverKnown = networkServerKnown(result);
     updateTray();
     // Yalnızca 'ok' işlenir; 'changed' arka planda ekran açmaz (kullanıcı zaten bağlantı sayfasında).
@@ -483,6 +491,7 @@ async function changeServer() {
     const parent = alive() && win.isVisible() ? win : undefined;
     const { response } = await dialog.showMessageBox(parent, CHANGE_SERVER_CONFIRM);
     if (response !== 0) return;
+    autoPickSingle = false; // disableServerMode içindeki connectToServer'dan ÖNCE
     await disableServerMode();
   } finally {
     confirmingChange = false;
@@ -565,6 +574,7 @@ ipcMain.handle('server:submit', async (event, text) => {
   }
   if (action.action !== 'open') return { error: action.message };
   connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
+  autoPickSingle = true;
   rememberConnection(url, action.identity);
   retried = false;
   openServer(url);
@@ -585,6 +595,7 @@ ipcMain.handle('server:confirm', async (event, text, shown) => {
   const action = confirmAction(await verifyServer(url, getPinned(loadConfig(configDir()))), shown);
   if (action.action !== 'open') return { error: action.message };
   connectGeneration += 1; // kullanıcının kararı: süren arka plan denemeleri sonuçlarını atsın
+  autoPickSingle = true;
   // Legacy onayında identity null: eski hatırlanan kimlik silinir.
   rememberConnection(url, action.identity);
   retried = false;
