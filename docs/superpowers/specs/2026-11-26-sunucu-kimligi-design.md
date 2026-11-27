@@ -104,6 +104,8 @@ Değişiklik ekranı **bağlanmaya engel olmaz ama bağlanmayı zorunlu da kılm
 
 Keşif birden fazla sunucu bulursa bugünkü gibi seçim ekranı çıkar; fark: her aday doğrulanır, **kayıtlı kimliği taşıyan sunucu öne çıkarılır ve otomatik seçilir**, kimliği tanınmayanlar "Tanımadığın sunucu" etiketiyle gösterilir. Kayıtlı kimliği taşıyan sunucu bulunamıyor ama başka sunucular var ise 7.4 ekranı gösterilir.
 
+> **Düzeltme (2026-11-27, kullanıcı isteği, ilk gerçek denemeden sonra):** hatırlanan sunucu **yokken** keşif **tam bir** sunucu bulursa (kimlik doğrulanmış ya da eski/kimliksiz), seçim listesi **gösterilmez**: uygulama o sunucuya bağlanır ve kimliği varsa sorusuz hatırlar. Seçim listesi yalnızca **iki ya da daha çok** aday bulunursa çıkar. Gerekçe: kullanıcı "en az iş" ister ve ilk açılış onayı zaten verildiği için ikinci bir tıklama yarar sağlamıyordu; ayrıca bu kural, ilk gördüğüne güven (§6) ilkesiyle tutarlıdır. Bilinen bedel: ağda yalnızca kötü niyetli bir sunucu yanıt verirse (gerçek sunucu kapalıyken) ona otomatik bağlanılır ve kimliği hatırlanır; liste gösterilse de kullanıcı adı yalnızca bir ad olduğundan koruma zayıftı. Önceki davranış (tek aday için de liste) 0.5.0'dan devralınmıştı.
+
 ### 7.6 Eski sunucular ve sürüm karışıklığı
 
 Kimlik ucu olmayan bir sunucu (0.5.0 ve öncesi) için:
